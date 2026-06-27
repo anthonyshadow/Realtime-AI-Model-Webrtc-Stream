@@ -78,7 +78,10 @@ export async function connectLucyRealtime({
   try {
     return await client.realtime.connect(stream, {
       model,
-      mirror: "auto",
+      // Decart's auto-mirror path creates a generated video track. In Chrome,
+      // that track can lose width/height settings during LiveKit reconnect
+      // republishes, which can stall the realtime stream.
+      mirror: false,
       onRemoteStream,
       onConnectionChange,
       initialState: buildInitialState(initialState),

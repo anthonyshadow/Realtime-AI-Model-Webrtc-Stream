@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ControlPanel } from "./components/ControlPanel/ControlPanel";
+import { AutoHidingControlPanel } from "./components/ControlPanel/AutoHidingControlPanel";
 import { VideoStage } from "./components/VideoStage/VideoStage";
 import { DEFAULT_TEXT_ONLY_PROMPT } from "./constants/prompts";
 import { useLucyRealtime } from "./hooks/useLucyRealtime";
@@ -37,7 +37,7 @@ export function App() {
   return (
     <main className="min-h-screen overflow-hidden bg-neutral-950 text-white">
       <VideoStage remoteStream={lucy.remoteStream} status={lucy.status} />
-      <ControlPanel
+      <AutoHidingControlPanel
         prompt={prompt}
         imageFile={imageFile}
         imagePreviewUrl={imagePreviewUrl}
