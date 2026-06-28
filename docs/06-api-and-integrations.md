@@ -59,7 +59,7 @@ It must never import backend env files or read `DECART_API_KEY`.
 
 ## Realtime `set()` Rule
 
-`realtimeClient.set()` replaces the full realtime state. Use `src/lib/realtimeState.ts` to build one atomic payload for prompt, image, and enhance when image state is part of the update. For prompt-only live updates, use `realtimeClient.setPrompt(prompt, { enhance })` so the current image state is preserved.
+`realtimeClient.set()` replaces the full realtime state. Use `src/lib/realtimeState.ts` to build one atomic payload for prompt, image, and enhance from the current control-panel snapshot. Full control-panel Apply must call `realtimeClient.set(fullPayload)` so an empty UI image can be sent as `image: null` and stale Decart image state is cleared. Reserve `setPrompt` only for future controls that intentionally preserve an active image outside the full control-panel Apply flow.
 
 Model-specific image-only behavior:
 

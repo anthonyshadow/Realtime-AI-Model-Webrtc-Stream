@@ -13,7 +13,11 @@ import {
 } from "../lib/decartClient";
 import { toUserMessage } from "../lib/errors";
 import { getCameraStream, stopMediaStream } from "../lib/media";
-import { buildRealtimeStatePayload } from "../lib/realtimeState";
+import {
+  buildFullRealtimeStatePayload,
+  buildRealtimeClearPayload,
+  buildRealtimeStatePayload,
+} from "../lib/realtimeState";
 import type {
   ApplyRealtimeStateInput,
   RealtimeStatus,
@@ -174,7 +178,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
         return false;
       }
 
-      const payload = buildRealtimeStatePayload(input);
+      const payload = buildFullRealtimeStatePayload(input);
 
       if (!payload) {
         setError(getMissingInputMessage(getModelConfig(input.modelMode), "applying"));
@@ -186,11 +190,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       try {
         setError(null);
         setIsApplying(true);
-        if (payload.image !== undefined) {
-          await realtimeClient.set(payload);
-        } else if (payload.prompt) {
-          await realtimeClient.setPrompt(payload.prompt, { enhance: payload.enhance });
-        }
+        await realtimeClient.set(payload);
 
         return true;
       } catch {
@@ -207,6 +207,50 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
     },
     [status],
   );
+
+  const resetRealtimeState = useCallback(async () => {
+    const realtimeClient = realtimeClientRef.current;
+
+    setError(null);
+
+    if (CONNECTING_STATUSES.has(status)) {
+      startRequestIdRef.current += 1;
+      resetSession();
+      setStatus("idle");
+      return true;
+    }
+
+    if (status === "reconnecting") {
+      startRequestIdRef.current += 1;
+      resetSession();
+      setStatus("disconnected");
+      return true;
+    }
+
+    if (!APPLY_STATUSES.has(status) || !realtimeClient) {
+      return true;
+    }
+
+    const requestId = startRequestIdRef.current;
+
+    try {
+      setIsApplying(true);
+      await realtimeClient.set(buildRealtimeClearPayload());
+      return true;
+    } catch {
+      if (startRequestIdRef.current === requestId) {
+        setError(
+          "Could not reset the realtime state. Check that the realtime session is still connected and try again.",
+        );
+      }
+
+      return false;
+    } finally {
+      if (startRequestIdRef.current === requestId) {
+        setIsApplying(false);
+      }
+    }
+  }, [resetSession, status]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -236,6 +280,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       start,
       stop,
       apply,
+      resetRealtimeState,
     }),
     [
       activeModelMode,
@@ -246,6 +291,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       isRunning,
       localStream,
       remoteStream,
+      resetRealtimeState,
       start,
       status,
       stop,

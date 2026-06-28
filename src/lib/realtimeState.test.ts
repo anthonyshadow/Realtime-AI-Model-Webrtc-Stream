@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_LUCY_CHARACTER_PROMPT } from "../constants/prompts";
-import { buildRealtimeStatePayload } from "./realtimeState";
+import {
+  buildFullRealtimeStatePayload,
+  buildRealtimeClearPayload,
+  buildRealtimeStatePayload,
+} from "./realtimeState";
 
 describe("buildRealtimeStatePayload", () => {
   const image = new File(["portrait"], "portrait.png", { type: "image/png" });
@@ -30,9 +34,24 @@ describe("buildRealtimeStatePayload", () => {
     });
   });
 
+  it("clears the image for prompt-only full-state payloads", () => {
+    expect(
+      buildFullRealtimeStatePayload({
+        modelMode: "lucy-vton-3",
+        prompt: "  Substitute the jacket with denim  ",
+        image: null,
+        enhance: false,
+      }),
+    ).toEqual({
+      prompt: "Substitute the jacket with denim",
+      image: null,
+      enhance: false,
+    });
+  });
+
   it("keeps prompt and image together for atomic updates", () => {
     expect(
-      buildRealtimeStatePayload({
+      buildFullRealtimeStatePayload({
         modelMode: "lucy-2.1",
         prompt: "Use the uploaded face",
         image,
@@ -72,5 +91,9 @@ describe("buildRealtimeStatePayload", () => {
       image,
       enhance: false,
     });
+  });
+
+  it("builds an SDK-safe clear payload", () => {
+    expect(buildRealtimeClearPayload()).toEqual({ image: null });
   });
 });

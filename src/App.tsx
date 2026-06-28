@@ -14,26 +14,15 @@ import type { ApplyRealtimeStateInput } from "./types/realtime";
 export function App() {
   const realtime = useDecartRealtimeSession();
   const timer = useSessionTimer(realtime.isRunning);
-  const [modelMode, setModelMode] = useState<SupportedModelMode>(DEFAULT_MODEL_MODE);
-  const modelConfig = getModelConfig(modelMode);
+  const [draft, setDraft] = useState<ApplyRealtimeStateInput>(() =>
+    createControlPanelDraft(DEFAULT_MODEL_MODE),
+  );
+  const modelMode = draft.modelMode;
   const activeModelConfig = getModelConfig(realtime.activeModelMode ?? modelMode);
-  const [prompt, setPrompt] = useState(modelConfig.defaultPrompt);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [enhancePrompt, setEnhancePrompt] = useState(modelConfig.enhanceDefault);
   const [formError, setFormError] = useState<string | null>(null);
   const [lastAppliedDraftKey, setLastAppliedDraftKey] = useState<string | null>(null);
-  const imagePreviewUrl = useObjectUrl(imageFile);
+  const imagePreviewUrl = useObjectUrl(draft.image);
   const canChangeModel = !realtime.isRunning && !realtime.isConnecting;
-
-  const draft = useMemo<ApplyRealtimeStateInput>(
-    () => ({
-      modelMode,
-      prompt,
-      image: imageFile,
-      enhance: enhancePrompt,
-    }),
-    [enhancePrompt, imageFile, modelMode, prompt],
-  );
 
   const draftKey = useMemo(() => createDraftKey(draft), [draft]);
   const hasPendingChanges =
@@ -46,33 +35,43 @@ export function App() {
 
     const nextConfig = getModelConfig(nextMode);
     setFormError(null);
-    setModelMode(nextMode);
-    setPrompt(nextConfig.defaultPrompt);
-    setImageFile(null);
-    setEnhancePrompt(nextConfig.enhanceDefault);
+    setDraft({
+      modelMode: nextMode,
+      prompt: nextConfig.defaultPrompt,
+      image: null,
+      enhance: nextConfig.enhanceDefault,
+    });
     setLastAppliedDraftKey(null);
   };
 
   const handlePromptChange = (value: string) => {
     setFormError(null);
-    setPrompt(value);
+    setDraft((currentDraft) => ({ ...currentDraft, prompt: value }));
   };
 
   const handleImageChange = (file: File | null) => {
     setFormError(null);
-    setImageFile(file);
+    setDraft((currentDraft) => ({ ...currentDraft, image: file }));
   };
 
   const handleEnhancePromptChange = (value: boolean) => {
     setFormError(null);
-    setEnhancePrompt(value);
+    setDraft((currentDraft) => ({ ...currentDraft, enhance: value }));
   };
 
   const handleReset = () => {
+    const resetDraft = createControlPanelDraft(modelMode);
+    const resetDraftKey = createDraftKey(resetDraft);
+
     setFormError(null);
-    setPrompt(modelConfig.defaultPrompt);
-    setImageFile(null);
-    setEnhancePrompt(modelConfig.enhanceDefault);
+    setDraft(resetDraft);
+    setLastAppliedDraftKey(null);
+
+    void realtime.resetRealtimeState().then((didReset) => {
+      if (didReset && realtime.isRunning) {
+        setLastAppliedDraftKey(resetDraftKey);
+      }
+    });
   };
 
   const handleStart = () => {
@@ -114,12 +113,12 @@ export function App() {
       <AutoHidingControlPanel
         activeModelMode={realtime.activeModelMode}
         canChangeModel={canChangeModel}
-        enhancePrompt={enhancePrompt}
+        enhancePrompt={draft.enhance}
         hasPendingChanges={hasPendingChanges}
         isApplying={realtime.isApplying}
         modelMode={modelMode}
-        prompt={prompt}
-        imageFile={imageFile}
+        prompt={draft.prompt}
+        imageFile={draft.image}
         imagePreviewUrl={imagePreviewUrl}
         status={realtime.status}
         elapsedLabel={timer.elapsedLabel}
@@ -136,6 +135,17 @@ export function App() {
       />
     </main>
   );
+}
+
+function createControlPanelDraft(modelMode: SupportedModelMode): ApplyRealtimeStateInput {
+  const config = getModelConfig(modelMode);
+
+  return {
+    modelMode,
+    prompt: config.defaultPrompt,
+    image: null,
+    enhance: config.enhanceDefault,
+  };
 }
 
 function createDraftKey(input: ApplyRealtimeStateInput) {

@@ -18,9 +18,9 @@ function renderImageUpload(overrides: Partial<Parameters<typeof ImageUpload>[0]>
     ...overrides,
   };
 
-  render(<ImageUpload {...props} />);
+  const rendered = render(<ImageUpload {...props} />);
 
-  return props;
+  return { ...props, ...rendered };
 }
 
 describe("ImageUpload", () => {
@@ -61,5 +61,45 @@ describe("ImageUpload", () => {
 
     expect(props.onError).toHaveBeenCalledWith(null);
     expect(props.onChange).toHaveBeenCalledWith(null);
+  });
+
+  it("clears the file input when parent state clears the file", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.webp", { type: "image/webp" });
+    const props = renderImageUpload();
+    const input = screen.getByLabelText("Reference portrait");
+
+    await user.upload(input, file);
+
+    expect(input).not.toHaveValue("");
+
+    props.rerender(
+      <ImageUpload
+        actionText="Use portrait"
+        altText="Reference portrait preview"
+        emptyLabel="No portrait"
+        file={file}
+        helperText="Best as a clear portrait."
+        label="Reference portrait"
+        previewUrl="blob:http://localhost/portrait"
+        onChange={props.onChange}
+        onError={props.onError}
+      />,
+    );
+    props.rerender(
+      <ImageUpload
+        actionText="Use portrait"
+        altText="Reference portrait preview"
+        emptyLabel="No portrait"
+        file={null}
+        helperText="Best as a clear portrait."
+        label="Reference portrait"
+        previewUrl={null}
+        onChange={props.onChange}
+        onError={props.onError}
+      />,
+    );
+
+    expect(input).toHaveValue("");
   });
 });

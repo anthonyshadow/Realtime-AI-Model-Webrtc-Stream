@@ -133,32 +133,10 @@ describe("App", () => {
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
 
-  it("applies prompt-only changes without replacing image state", async () => {
+  it("applies prompt-only changes with a full payload that clears image state", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
-
-    await user.clear(screen.getByLabelText(/Transformation prompt/i));
-    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene neon");
-    await user.click(screen.getByRole("button", { name: "Apply" }));
-
-    await waitFor(() => {
-      expect(decartMocks.realtimeClient.setPrompt).toHaveBeenCalledWith("Make the scene neon", {
-        enhance: true,
-      });
-    });
-    expect(decartMocks.realtimeClient.set).not.toHaveBeenCalled();
-  });
-
-  it("applies prompt and selected image together through the active realtime client", async () => {
-    const user = userEvent.setup();
-    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
-    render(<App />);
-
-    await user.upload(screen.getByLabelText("Reference portrait"), file);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
@@ -170,7 +148,110 @@ describe("App", () => {
     await waitFor(() => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene neon",
+        image: null,
+        enhance: true,
+      });
+    });
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
+  it("applies prompt and selected image together through the active realtime client", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initialState: expect.objectContaining({
+          prompt: "Make the scene cinematic",
+          image: file,
+          enhance: true,
+        }),
+      }),
+    );
+
+    await user.clear(screen.getByLabelText(/Transformation prompt/i));
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene neon");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: "Make the scene neon",
         image: file,
+        enhance: true,
+      });
+    });
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
+  it("applies a changed image with the existing prompt", async () => {
+    const user = userEvent.setup();
+    const firstFile = new File(["portrait"], "portrait.png", { type: "image/png" });
+    const secondFile = new File(["portrait 2"], "portrait-2.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), firstFile);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+
+    await user.upload(screen.getByLabelText("Reference portrait"), secondFile);
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: "Make the scene cinematic",
+        image: secondFile,
+        enhance: true,
+      });
+    });
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
+  it("applies enhance changes with the existing prompt and image", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+
+    await user.click(screen.getByRole("checkbox", { name: /Enhance prompt/i }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: "Make the scene cinematic",
+        image: file,
+        enhance: false,
+      });
+    });
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
+  it("clears the active image when the UI image is cleared before applying a prompt", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: "Make the scene cinematic",
+        image: null,
         enhance: true,
       });
     });
@@ -236,6 +317,83 @@ describe("App", () => {
         }),
       );
     });
+  });
+
+  it("resets UI, applied draft cache, file input, and realtime state without reusing stale image", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    const imageInput = screen.getByLabelText("Reference portrait");
+    const promptInput = screen.getByLabelText(/Transformation prompt/i);
+
+    await user.upload(imageInput, file);
+    await user.type(promptInput, "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({ image: null });
+    });
+    expect(promptInput).toHaveValue("");
+    expect(screen.queryByAltText("Reference portrait preview")).not.toBeInTheDocument();
+    expect(screen.queryByText("portrait.png")).not.toBeInTheDocument();
+    await waitFor(() => expect(imageInput).toHaveValue(""));
+
+    decartMocks.realtimeClient.set.mockClear();
+    await user.type(promptInput, "After reset prompt");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: "After reset prompt",
+        image: null,
+        enhance: true,
+      });
+    });
+    expect(decartMocks.realtimeClient.set).not.toHaveBeenCalledWith(
+      expect.objectContaining({ image: file }),
+    );
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
+  it("reset cancels an in-flight start before stale draft state can connect", async () => {
+    const user = userEvent.setup();
+    const stream = createMockMediaStream();
+    const [track] = stream.getTracks() as MockMediaStreamTrack[];
+    const tokenRequest = createDeferred<{
+      apiKey: string;
+      expiresAt: string;
+    }>();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    decartMocks.fetchRealtimeToken.mockReturnValueOnce(tokenRequest.promise);
+    render(<App />);
+
+    const imageInput = screen.getByLabelText("Reference portrait");
+    const promptInput = screen.getByLabelText(/Transformation prompt/i);
+
+    await user.upload(imageInput, file);
+    await user.type(promptInput, "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(decartMocks.fetchRealtimeToken).toHaveBeenCalledWith("lucy-2.1"));
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    tokenRequest.resolve({
+      apiKey: "ek_test_client_token_after_reset",
+      expiresAt: "2030-01-01T00:00:00.000Z",
+    });
+    await flushPromises();
+
+    expect(promptInput).toHaveValue("");
+    expect(imageInput).toHaveValue("");
+    expect(track.stop).toHaveBeenCalledTimes(1);
+    expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
+    expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+    expect(screen.getAllByText("Idle").length).toBeGreaterThan(0);
   });
 
   it("stops a running session and clears the UI state", async () => {
@@ -333,3 +491,16 @@ describe("App", () => {
     expect(track.stop).toHaveBeenCalledTimes(1);
   });
 });
+
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+
+  return { promise, resolve };
+}
+
+function flushPromises() {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}

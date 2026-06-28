@@ -50,7 +50,8 @@ Do not implement combined model mode unless explicitly requested and verified.
 
 - `realtimeClient.set()` replaces full realtime state.
 - Send prompt, image, and enhance together when image state should remain active with a prompt.
-- Use `realtimeClient.setPrompt(prompt, { enhance })` for prompt-only live updates so active image state is preserved.
+- Full control-panel Apply must use `realtimeClient.set(fullPayload)` from the current control-panel snapshot; send `image: null` when the UI image is empty and stale Decart image state must be cleared.
+- Use `realtimeClient.setPrompt(prompt, { enhance })` only for future prompt-only live controls that intentionally preserve active image state outside the full control-panel Apply flow.
 - Lucy 2.1 image-only updates include the default character substitution prompt.
 - Lucy VTON 3 image-only updates send the garment image without inventing a prompt.
 

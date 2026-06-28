@@ -30,4 +30,5 @@ export type UseDecartRealtimeSessionReturn = {
   start: (initialState: ApplyRealtimeStateInput) => Promise<boolean>;
   stop: () => void;
   apply: (input: ApplyRealtimeStateInput) => Promise<boolean>;
+  resetRealtimeState: () => Promise<boolean>;
 };

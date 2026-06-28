@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { SUPPORTED_IMAGE_FORMAT_LABEL, SUPPORTED_IMAGE_TYPES } from "../../constants/app";
 import { UNSUPPORTED_IMAGE_MESSAGE, isSupportedImageType } from "../../lib/imageValidation";
 
@@ -32,6 +32,12 @@ export function ImageUpload({
       inputRef.current.value = "";
     }
   };
+
+  useEffect(() => {
+    if (!file) {
+      clearInput();
+    }
+  }, [file]);
 
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) {

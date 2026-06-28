@@ -69,6 +69,54 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
     .toBe(1);
 });
 
+test("reset clears prompt, reference image, file input, and mocked realtime state", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
+  await page.getByLabel(/Reference portrait/i).setInputFiles({
+    name: "portrait.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("mock portrait"),
+  });
+
+  await expect(page.getByText("portrait.png")).toBeVisible();
+
+  await page.getByRole("button", { name: "Start" }).click();
+
+  await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
+    .toEqual({
+      prompt: "Make the scene cinematic",
+      enhance: true,
+      imageName: "portrait.png",
+    });
+
+  await page.getByRole("button", { name: "Reset" }).click();
+
+  await expect(page.getByLabel(/Transformation prompt/i)).toHaveValue("");
+  await expect(page.getByText("No portrait")).toBeVisible();
+  await expect(page.getByLabel(/Reference portrait/i)).toHaveValue("");
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
+    .toEqual({
+      prompt: null,
+      enhance: null,
+      imageName: null,
+    });
+
+  await page.getByLabel(/Transformation prompt/i).fill("After reset prompt");
+  await page.getByRole("button", { name: "Apply" }).click();
+
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
+    .toEqual({
+      prompt: "After reset prompt",
+      enhance: true,
+      imageName: null,
+    });
+});
+
 test("shows a useful API failure message", async ({ page }) => {
   await mockRealtimeToken(page, {
     status: 500,

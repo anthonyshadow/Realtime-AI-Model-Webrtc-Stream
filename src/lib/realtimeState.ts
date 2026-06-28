@@ -4,12 +4,23 @@ import type { ApplyRealtimeStateInput } from "../types/realtime";
 export type RealtimeStatePayload =
   | {
       prompt?: string;
-      image?: File;
+      image?: File | null;
       enhance: boolean;
     }
   | null;
 
-export function buildRealtimeStatePayload(input: ApplyRealtimeStateInput): RealtimeStatePayload {
+export type RealtimeClearPayload = {
+  image: null;
+};
+
+type BuildRealtimeStatePayloadOptions = {
+  clearMissingImage?: boolean;
+};
+
+export function buildRealtimeStatePayload(
+  input: ApplyRealtimeStateInput,
+  options: BuildRealtimeStatePayloadOptions = {},
+): RealtimeStatePayload {
   const config = getModelConfig(input.modelMode);
   const prompt = input.prompt.trim();
   const enhance = input.enhance;
@@ -19,7 +30,7 @@ export function buildRealtimeStatePayload(input: ApplyRealtimeStateInput): Realt
   }
 
   if (prompt) {
-    return { prompt, enhance };
+    return options.clearMissingImage ? { prompt, image: null, enhance } : { prompt, enhance };
   }
 
   if (input.image) {
@@ -29,4 +40,12 @@ export function buildRealtimeStatePayload(input: ApplyRealtimeStateInput): Realt
   }
 
   return null;
+}
+
+export function buildFullRealtimeStatePayload(input: ApplyRealtimeStateInput): RealtimeStatePayload {
+  return buildRealtimeStatePayload(input, { clearMissingImage: true });
+}
+
+export function buildRealtimeClearPayload(): RealtimeClearPayload {
+  return { image: null };
 }
