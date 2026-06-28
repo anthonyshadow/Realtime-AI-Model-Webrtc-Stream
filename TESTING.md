@@ -9,6 +9,7 @@ This project uses npm scripts for all automated checks.
 - `@testing-library/jest-dom` and `@testing-library/user-event` for DOM assertions and interactions.
 - MSW for mocked HTTP responses from `/api/realtime-token`.
 - Storybook's Vitest addon for automated story rendering and focused story `play` interactions.
+- Storybook's accessibility addon for manual a11y checks in the Storybook UI.
 - Playwright for browser E2E tests.
 
 Default tests never call the live Decart API. Decart SDK calls, token requests, media devices, media streams, video playback, and WebRTC constructors are mocked in test environments.
@@ -23,6 +24,7 @@ npm run test:coverage
 npm run test:storybook
 npm run test:storybook:watch
 npm run test:storybook:coverage
+npm run test:a11y
 npm run test:e2e
 npm run test:e2e:ui
 npm run test:all
@@ -89,6 +91,14 @@ STORYBOOK_DISABLE_TELEMETRY=1
 
 MSW allows local Storybook asset requests but fails unhandled API or external requests. Stories must not read secrets, call live Decart endpoints, request a real webcam, or create real WebRTC sessions.
 
+The accessibility addon is available in Storybook for manual review. A small automated accessibility smoke suite runs through Playwright and `axe-core`:
+
+```bash
+npm run test:a11y
+```
+
+This checks only stable Storybook iframe stories for serious or critical WCAG A/AA violations. It is intentionally not part of `npm run test:all` yet, so noisy or environment-specific accessibility results stay nonblocking while the story set is being tuned.
+
 ## E2E Tests
 
 Playwright reads `playwright.config.ts` and runs `tests/e2e/*.spec.ts`.
@@ -113,7 +123,7 @@ The main browser flow asserts the selected model payload, token request body, in
 
 ## Full Check
 
-`npm run test:all` runs typecheck, unit/component tests, Storybook tests, Playwright E2E tests, the Storybook static build, and the production app build.
+`npm run test:all` runs typecheck, unit/component tests, Storybook tests, Playwright E2E tests, the Storybook static build, and the production app build. Run `npm run test:a11y` separately when reviewing accessibility.
 
 ## Live Decart Smoke Tests
 

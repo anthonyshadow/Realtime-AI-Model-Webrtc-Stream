@@ -1,4 +1,10 @@
 import type { ConnectionState } from "@decartai/sdk";
+import {
+  createFakeMediaStream,
+  FakeRTCIceCandidate,
+  FakeRTCPeerConnection,
+  FakeRTCSessionDescription,
+} from "./mediaFakes";
 
 export type StorybookCameraMode = "denied" | "ready" | "unavailable";
 export type StorybookConnectionMode = "connected" | "connect-error";
@@ -135,13 +141,14 @@ export function createStorybookMediaStream({
     }
   }
 
-  return new FakeMediaStream([
-    new FakeMediaStreamTrack({
-      fps,
-      height,
-      width,
-    }),
-  ]) as unknown as MediaStream;
+  return createFakeMediaStream({
+    fps,
+    height,
+    label: "Storybook mock camera",
+    streamId: "storybook-mock-stream",
+    trackId: "storybook-mock-track",
+    width,
+  });
 }
 
 function patchMediaDevices() {
@@ -175,19 +182,15 @@ function patchVideoElement() {
 }
 
 function patchObjectUrl() {
-  if (!URL.createObjectURL) {
-    Object.defineProperty(URL, "createObjectURL", {
-      configurable: true,
-      value: () => placeholderImageDataUrl,
-    });
-  }
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    value: () => placeholderImageDataUrl,
+  });
 
-  if (!URL.revokeObjectURL) {
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: () => undefined,
-    });
-  }
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: () => undefined,
+  });
 }
 
 function installRtcMocks() {
@@ -320,107 +323,6 @@ function patchVideoTrackSettings(
       width,
     });
   }
-}
-
-type FakeTrackOptions = {
-  fps: number;
-  height: number;
-  kind?: string;
-  width: number;
-};
-
-class FakeMediaStreamTrack {
-  enabled = true;
-  id = "storybook-mock-track";
-  kind: string;
-  label = "Storybook mock camera";
-  muted = false;
-  readyState: MediaStreamTrackState = "live";
-
-  private settings: MediaTrackSettings;
-
-  constructor({ fps, height, kind = "video", width }: FakeTrackOptions) {
-    this.kind = kind;
-    this.settings = {
-      frameRate: fps,
-      height,
-      width,
-    };
-  }
-
-  stop() {
-    this.readyState = "ended";
-  }
-  addEventListener() {}
-  removeEventListener() {}
-  dispatchEvent() {
-    return true;
-  }
-  getCapabilities() {
-    return {};
-  }
-  getConstraints() {
-    return {};
-  }
-  getSettings() {
-    return this.settings;
-  }
-  applyConstraints() {
-    return Promise.resolve();
-  }
-  clone() {
-    return new FakeMediaStreamTrack({
-      fps: this.settings.frameRate ?? 24,
-      height: this.settings.height ?? 720,
-      kind: this.kind,
-      width: this.settings.width ?? 1280,
-    });
-  }
-}
-
-class FakeMediaStream {
-  active = true;
-  id = "storybook-mock-stream";
-
-  constructor(private tracks: FakeMediaStreamTrack[] = []) {}
-
-  addEventListener() {}
-  removeEventListener() {}
-  dispatchEvent() {
-    return true;
-  }
-  addTrack(track: FakeMediaStreamTrack) {
-    this.tracks.push(track);
-  }
-  removeTrack(track: FakeMediaStreamTrack) {
-    this.tracks = this.tracks.filter((item) => item !== track);
-  }
-  getTracks() {
-    return this.tracks;
-  }
-  getVideoTracks() {
-    return this.tracks.filter((track) => track.kind === "video");
-  }
-  getAudioTracks() {
-    return this.tracks.filter((track) => track.kind === "audio");
-  }
-  clone() {
-    return new FakeMediaStream(this.tracks.map((track) => track.clone()));
-  }
-}
-
-class FakeRTCPeerConnection {
-  addEventListener() {}
-  removeEventListener() {}
-  close() {}
-}
-
-class FakeRTCSessionDescription {
-  constructor(public init: RTCSessionDescriptionInit) {}
-}
-
-class FakeRTCIceCandidate {
-  constructor(public init?: RTCIceCandidateInit) {}
 }
 
 const placeholderImageDataUrl =

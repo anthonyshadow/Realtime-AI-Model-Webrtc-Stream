@@ -1,5 +1,6 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { fn } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { EnhanceToggle } from "./EnhanceToggle";
 
 const meta = {
@@ -25,8 +26,35 @@ type Story = StoryObj<typeof meta>;
 
 export const Enabled: Story = {};
 
-export const Disabled: Story = {
+export const Unchecked: Story = {
   args: {
     checked: false,
+  },
+};
+
+export const TogglesEnhancement: Story = {
+  render: (args) => {
+    const [checked, setChecked] = useState(args.checked ?? true);
+
+    return (
+      <EnhanceToggle
+        {...args}
+        checked={checked}
+        onChange={(nextChecked) => {
+          args.onChange(nextChecked);
+          setChecked(nextChecked);
+        }}
+      />
+    );
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const checkbox = canvas.getByRole("checkbox", { name: /Enhance prompt/i });
+
+    await expect(checkbox).toBeChecked();
+    await userEvent.click(checkbox);
+
+    await expect(checkbox).not.toBeChecked();
+    await expect(args.onChange).toHaveBeenLastCalledWith(false);
   },
 };

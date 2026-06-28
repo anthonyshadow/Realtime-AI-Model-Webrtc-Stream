@@ -17,6 +17,7 @@
     "test:storybook": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true vitest run --project storybook",
     "test:storybook:watch": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true vitest --project storybook",
     "test:storybook:coverage": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true vitest run --coverage --project storybook",
+    "test:a11y": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true playwright test -c playwright.a11y.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm run typecheck && npm run test:unit && npm run test:storybook && npm run test:e2e && npm run build-storybook && npm run build"
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "@storybook/addon-a11y": "^10.4.6",
     "@storybook/addon-docs": "^10.4.6",
     "@storybook/addon-vitest": "^10.4.6",
     "@storybook/react-vite": "^10.4.6",

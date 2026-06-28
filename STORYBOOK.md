@@ -10,6 +10,7 @@ npm run build-storybook
 npm run test:storybook
 npm run test:storybook:watch
 npm run test:storybook:coverage
+npm run test:a11y
 ```
 
 Storybook runs on:
@@ -21,6 +22,8 @@ http://localhost:6006
 The static build is written to `storybook-static/`, which is ignored by Git.
 
 Storybook tests run stories through Vitest browser mode with Playwright Chromium. They are intended for isolated story rendering and focused `play` interactions, not full app journey coverage.
+
+The accessibility addon is enabled for manual checks in the Storybook UI. `npm run test:a11y` also runs a small nonblocking Playwright/axe smoke suite against stable Storybook iframe stories.
 
 ## What Is Included
 
@@ -103,6 +106,8 @@ Good candidates for story `play` functions:
 - a disclosure, toggle, or compact interaction that is easier to inspect in isolation
 
 Keep plays short and deterministic. Avoid arbitrary timers, real network, real camera prompts, real WebRTC, and assertions against private implementation details.
+
+Use the accessibility panel for targeted manual checks on stable stories. Keep automated accessibility checks scoped to stable component states first so unrelated Storybook work is not blocked by noisy or environment-specific axe results.
 
 ## Do Not Do This
 

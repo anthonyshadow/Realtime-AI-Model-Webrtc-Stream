@@ -80,6 +80,7 @@ Storybook is available for component review with mocked Decart, camera, and API 
 ```bash
 npm run storybook
 npm run test:storybook
+npm run test:a11y
 npm run build-storybook
 ```
 

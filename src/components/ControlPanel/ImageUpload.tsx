@@ -78,7 +78,7 @@ export function ImageUpload({
             alt={altText}
           />
         ) : (
-          <div className="grid h-12 w-12 place-items-center rounded-md border border-white/10 bg-black/25 text-[11px] text-neutral-500">
+          <div className="grid h-12 w-12 place-items-center rounded-md border border-white/10 bg-black/25 text-[11px] text-neutral-300">
             {emptyLabel}
           </div>
         )}
@@ -87,7 +87,7 @@ export function ImageUpload({
           <p className="truncate text-xs text-neutral-300">
             {file ? file.name : `${actionText}: JPEG, PNG, or WebP`}
           </p>
-          <p className="mt-1 text-xs text-neutral-500">{helperText}</p>
+          <p className="mt-1 text-xs text-neutral-400">{helperText}</p>
         </div>
 
         <button

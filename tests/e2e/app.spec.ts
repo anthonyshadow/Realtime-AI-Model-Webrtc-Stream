@@ -106,6 +106,23 @@ test("shows a useful camera permission denied message", async ({ page }) => {
     .toBe(0);
 });
 
+test("shows a useful Decart connection failure message", async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as any).__E2E_DECART_CONNECT_ERROR__ = true;
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start" }).click();
+
+  await expect(
+    page.getByText("Could not connect to Lucy 2.1. Check API access, model availability, and network."),
+  ).toBeVisible();
+  expect(realtimeTokenRequests.get(page)).toEqual([{ model: "lucy-2.1" }]);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(0);
+});
+
 async function blockUnexpectedExternalRequests(page: Page) {
   const unexpectedRequests: string[] = [];
   unexpectedExternalRequests.set(page, unexpectedRequests);
@@ -217,6 +234,10 @@ async function installMockBrowserApis(page: Page) {
       createDecartClient: () => ({
         realtime: {
           connect: async (_stream: unknown, options: any) => {
+            if ((window as any).__E2E_DECART_CONNECT_ERROR__) {
+              throw new Error("Mock Decart connection failed.");
+            }
+
             (window as any).__E2E_DECART_EVENTS__.connects += 1;
             (window as any).__E2E_DECART_EVENTS__.initialStates.push({
               prompt: options.initialState?.prompt?.text ?? null,

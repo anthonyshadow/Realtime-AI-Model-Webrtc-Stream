@@ -8,6 +8,7 @@ export default defineConfig({
     include: ["@decartai/sdk"],
   },
   build: {
+    chunkSizeWarningLimit: 700,
     outDir: "dist",
   },
 });

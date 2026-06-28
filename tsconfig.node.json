@@ -18,6 +18,7 @@
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",
+    "playwright.a11y.config.ts",
     "tailwind.config.ts"
   ]
 }
