@@ -22,3 +22,11 @@ This is the compact always-read entry point for coding agents.
 - For task-specific context, use [docs/agents/agent-read-order.md](docs/agents/agent-read-order.md).
 - For implementation rules, use [docs/agents/implementation-rules.md](docs/agents/implementation-rules.md).
 - For reusable procedures, use [docs/skills/skill-index.md](docs/skills/skill-index.md).
+
+## Design Skill
+
+For UI/UX, frontend polish, component redesign, visual hierarchy, typography, spacing, motion, empty states, or interface copy work, use the repo skill:
+
+`$frontend-design`
+
+Apply the skill before implementing design changes so the design plan is intentional, project-specific, accessible, and not generic.
