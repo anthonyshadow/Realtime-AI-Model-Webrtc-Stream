@@ -186,7 +186,12 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       try {
         setError(null);
         setIsApplying(true);
-        await realtimeClient.set(payload);
+        if (payload.image !== undefined) {
+          await realtimeClient.set(payload);
+        } else if (payload.prompt) {
+          await realtimeClient.setPrompt(payload.prompt, { enhance: payload.enhance });
+        }
+
         return true;
       } catch {
         if (startRequestIdRef.current === requestId) {

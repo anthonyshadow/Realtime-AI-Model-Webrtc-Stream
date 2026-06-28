@@ -27,7 +27,7 @@ describe("ImageUpload", () => {
   it("accepts supported image uploads", async () => {
     const user = userEvent.setup();
     const props = renderImageUpload();
-    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    const file = new File(["portrait"], "portrait.avif", { type: "image/avif" });
 
     await user.upload(screen.getByLabelText("Reference portrait"), file);
 

@@ -20,7 +20,7 @@ The modes are independent. Combined Lucy plus VTON mode is not implemented.
 - Floating auto-hiding control panel.
 - Model mode selector.
 - Mode-aware prompt textarea.
-- JPEG, PNG, and WebP upload.
+- JPEG, PNG, WebP, and AVIF upload.
 - Lucy 2.1 reference portrait mode.
 - Lucy VTON 3 garment image mode.
 - Enhance prompt toggle.
@@ -38,7 +38,7 @@ The modes are independent. Combined Lucy plus VTON mode is not implemented.
 5. Browser creates a Decart client with the temporary token.
 6. Browser connects the webcam stream to `models.realtime(modelId)`.
 7. Decart returns a transformed remote stream for the video stage.
-8. Apply sends the full intended state in one realtime `set()` call.
+8. Apply sends prompt, image, and enhance through the realtime update path that preserves the intended control panel state.
 9. Stop disconnects Decart and stops camera tracks.
 
 ## Non-Goals

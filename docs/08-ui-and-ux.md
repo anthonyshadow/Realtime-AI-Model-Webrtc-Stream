@@ -43,7 +43,7 @@ The panel includes:
 - status summary
 - prompt input with an empty initial value and placeholder-only guidance
 - image upload and clear action
-- options disclosure with Enhance prompt toggle off by default
+- options disclosure with Enhance prompt toggle on by default
 - Start, Stop, Apply, and Reset actions
 - error banner
 - session timer

@@ -18,6 +18,7 @@ const decartMocks = vi.hoisted(() => ({
     getConnectionState: vi.fn(),
     on: vi.fn(),
     set: vi.fn(),
+    setPrompt: vi.fn(),
   },
 }));
 
@@ -42,6 +43,8 @@ describe("App", () => {
     decartMocks.realtimeClient.on.mockReset();
     decartMocks.realtimeClient.set.mockReset();
     decartMocks.realtimeClient.set.mockResolvedValue(undefined);
+    decartMocks.realtimeClient.setPrompt.mockReset();
+    decartMocks.realtimeClient.setPrompt.mockResolvedValue(undefined);
     decartMocks.connectRealtimeModel.mockReset();
     decartMocks.connectRealtimeModel.mockImplementation(async ({ stream, onConnectionChange, onRemoteStream }) => {
       onRemoteStream(stream);
@@ -60,7 +63,7 @@ describe("App", () => {
       "placeholder",
       "Describe one clear transformation",
     );
-    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).toBeChecked();
     expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
   });
 
@@ -81,7 +84,7 @@ describe("App", () => {
           modelMode: "lucy-2.1",
           prompt: "Make the scene cinematic",
           image: null,
-          enhance: false,
+          enhance: true,
         }),
         modelLabel: "Lucy 2.1",
       }),
@@ -109,7 +112,7 @@ describe("App", () => {
           modelMode: "lucy-vton-3",
           prompt: "Substitute the top with denim",
           image: null,
-          enhance: false,
+          enhance: true,
         }),
         modelLabel: "Lucy VTON 3",
       }),
@@ -130,7 +133,7 @@ describe("App", () => {
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
 
-  it("applies prompt changes through the active realtime client", async () => {
+  it("applies prompt-only changes without replacing image state", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -143,14 +146,38 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     await waitFor(() => {
-      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
-        prompt: "Make the scene neon",
-        enhance: false,
+      expect(decartMocks.realtimeClient.setPrompt).toHaveBeenCalledWith("Make the scene neon", {
+        enhance: true,
       });
     });
+    expect(decartMocks.realtimeClient.set).not.toHaveBeenCalled();
   });
 
-  it("can manually enable enhanced prompt for a session", async () => {
+  it("applies prompt and selected image together through the active realtime client", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+
+    await user.clear(screen.getByLabelText(/Transformation prompt/i));
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene neon");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: "Make the scene neon",
+        image: file,
+        enhance: true,
+      });
+    });
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
+  it("can manually disable enhanced prompt for a session", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -162,7 +189,7 @@ describe("App", () => {
       expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
         expect.objectContaining({
           initialState: expect.objectContaining({
-            enhance: true,
+            enhance: false,
           }),
         }),
       );

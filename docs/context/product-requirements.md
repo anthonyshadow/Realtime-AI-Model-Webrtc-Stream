@@ -16,7 +16,7 @@ Use this for product behavior and acceptance criteria. For code boundaries, read
 - Prompt text.
 - Lucy 2.1 reference portrait.
 - Lucy VTON 3 garment image.
-- JPEG, PNG, and WebP uploads.
+- JPEG, PNG, WebP, and AVIF uploads.
 - Enhance prompt toggle.
 
 ## Acceptance Criteria

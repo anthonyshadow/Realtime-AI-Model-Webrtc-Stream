@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { SUPPORTED_IMAGE_TYPES } from "../../constants/app";
+import { SUPPORTED_IMAGE_FORMAT_LABEL, SUPPORTED_IMAGE_TYPES } from "../../constants/app";
 import { UNSUPPORTED_IMAGE_MESSAGE, isSupportedImageType } from "../../lib/imageValidation";
 
 type ImageUploadProps = {
@@ -85,7 +85,7 @@ export function ImageUpload({
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs text-neutral-300">
-            {file ? file.name : `${actionText}: JPEG, PNG, or WebP`}
+            {file ? file.name : `${actionText}: ${SUPPORTED_IMAGE_FORMAT_LABEL}`}
           </p>
           <p className="mt-1 text-xs text-neutral-400">{helperText}</p>
         </div>

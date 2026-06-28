@@ -49,7 +49,8 @@ Do not implement combined model mode unless explicitly requested and verified.
 ## Realtime State Rules
 
 - `realtimeClient.set()` replaces full realtime state.
-- Send prompt, image, and enhance together when they should remain active together.
+- Send prompt, image, and enhance together when image state should remain active with a prompt.
+- Use `realtimeClient.setPrompt(prompt, { enhance })` for prompt-only live updates so active image state is preserved.
 - Lucy 2.1 image-only updates include the default character substitution prompt.
 - Lucy VTON 3 image-only updates send the garment image without inventing a prompt.
 

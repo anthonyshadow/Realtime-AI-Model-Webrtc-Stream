@@ -55,6 +55,10 @@ type RealtimeSetPayload = {
   prompt?: string;
 };
 
+type RealtimeSetPromptOptions = {
+  enhance?: boolean;
+};
+
 declare global {
   interface Window {
     __STORYBOOK_DECART_EVENTS__?: StorybookDecartEvents;
@@ -242,6 +246,14 @@ function installDecartSdkMock() {
             },
             getConnectionState: () => "connected" as ConnectionState,
             on: () => undefined,
+            setPrompt: async (prompt: string, promptOptions: RealtimeSetPromptOptions = {}) => {
+              window.__STORYBOOK_DECART_EVENTS__?.sets.push({
+                enhance: promptOptions.enhance ?? null,
+                imageName: null,
+                prompt,
+              });
+              options.onConnectionChange?.("generating");
+            },
             set: async (payload: RealtimeSetPayload) => {
               window.__STORYBOOK_DECART_EVENTS__?.sets.push(summarizeSetPayload(payload));
               options.onConnectionChange?.("generating");

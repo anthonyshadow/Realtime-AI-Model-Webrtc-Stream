@@ -45,7 +45,7 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
     .toEqual({
       prompt: "Substitute the current top with a cobalt rain jacket",
-      enhance: false,
+      enhance: true,
       imageName: "jacket.png",
     });
 
@@ -56,7 +56,7 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
     .toEqual({
       prompt: "Substitute the current top with a matte black shell",
-      enhance: false,
+      enhance: true,
       imageName: "jacket.png",
     });
 
@@ -256,6 +256,14 @@ async function installMockBrowserApis(page: Page) {
               },
               getConnectionState: () => "connected",
               on: () => undefined,
+              setPrompt: async (prompt: string, promptOptions: { enhance?: boolean } = {}) => {
+                (window as any).__E2E_DECART_EVENTS__.sets.push({
+                  prompt,
+                  enhance: promptOptions.enhance ?? null,
+                  imageName: null,
+                });
+                options.onConnectionChange?.("generating");
+              },
               set: async (payload: any) => {
                 (window as any).__E2E_DECART_EVENTS__.sets.push({
                   prompt: payload.prompt ?? null,
