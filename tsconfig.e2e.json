@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
@@ -13,11 +13,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": [
-    "server",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "playwright.config.ts",
-    "tailwind.config.ts"
-  ]
+  "include": ["tests/e2e"]
 }

@@ -8,6 +8,12 @@ type DecartSdk = typeof import("@decartai/sdk");
 type BrowserDecartClient = ReturnType<DecartSdk["createDecartClient"]>;
 type RealtimeModel = ReturnType<DecartSdk["models"]["realtime"]>;
 
+declare global {
+  // Test-only escape hatch for browser E2E. It is only read when the Vite
+  // test flag is enabled, so normal app runs always use the real SDK import.
+  var __DECART_TEST_SDK__: DecartSdk | undefined;
+}
+
 let decartSdkPromise: Promise<DecartSdk> | null = null;
 
 export async function fetchRealtimeToken(modelMode: SupportedModelMode): Promise<RealtimeTokenResponse> {
@@ -123,6 +129,10 @@ function buildInitialState(input: ApplyRealtimeStateInput) {
 }
 
 function getDecartSdk() {
+  if (import.meta.env.VITE_USE_MOCK_DECART === "true" && globalThis.__DECART_TEST_SDK__) {
+    return Promise.resolve(globalThis.__DECART_TEST_SDK__);
+  }
+
   decartSdkPromise ??= import("@decartai/sdk");
   return decartSdkPromise;
 }

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { SUPPORTED_IMAGE_TYPES } from "../../constants/app";
+import { UNSUPPORTED_IMAGE_MESSAGE, isSupportedImageType } from "../../lib/imageValidation";
 
 type ImageUploadProps = {
   actionText: string;
@@ -12,8 +13,6 @@ type ImageUploadProps = {
   onChange: (file: File | null) => void;
   onError: (message: string | null) => void;
 };
-
-const UNSUPPORTED_IMAGE_MESSAGE = "Please upload a JPEG, PNG, or WebP image.";
 
 export function ImageUpload({
   actionText,
@@ -102,8 +101,4 @@ export function ImageUpload({
       </div>
     </div>
   );
-}
-
-function isSupportedImageType(file: File) {
-  return SUPPORTED_IMAGE_TYPES.some((type) => type === file.type);
 }
