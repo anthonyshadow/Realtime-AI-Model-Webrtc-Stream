@@ -8,7 +8,7 @@ function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0
     activeModelMode: null,
     canChangeModel: true,
     elapsedLabel: "00:00",
-    enhancePrompt: true,
+    enhancePrompt: false,
     error: null,
     hasPendingChanges: false,
     imageFile: null,
@@ -25,7 +25,7 @@ function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0
     onReset: vi.fn(),
     onStart: vi.fn(),
     onStop: vi.fn(),
-    prompt: "Default prompt",
+    prompt: "",
     status: "idle" as const,
     ...overrides,
   };
@@ -41,7 +41,12 @@ describe("ControlPanel", () => {
 
     expect(screen.getByText("Lucy 2.1")).toBeInTheDocument();
     expect(screen.getByText("Session")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("Default prompt");
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveAttribute(
+      "placeholder",
+      "Describe one clear transformation",
+    );
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     expect(screen.getByLabelText("Reference portrait")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
   });

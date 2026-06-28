@@ -39,7 +39,7 @@ Mocks live in:
 - `src/test/mocks/storybookFixtures.ts`
 - `src/test/mocks/handlers.ts`
 
-MSW is wired in `.storybook/preview.tsx`. Unhandled API or external requests fail, while local Storybook assets are allowed.
+MSW is wired in `.storybook/preview.tsx`. Handled mock traffic runs quietly; unhandled API or external requests fail, while local Storybook assets are allowed.
 
 ## Do Not
 

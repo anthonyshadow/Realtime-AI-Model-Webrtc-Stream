@@ -15,7 +15,7 @@ Use this before changing mocked API, media, WebRTC, or Storybook behavior.
 
 - `src/test/mocks/storybookBrowserMocks.ts`: camera, media, WebRTC, Decart SDK, object URL, and video element mocks.
 - `src/test/mocks/storybookFixtures.ts`: story image files and preview URLs.
-- `.storybook/preview.tsx`: installs mocks and MSW for stories.
+- `.storybook/preview.tsx`: installs mocks and quiet MSW handling for stories.
 
 ## Rules
 

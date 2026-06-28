@@ -55,6 +55,12 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "Start camera to begin" })).toBeInTheDocument();
     expect(screen.getByText("Lucy 2.1 realtime")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveAttribute(
+      "placeholder",
+      "Describe one clear transformation",
+    );
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
   });
 
@@ -62,6 +68,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
 
     await waitFor(() => {
@@ -72,7 +79,9 @@ describe("App", () => {
       expect.objectContaining({
         initialState: expect.objectContaining({
           modelMode: "lucy-2.1",
-          enhance: true,
+          prompt: "Make the scene cinematic",
+          image: null,
+          enhance: false,
         }),
         modelLabel: "Lucy 2.1",
       }),
@@ -86,6 +95,8 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: /VTON/i }));
+    expect(screen.getByLabelText(/Garment prompt/i)).toHaveValue("");
+    await user.type(screen.getByLabelText(/Garment prompt/i), "Substitute the top with denim");
     await user.click(screen.getByRole("button", { name: "Start" }));
 
     await waitFor(() => {
@@ -96,6 +107,8 @@ describe("App", () => {
       expect.objectContaining({
         initialState: expect.objectContaining({
           modelMode: "lucy-vton-3",
+          prompt: "Substitute the top with denim",
+          image: null,
           enhance: false,
         }),
         modelLabel: "Lucy VTON 3",
@@ -107,7 +120,6 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.clear(screen.getByLabelText(/Transformation prompt/i));
     await user.click(screen.getByRole("button", { name: "Start" }));
 
     expect(
@@ -122,6 +134,7 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
 
@@ -132,8 +145,69 @@ describe("App", () => {
     await waitFor(() => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene neon",
-        enhance: true,
+        enhance: false,
       });
+    });
+  });
+
+  it("can manually enable enhanced prompt for a session", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("checkbox", { name: /Enhance prompt/i }));
+    await user.click(screen.getByRole("button", { name: "Start" }));
+
+    await waitFor(() => {
+      expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          initialState: expect.objectContaining({
+            enhance: true,
+          }),
+        }),
+      );
+    });
+  });
+
+  it("clears selected images from the UI without a refresh", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+
+    expect(screen.getByAltText("Reference portrait preview")).toBeInTheDocument();
+    expect(screen.getByText("portrait.png")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+
+    expect(screen.queryByAltText("Reference portrait preview")).not.toBeInTheDocument();
+    expect(screen.queryByText("portrait.png")).not.toBeInTheDocument();
+    expect(screen.getByText("No portrait")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/mock-object-url"),
+    );
+  });
+
+  it("does not include a cleared image in the next session payload", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+
+    await waitFor(() => {
+      expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          initialState: expect.objectContaining({
+            image: null,
+            prompt: "Make the scene cinematic",
+          }),
+        }),
+      );
     });
   });
 
@@ -144,6 +218,7 @@ describe("App", () => {
     mockGetUserMedia.mockResolvedValueOnce(stream);
     render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
 
@@ -162,6 +237,7 @@ describe("App", () => {
     mockGetUserMedia.mockResolvedValueOnce(stream);
     const { unmount } = render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
 
@@ -177,6 +253,7 @@ describe("App", () => {
     mockGetUserMedia.mockRejectedValueOnce(permissionError);
     render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
 
     expect(
@@ -196,6 +273,7 @@ describe("App", () => {
     );
     render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
 
     expect(
@@ -217,6 +295,7 @@ describe("App", () => {
     );
     render(<App />);
 
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("button", { name: "Start" }));
 
     expect(

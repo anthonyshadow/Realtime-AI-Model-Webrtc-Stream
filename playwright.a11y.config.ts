@@ -16,7 +16,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: `HOME=/tmp/storybook-home STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true storybook dev -p ${port} --host 127.0.0.1 --ci`,
+    command: `STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true storybook dev -p ${port} --host 127.0.0.1 --ci`,
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,

@@ -65,7 +65,7 @@ function StatusCell({ label, value, tone = "default" }: StatusCellProps) {
 
   return (
     <div className="min-w-0 rounded-md border border-white/10 bg-black/25 px-2.5 py-2">
-      <p className="text-[10px] font-medium uppercase text-neutral-500">{label}</p>
+      <p className="text-[10px] font-medium uppercase text-neutral-400">{label}</p>
       <p className={`mt-0.5 truncate text-xs font-semibold ${valueClassName}`}>{value}</p>
     </div>
   );

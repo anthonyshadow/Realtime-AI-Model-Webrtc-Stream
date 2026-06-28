@@ -1,7 +1,5 @@
 import {
   DEFAULT_LUCY_CHARACTER_PROMPT,
-  DEFAULT_LUCY_TEXT_ONLY_PROMPT,
-  DEFAULT_VTON_TEXT_ONLY_PROMPT,
   LUCY_PROMPT_HELPER_TEXT,
   VTON_PROMPT_HELPER_TEXT,
 } from "./prompts";
@@ -38,7 +36,7 @@ export const MODEL_REGISTRY: Record<SupportedModelMode, ModelModeConfig> = {
     shortLabel: "Lucy",
     eyebrow: "Realtime character edit",
     description: "Transform the live camera with a prompt, a character reference, or both.",
-    defaultPrompt: DEFAULT_LUCY_TEXT_ONLY_PROMPT,
+    defaultPrompt: "",
     imageOnlyPrompt: DEFAULT_LUCY_CHARACTER_PROMPT,
     promptLabel: "Transformation prompt",
     promptPlaceholder: "Describe one clear transformation",
@@ -48,7 +46,7 @@ export const MODEL_REGISTRY: Record<SupportedModelMode, ModelModeConfig> = {
     imageHelperText: "Best as a clear, front-facing head-and-shoulders portrait.",
     imageAltText: "Reference portrait preview",
     imageActionText: "Use portrait",
-    enhanceDefault: true,
+    enhanceDefault: false,
   },
   "lucy-vton-3": {
     id: "lucy-vton-3",
@@ -56,7 +54,7 @@ export const MODEL_REGISTRY: Record<SupportedModelMode, ModelModeConfig> = {
     shortLabel: "VTON",
     eyebrow: "Realtime virtual try-on",
     description: "Dress the person with a garment prompt, garment image, or both.",
-    defaultPrompt: DEFAULT_VTON_TEXT_ONLY_PROMPT,
+    defaultPrompt: "",
     imageOnlyPrompt: null,
     promptLabel: "Garment prompt",
     promptPlaceholder: "Substitute the current top with a navy hoodie with a white logo",

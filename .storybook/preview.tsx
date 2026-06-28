@@ -23,6 +23,7 @@ const handleUnhandledRequest: UnhandledRequestCallback = (request, print) => {
 };
 
 initialize({
+  quiet: true,
   onUnhandledRequest: handleUnhandledRequest,
 });
 

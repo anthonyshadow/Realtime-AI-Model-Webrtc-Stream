@@ -22,7 +22,7 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
 
   await expect(page.getByRole("heading", { name: "Start camera to begin" })).toBeVisible();
   await page.getByRole("button", { name: /VTON/i }).click();
-  await expect(page.getByLabel(/Garment prompt/i)).toHaveValue(/tailored black jacket/i);
+  await expect(page.getByLabel(/Garment prompt/i)).toHaveValue("");
 
   await page.getByLabel(/Garment prompt/i).fill("Substitute the current top with a cobalt rain jacket");
   await page.getByLabel(/Garment image/i).setInputFiles({
@@ -78,6 +78,7 @@ test("shows a useful API failure message", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
   await page.getByRole("button", { name: "Start" }).click();
 
   await expect(
@@ -95,6 +96,7 @@ test("shows a useful camera permission denied message", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
   await page.getByRole("button", { name: "Start" }).click();
 
   await expect(
@@ -112,6 +114,7 @@ test("shows a useful Decart connection failure message", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
   await page.getByRole("button", { name: "Start" }).click();
 
   await expect(

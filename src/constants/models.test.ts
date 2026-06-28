@@ -17,6 +17,13 @@ describe("model registry", () => {
     expect(getModelConfig("lucy-vton-3").imageOnlyPrompt).toBeNull();
   });
 
+  it("starts prompts empty and enhanced prompt disabled for all modes", () => {
+    for (const modelMode of MODEL_MODE_IDS) {
+      expect(getModelConfig(modelMode).defaultPrompt).toBe("");
+      expect(getModelConfig(modelMode).enhanceDefault).toBe(false);
+    }
+  });
+
   it("recognizes only supported model ids", () => {
     expect(MODEL_MODE_IDS).toEqual(["lucy-2.1", "lucy-vton-3"]);
     expect(isSupportedModelMode("lucy-vton-3")).toBe(true);

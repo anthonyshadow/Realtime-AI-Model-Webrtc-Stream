@@ -41,9 +41,9 @@ The panel includes:
 
 - model mode selector
 - status summary
-- prompt input
+- prompt input with an empty initial value and placeholder-only guidance
 - image upload and clear action
-- options disclosure with Enhance prompt toggle
+- options disclosure with Enhance prompt toggle off by default
 - Start, Stop, Apply, and Reset actions
 - error banner
 - session timer

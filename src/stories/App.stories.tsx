@@ -35,6 +35,7 @@ export const StartsMockedLucySession: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start" }));
     await canvas.findByRole("button", { name: "Stop" });
     await canvas.findByText("Live");
@@ -96,7 +97,6 @@ export const ValidationError: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.clear(canvas.getByLabelText(/Transformation prompt/i));
     await userEvent.click(canvas.getByRole("button", { name: "Start" }));
 
     await canvas.findByText(
@@ -124,6 +124,7 @@ export const ApiFailure: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start" }));
     await canvas.findByText(
       "Could not create realtime session token. Check DECART_API_KEY on the local server.",
@@ -140,6 +141,7 @@ export const ConnectionFailure: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start" }));
     await canvas.findByText(
       "Could not connect to Lucy 2.1. Check API access, model availability, and network.",
@@ -156,6 +158,7 @@ export const PermissionDenied: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start" }));
     await canvas.findByText("Camera permission was denied. Allow camera access and try again.");
   },

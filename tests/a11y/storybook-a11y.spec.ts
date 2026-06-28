@@ -6,6 +6,10 @@ const unexpectedExternalRequests = new WeakMap<Page, string[]>();
 
 const STABLE_STORIES = [
   {
+    id: "control-panel-controlpanel--idle-lucy",
+    name: "Control panel idle state",
+  },
+  {
     id: "control-panel-promptinput--lucy-prompt",
     name: "Prompt input",
   },

@@ -33,7 +33,7 @@ export function ModelModeSelector({ disabled, value, onChange }: ModelModeSelect
               onClick={() => onChange(modelMode)}
             >
               <span className="block text-sm font-semibold">{config.shortLabel}</span>
-              <span className={`mt-0.5 block text-[11px] ${isSelected ? "text-neutral-600" : "text-neutral-500"}`}>
+              <span className={`mt-0.5 block text-[11px] ${isSelected ? "text-neutral-600" : "text-neutral-400"}`}>
                 {config.eyebrow}
               </span>
             </button>
