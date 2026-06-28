@@ -6,15 +6,20 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "npm run typecheck && vite build",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.e2e.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.e2e.json && tsc --noEmit -p tsconfig.storybook.json",
     "preview": "NODE_ENV=production tsx server/index.ts",
+    "storybook": "HOME=/tmp/storybook-home STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true storybook dev -p 6006",
+    "build-storybook": "HOME=/tmp/storybook-home STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true storybook build",
     "test": "npm run test:unit",
-    "test:unit": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run --project browser --project server",
+    "test:watch": "vitest --project browser --project server",
+    "test:coverage": "vitest run --coverage --project browser --project server",
+    "test:storybook": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true vitest run --project storybook",
+    "test:storybook:watch": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true vitest --project storybook",
+    "test:storybook:coverage": "STORYBOOK_DISABLE_TELEMETRY=1 VITE_USE_MOCK_DECART=true vitest run --coverage --project storybook",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm run typecheck && npm run test:unit && npm run test:e2e && npm run build"
+    "test:all": "npm run typecheck && npm run test:unit && npm run test:storybook && npm run test:e2e && npm run build-storybook && npm run build"
   },
   "dependencies": {
     "@decartai/sdk": "0.1.9",
@@ -25,6 +30,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/addon-vitest": "^10.4.6",
+    "@storybook/react-vite": "^10.4.6",
     "@tailwindcss/vite": "4.3.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -34,11 +42,15 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.3",
+    "@vitest/browser": "^4.1.9",
+    "@vitest/browser-playwright": "^4.1.9",
     "@vitest/coverage-v8": "^4.1.9",
     "autoprefixer": "10.5.2",
     "jsdom": "^29.1.1",
     "msw": "^2.14.6",
+    "msw-storybook-addon": "^2.0.7",
     "postcss": "8.5.15",
+    "storybook": "^10.4.6",
     "tailwindcss": "4.3.1",
     "tsx": "4.22.4",
     "typescript": "6.0.3",
@@ -47,5 +59,10 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

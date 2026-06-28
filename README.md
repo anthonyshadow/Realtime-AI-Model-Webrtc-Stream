@@ -75,6 +75,16 @@ npm run typecheck
 npm run build
 ```
 
+Storybook is available for component review with mocked Decart, camera, and API behavior:
+
+```bash
+npm run storybook
+npm run test:storybook
+npm run build-storybook
+```
+
+See `STORYBOOK.md` before adding stories or mocks.
+
 Health endpoint:
 
 ```text
