@@ -5,12 +5,18 @@ import { StatusBadge } from "./StatusBadge";
 import { VideoPlaceholder } from "./VideoPlaceholder";
 
 type VideoStageProps = {
-  modelLabel: string;
+  placeholderDescription: string;
+  placeholderEyebrow: string;
   remoteStream: MediaStream | null;
   status: RealtimeStatus;
 };
 
-export function VideoStage({ modelLabel, remoteStream, status }: VideoStageProps) {
+export function VideoStage({
+  placeholderDescription,
+  placeholderEyebrow,
+  remoteStream,
+  status,
+}: VideoStageProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -30,7 +36,9 @@ export function VideoStage({ modelLabel, remoteStream, status }: VideoStageProps
         muted
         playsInline
       />
-      {!remoteStream ? <VideoPlaceholder modelLabel={modelLabel} /> : null}
+      {!remoteStream ? (
+        <VideoPlaceholder description={placeholderDescription} eyebrow={placeholderEyebrow} />
+      ) : null}
       <div className="absolute left-5 top-5">
         <StatusBadge status={status} />
       </div>

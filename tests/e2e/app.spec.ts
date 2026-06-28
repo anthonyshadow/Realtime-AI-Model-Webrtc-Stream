@@ -33,9 +33,9 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
 
   await expect(page.getByText("jacket.png")).toBeVisible();
 
-  await page.getByRole("button", { name: "Start" }).click();
+  await page.getByRole("button", { name: "Start VTON session" }).click();
 
-  await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Stop session" })).toBeVisible();
   await expect(page.getByText("Live")).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
@@ -60,18 +60,49 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
       imageName: "jacket.png",
     });
 
-  await page.getByRole("button", { name: "Stop" }).click();
+  await page.getByRole("button", { name: "Stop session" }).click();
 
-  await expect(page.getByRole("button", { name: "Start" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start VTON session" })).toBeVisible();
   await expect(page.getByText("Stopped")).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.disconnects))
     .toBe(1);
 });
 
+test("starts and stops local camera without token or Decart connect", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByText("Local camera").first()).toBeVisible();
+  await page.getByRole("button", { name: "Start local camera" }).click();
+
+  await expect(page.getByRole("button", { name: "Stop session" })).toBeVisible();
+  await expect(page.getByText("Live")).toBeVisible();
+  expect(realtimeTokenRequests.get(page)).toEqual([]);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(0);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_MEDIA_REQUESTS__.at(-1)))
+    .toEqual({
+      video: {
+        facingMode: "user",
+      },
+      audio: true,
+    });
+
+  await page.getByRole("button", { name: "Stop session" }).click();
+
+  await expect(page.getByRole("button", { name: "Start local camera" })).toBeVisible();
+  await expect(page.getByText("Stopped")).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.disconnects))
+    .toBe(0);
+});
+
 test("reset clears prompt, reference image, file input, and mocked realtime state", async ({ page }) => {
   await page.goto("/");
 
+  await page.getByRole("button", { name: /Lucy 2.1/i }).click();
   await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
   await page.getByLabel(/Reference portrait/i).setInputFiles({
     name: "portrait.png",
@@ -81,9 +112,9 @@ test("reset clears prompt, reference image, file input, and mocked realtime stat
 
   await expect(page.getByText("portrait.png")).toBeVisible();
 
-  await page.getByRole("button", { name: "Start" }).click();
+  await page.getByRole("button", { name: "Start Lucy session" }).click();
 
-  await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Stop session" })).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
     .toEqual({
@@ -126,8 +157,9 @@ test("shows a useful API failure message", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.getByRole("button", { name: /Lucy 2.1/i }).click();
   await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
-  await page.getByRole("button", { name: "Start" }).click();
+  await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(
     page.getByText("Could not create realtime session token. Check DECART_API_KEY on the local server."),
@@ -144,8 +176,9 @@ test("shows a useful camera permission denied message", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.getByRole("button", { name: /Lucy 2.1/i }).click();
   await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
-  await page.getByRole("button", { name: "Start" }).click();
+  await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(
     page.getByText("Camera permission was denied. Allow camera access and try again."),
@@ -162,8 +195,9 @@ test("shows a useful Decart connection failure message", async ({ page }) => {
   });
 
   await page.goto("/");
+  await page.getByRole("button", { name: /Lucy 2.1/i }).click();
   await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
-  await page.getByRole("button", { name: "Start" }).click();
+  await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(
     page.getByText("Could not connect to Lucy 2.1. Check API access, model availability, and network."),
@@ -239,6 +273,7 @@ async function installMockBrowserApis(page: Page) {
       initialStates: [],
       sets: [],
     };
+    (window as any).__E2E_MEDIA_REQUESTS__ = [];
 
     const createE2EMediaStream = () => {
       const canvas = document.createElement("canvas");
@@ -265,7 +300,9 @@ async function installMockBrowserApis(page: Page) {
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
       value: {
-        getUserMedia: async () => {
+        getUserMedia: async (constraints: MediaStreamConstraints) => {
+          (window as any).__E2E_MEDIA_REQUESTS__.push(constraints);
+
           if ((window as any).__E2E_CAMERA_DENIED__) {
             const error = new Error("Denied");
             error.name = "NotAllowedError";

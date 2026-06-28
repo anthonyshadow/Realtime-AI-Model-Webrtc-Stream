@@ -3,16 +3,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getModelConfig,
   type ModelModeConfig,
-  type SupportedModelMode,
 } from "../constants/models";
 import {
-  connectRealtimeModel,
-  createBrowserDecartClient,
-  fetchRealtimeToken,
-  getRealtimeModel,
-} from "../lib/decartClient";
+  isLocalSessionMode,
+  isModelBackedSessionMode,
+  type LocalSessionModeId,
+  type SessionModeId,
+} from "../constants/sessionModes";
 import { toUserMessage } from "../lib/errors";
-import { getCameraStream, stopMediaStream } from "../lib/media";
+import { getCameraStream, getLocalCameraStream, stopMediaStream } from "../lib/media";
 import {
   buildFullRealtimeStatePayload,
   buildRealtimeClearPayload,
@@ -21,6 +20,7 @@ import {
 import type {
   ApplyRealtimeStateInput,
   RealtimeStatus,
+  StartRealtimeSessionInput,
   UseDecartRealtimeSessionReturn,
 } from "../types/realtime";
 
@@ -43,7 +43,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
   const [error, setError] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const [activeModelMode, setActiveModelMode] = useState<SupportedModelMode | null>(null);
+  const [activeSessionMode, setActiveSessionMode] = useState<SessionModeId | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const realtimeClientRef = useRef<RealTimeClient | null>(null);
@@ -67,13 +67,45 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
   const resetSession = useCallback(() => {
     disconnectRealtimeClient();
     clearStreams();
-    setActiveModelMode(null);
+    setActiveSessionMode(null);
     setIsApplying(false);
   }, [clearStreams, disconnectRealtimeClient]);
 
-  const start = useCallback(async (initialState: ApplyRealtimeStateInput) => {
+  const start = useCallback(async (initialState: StartRealtimeSessionInput) => {
     const requestId = startRequestIdRef.current + 1;
     startRequestIdRef.current = requestId;
+
+    if (isLocalStartInput(initialState)) {
+      setError(null);
+      setStatus("requesting-camera");
+      resetSession();
+
+      try {
+        const stream = await getLocalCameraStream();
+
+        if (startRequestIdRef.current !== requestId) {
+          stopMediaStream(stream);
+          return false;
+        }
+
+        streamRef.current = stream;
+        setLocalStream(stream);
+        setRemoteStream(stream);
+        setActiveSessionMode(initialState.sessionMode);
+        setStatus("connected");
+        return true;
+      } catch (startError) {
+        if (startRequestIdRef.current !== requestId) {
+          return false;
+        }
+
+        resetSession();
+        setError(toUserMessage(startError));
+        setStatus("error");
+        return false;
+      }
+    }
+
     const config = getModelConfig(initialState.modelMode);
     const initialPayload = buildRealtimeStatePayload(initialState);
 
@@ -88,6 +120,12 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
     resetSession();
 
     try {
+      const {
+        connectRealtimeModel,
+        createBrowserDecartClient,
+        fetchRealtimeToken,
+        getRealtimeModel,
+      } = await import("../lib/decartClient");
       const model = await getRealtimeModel(initialState.modelMode);
       const stream = await getCameraStream(model);
 
@@ -99,7 +137,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       streamRef.current = stream;
       setLocalStream(stream);
       setRemoteStream(stream);
-      setActiveModelMode(initialState.modelMode);
+      setActiveSessionMode(initialState.sessionMode);
 
       setStatus("requesting-token");
       const token = await fetchRealtimeToken(initialState.modelMode);
@@ -173,7 +211,11 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
     async (input: ApplyRealtimeStateInput) => {
       const realtimeClient = realtimeClientRef.current;
 
-      if (!APPLY_STATUSES.has(status) || !realtimeClient) {
+      if (
+        !APPLY_STATUSES.has(status) ||
+        !realtimeClient ||
+        !isModelBackedSessionMode(activeSessionMode)
+      ) {
         setError(`Start ${getModelConfig(input.modelMode).label} and wait for it to connect before applying changes.`);
         return false;
       }
@@ -205,7 +247,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
         }
       }
     },
-    [status],
+    [activeSessionMode, status],
   );
 
   const resetRealtimeState = useCallback(async () => {
@@ -273,7 +315,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       error,
       localStream,
       remoteStream,
-      activeModelMode,
+      activeSessionMode,
       isRunning,
       isConnecting,
       isApplying,
@@ -283,7 +325,7 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
       resetRealtimeState,
     }),
     [
-      activeModelMode,
+      activeSessionMode,
       apply,
       error,
       isApplying,
@@ -302,4 +344,10 @@ export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
 function getMissingInputMessage(config: ModelModeConfig, action: "applying" | "starting") {
   const imageLabel = config.id === "lucy-vton-3" ? "garment image" : "reference portrait";
   return `Enter a ${config.promptLabel.toLowerCase()} or choose a ${imageLabel} before ${action}.`;
+}
+
+function isLocalStartInput(
+  input: StartRealtimeSessionInput,
+): input is Extract<StartRealtimeSessionInput, { sessionMode: LocalSessionModeId }> {
+  return isLocalSessionMode(input.sessionMode);
 }

@@ -1,4 +1,5 @@
 export type FakeMediaStreamTrackOptions = {
+  audio?: boolean;
   fps?: number;
   height?: number;
   kind?: string;
@@ -121,6 +122,7 @@ export class FakeRTCIceCandidate {
 }
 
 export function createFakeMediaStream({
+  audio = false,
   fps,
   height = 720,
   label = "Mock camera",
@@ -128,16 +130,25 @@ export function createFakeMediaStream({
   trackId = "mock-track",
   width = 1280,
 }: FakeMediaStreamTrackOptions & { streamId?: string } = {}) {
-  return new FakeMediaStream(
-    [
+  const tracks = [
+    new FakeMediaStreamTrack({
+      fps,
+      height,
+      label,
+      trackId,
+      width,
+    }),
+  ];
+
+  if (audio) {
+    tracks.push(
       new FakeMediaStreamTrack({
-        fps,
-        height,
-        label,
-        trackId,
-        width,
+        kind: "audio",
+        label: "Mock microphone",
+        trackId: `${trackId}-audio`,
       }),
-    ],
-    streamId,
-  ) as unknown as MediaStream;
+    );
+  }
+
+  return new FakeMediaStream(tracks, streamId) as unknown as MediaStream;
 }

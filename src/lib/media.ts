@@ -3,7 +3,14 @@ import type { LucyModelSpec } from "../types/decart";
 const CAMERA_DIMENSIONS_TIMEOUT_MS = 2500;
 const CAMERA_DIMENSIONS_POLL_MS = 50;
 
-export async function getCameraStream(model: LucyModelSpec): Promise<MediaStream> {
+type CameraStreamOptions = {
+  audio?: boolean | MediaTrackConstraints;
+};
+
+export async function getCameraStream(
+  model: LucyModelSpec,
+  options: CameraStreamOptions = {},
+): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error("Camera access is not available in this browser.");
   }
@@ -15,7 +22,29 @@ export async function getCameraStream(model: LucyModelSpec): Promise<MediaStream
       height: model.height,
       facingMode: "user",
     },
-    audio: false,
+    audio: options.audio ?? false,
+  });
+
+  try {
+    await waitForVideoTrackDimensions(stream);
+  } catch (error) {
+    stopMediaStream(stream);
+    throw error;
+  }
+
+  return stream;
+}
+
+export async function getLocalCameraStream(): Promise<MediaStream> {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Camera access is not available in this browser.");
+  }
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: "user",
+    },
+    audio: true,
   });
 
   try {

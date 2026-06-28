@@ -1,17 +1,17 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
-import type { SupportedModelMode } from "../../../constants/models";
-import { ModelModeSelector } from "../ModelModeSelector";
+import type { SessionModeId } from "../../../constants/sessionModes";
+import { SessionModeSelector } from "../SessionModeSelector";
 
 const meta = {
-  title: "Control Panel/ModelModeSelector",
-  component: ModelModeSelector,
+  title: "Control Panel/SessionModeSelector",
+  component: SessionModeSelector,
   tags: ["autodocs"],
   args: {
     disabled: false,
     onChange: fn(),
-    value: "lucy-2.1",
+    value: "local",
   },
   decorators: [
     (Story) => (
@@ -20,20 +20,20 @@ const meta = {
       </div>
     ),
   ],
-} satisfies Meta<typeof ModelModeSelector>;
+} satisfies Meta<typeof SessionModeSelector>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const LucySelected: Story = {};
+export const LocalSelected: Story = {};
 
 export const ChangesSelection: Story = {
   render: (args) => {
-    const [value, setValue] = useState<SupportedModelMode>(args.value ?? "lucy-2.1");
+    const [value, setValue] = useState<SessionModeId>(args.value ?? "local");
 
     return (
-      <ModelModeSelector
+      <SessionModeSelector
         {...args}
         value={value}
         onChange={(nextValue) => {
@@ -45,14 +45,20 @@ export const ChangesSelection: Story = {
   },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
-    const lucyButton = canvas.getByRole("button", { name: /Lucy/i });
-    const vtonButton = canvas.getByRole("button", { name: /VTON/i });
+    const localButton = canvas.getByRole("button", { name: /Local camera/i });
+    const vtonButton = canvas.getByRole("button", { name: /Lucy VTON 3/i });
 
-    await expect(lucyButton).toHaveAttribute("aria-pressed", "true");
+    await expect(localButton).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(vtonButton);
 
     await expect(vtonButton).toHaveAttribute("aria-pressed", "true");
     await expect(args.onChange).toHaveBeenCalledWith("lucy-vton-3");
+  },
+};
+
+export const LucySelected: Story = {
+  args: {
+    value: "lucy-2.1",
   },
 };
 
@@ -70,7 +76,8 @@ export const DisabledDuringSession: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByRole("button", { name: /Lucy/i })).toBeDisabled();
-    await expect(canvas.getByRole("button", { name: /VTON/i })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: /Local camera/i })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: /Lucy VTON 3/i })).toBeDisabled();
   },
 };

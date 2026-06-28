@@ -35,14 +35,15 @@ export const StartsMockedLucySession: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
-    await canvas.findByRole("button", { name: "Stop" });
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
+    await canvas.findByRole("button", { name: "Stop session" });
     await canvas.findByText("Live");
 
-    await userEvent.click(canvas.getByRole("button", { name: "Stop" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Stop session" }));
 
-    await expect(canvas.getByRole("button", { name: "Start" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
     await canvas.findByText("Stopped");
   },
 };
@@ -63,9 +64,9 @@ export const StartsVtonImageOnlySession: Story = {
     await userEvent.click(canvas.getByRole("button", { name: /VTON/i }));
     await userEvent.clear(canvas.getByLabelText(/Garment prompt/i));
     await userEvent.upload(canvas.getByLabelText("Garment image"), firstGarment);
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Start VTON session" }));
 
-    await canvas.findByRole("button", { name: "Stop" });
+    await canvas.findByRole("button", { name: "Stop session" });
     await canvas.findByText("Live");
     await waitFor(() => {
       const initialStates = storyWindow?.__STORYBOOK_DECART_EVENTS__?.initialStates ?? [];
@@ -97,12 +98,13 @@ export const ValidationError: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
 
     await canvas.findByText(
       "Enter a transformation prompt or choose a reference portrait before starting.",
     );
-    await expect(canvas.getByRole("button", { name: "Start" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
   },
 };
 
@@ -124,8 +126,9 @@ export const ApiFailure: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
     await canvas.findByText(
       "Could not create realtime session token. Check DECART_API_KEY on the local server.",
     );
@@ -141,8 +144,9 @@ export const ConnectionFailure: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
     await canvas.findByText(
       "Could not connect to Lucy 2.1. Check API access, model availability, and network.",
     );
@@ -158,8 +162,9 @@ export const PermissionDenied: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
     await canvas.findByText("Camera permission was denied. Allow camera access and try again.");
   },
 };

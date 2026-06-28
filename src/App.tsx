@@ -2,45 +2,53 @@ import { useMemo, useState } from "react";
 import { AutoHidingControlPanel } from "./components/ControlPanel/AutoHidingControlPanel";
 import { VideoStage } from "./components/VideoStage/VideoStage";
 import {
-  DEFAULT_MODEL_MODE,
   getModelConfig,
-  type SupportedModelMode,
 } from "./constants/models";
+import {
+  DEFAULT_SESSION_MODE,
+  getSessionModeConfig,
+  isModelBackedSessionMode,
+  type SessionModeId,
+} from "./constants/sessionModes";
 import { useDecartRealtimeSession } from "./hooks/useDecartRealtimeSession";
 import { useObjectUrl } from "./hooks/useObjectUrl";
 import { useSessionTimer } from "./hooks/useSessionTimer";
-import type { ApplyRealtimeStateInput } from "./types/realtime";
+import type { ApplyRealtimeStateInput, StartRealtimeSessionInput } from "./types/realtime";
+
+type ControlPanelDraft = {
+  sessionMode: SessionModeId;
+  prompt: string;
+  image: File | null;
+  enhance: boolean;
+};
 
 export function App() {
   const realtime = useDecartRealtimeSession();
   const timer = useSessionTimer(realtime.isRunning);
-  const [draft, setDraft] = useState<ApplyRealtimeStateInput>(() =>
-    createControlPanelDraft(DEFAULT_MODEL_MODE),
+  const [draft, setDraft] = useState<ControlPanelDraft>(() =>
+    createControlPanelDraft(DEFAULT_SESSION_MODE),
   );
-  const modelMode = draft.modelMode;
-  const activeModelConfig = getModelConfig(realtime.activeModelMode ?? modelMode);
+  const sessionMode = draft.sessionMode;
+  const activeSessionConfig = getSessionModeConfig(realtime.activeSessionMode ?? sessionMode);
   const [formError, setFormError] = useState<string | null>(null);
   const [lastAppliedDraftKey, setLastAppliedDraftKey] = useState<string | null>(null);
   const imagePreviewUrl = useObjectUrl(draft.image);
-  const canChangeModel = !realtime.isRunning && !realtime.isConnecting;
+  const canChangeSessionMode = !realtime.isRunning && !realtime.isConnecting;
 
   const draftKey = useMemo(() => createDraftKey(draft), [draft]);
   const hasPendingChanges =
-    realtime.isRunning && lastAppliedDraftKey !== null && lastAppliedDraftKey !== draftKey;
+    isModelBackedSessionMode(sessionMode) &&
+    realtime.isRunning &&
+    lastAppliedDraftKey !== null &&
+    lastAppliedDraftKey !== draftKey;
 
-  const handleModelModeChange = (nextMode: SupportedModelMode) => {
-    if (!canChangeModel || nextMode === modelMode) {
+  const handleSessionModeChange = (nextMode: SessionModeId) => {
+    if (!canChangeSessionMode || nextMode === sessionMode) {
       return;
     }
 
-    const nextConfig = getModelConfig(nextMode);
     setFormError(null);
-    setDraft({
-      modelMode: nextMode,
-      prompt: nextConfig.defaultPrompt,
-      image: null,
-      enhance: nextConfig.enhanceDefault,
-    });
+    setDraft(createControlPanelDraft(nextMode));
     setLastAppliedDraftKey(null);
   };
 
@@ -60,7 +68,7 @@ export function App() {
   };
 
   const handleReset = () => {
-    const resetDraft = createControlPanelDraft(modelMode);
+    const resetDraft = createControlPanelDraft(sessionMode);
     const resetDraftKey = createDraftKey(resetDraft);
 
     setFormError(null);
@@ -78,8 +86,9 @@ export function App() {
     setFormError(null);
     const draftAtSubmit = draft;
     const draftKeyAtSubmit = draftKey;
+    const startInput = createStartSessionInput(draftAtSubmit);
 
-    void realtime.start(draftAtSubmit).then((didStart) => {
+    void realtime.start(startInput).then((didStart) => {
       if (didStart) {
         setLastAppliedDraftKey(draftKeyAtSubmit);
       }
@@ -95,8 +104,13 @@ export function App() {
     setFormError(null);
     const draftAtSubmit = draft;
     const draftKeyAtSubmit = draftKey;
+    const applyInput = createApplyInput(draftAtSubmit);
 
-    void realtime.apply(draftAtSubmit).then((didApply) => {
+    if (!applyInput) {
+      return;
+    }
+
+    void realtime.apply(applyInput).then((didApply) => {
       if (didApply) {
         setLastAppliedDraftKey(draftKeyAtSubmit);
       }
@@ -106,17 +120,18 @@ export function App() {
   return (
     <main className="min-h-screen overflow-hidden bg-neutral-950 text-white">
       <VideoStage
-        modelLabel={activeModelConfig.label}
+        placeholderDescription={activeSessionConfig.videoDescription}
+        placeholderEyebrow={activeSessionConfig.videoEyebrow}
         remoteStream={realtime.remoteStream}
         status={realtime.status}
       />
       <AutoHidingControlPanel
-        activeModelMode={realtime.activeModelMode}
-        canChangeModel={canChangeModel}
+        activeSessionMode={realtime.activeSessionMode}
+        canChangeSessionMode={canChangeSessionMode}
         enhancePrompt={draft.enhance}
         hasPendingChanges={hasPendingChanges}
         isApplying={realtime.isApplying}
-        modelMode={modelMode}
+        sessionMode={sessionMode}
         prompt={draft.prompt}
         imageFile={draft.image}
         imagePreviewUrl={imagePreviewUrl}
@@ -124,7 +139,7 @@ export function App() {
         elapsedLabel={timer.elapsedLabel}
         error={formError ?? realtime.error}
         onEnhancePromptChange={handleEnhancePromptChange}
-        onModelModeChange={handleModelModeChange}
+        onSessionModeChange={handleSessionModeChange}
         onPromptChange={handlePromptChange}
         onImageChange={handleImageChange}
         onImageError={setFormError}
@@ -137,20 +152,58 @@ export function App() {
   );
 }
 
-function createControlPanelDraft(modelMode: SupportedModelMode): ApplyRealtimeStateInput {
-  const config = getModelConfig(modelMode);
+function createControlPanelDraft(sessionMode: SessionModeId): ControlPanelDraft {
+  if (!isModelBackedSessionMode(sessionMode)) {
+    return {
+      sessionMode,
+      prompt: "",
+      image: null,
+      enhance: false,
+    };
+  }
+
+  const config = getModelConfig(sessionMode);
 
   return {
-    modelMode,
+    sessionMode,
     prompt: config.defaultPrompt,
     image: null,
     enhance: config.enhanceDefault,
   };
 }
 
-function createDraftKey(input: ApplyRealtimeStateInput) {
+function createApplyInput(input: ControlPanelDraft): ApplyRealtimeStateInput | null {
+  if (!isModelBackedSessionMode(input.sessionMode)) {
+    return null;
+  }
+
+  return {
+    modelMode: input.sessionMode,
+    prompt: input.prompt,
+    image: input.image,
+    enhance: input.enhance,
+  };
+}
+
+function createStartSessionInput(input: ControlPanelDraft): StartRealtimeSessionInput {
+  if (!isModelBackedSessionMode(input.sessionMode)) {
+    return {
+      sessionMode: input.sessionMode,
+    };
+  }
+
+  return {
+    sessionMode: input.sessionMode,
+    modelMode: input.sessionMode,
+    prompt: input.prompt,
+    image: input.image,
+    enhance: input.enhance,
+  };
+}
+
+function createDraftKey(input: ControlPanelDraft) {
   return JSON.stringify({
-    modelMode: input.modelMode,
+    sessionMode: input.sessionMode,
     prompt: input.prompt.trim(),
     enhance: input.enhance,
     image: input.image

@@ -1,4 +1,5 @@
 import type { SupportedModelMode } from "../constants/models";
+import type { LocalSessionModeId, SessionModeId } from "../constants/sessionModes";
 
 export type RealtimeStatus =
   | "idle"
@@ -18,16 +19,24 @@ export type ApplyRealtimeStateInput = {
   enhance: boolean;
 };
 
+export type StartRealtimeSessionInput =
+  | {
+      sessionMode: LocalSessionModeId;
+    }
+  | (ApplyRealtimeStateInput & {
+      sessionMode: SupportedModelMode;
+    });
+
 export type UseDecartRealtimeSessionReturn = {
   status: RealtimeStatus;
   error: string | null;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
-  activeModelMode: SupportedModelMode | null;
+  activeSessionMode: SessionModeId | null;
   isRunning: boolean;
   isConnecting: boolean;
   isApplying: boolean;
-  start: (initialState: ApplyRealtimeStateInput) => Promise<boolean>;
+  start: (initialState: StartRealtimeSessionInput) => Promise<boolean>;
   stop: () => void;
   apply: (input: ApplyRealtimeStateInput) => Promise<boolean>;
   resetRealtimeState: () => Promise<boolean>;

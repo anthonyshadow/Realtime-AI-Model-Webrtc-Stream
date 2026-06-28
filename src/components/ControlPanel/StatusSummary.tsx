@@ -1,11 +1,14 @@
-import { getModelConfig, type SupportedModelMode } from "../../constants/models";
+import {
+  getSessionModeConfig,
+  type SessionModeId,
+} from "../../constants/sessionModes";
 import type { RealtimeStatus } from "../../types/realtime";
 
 type StatusSummaryProps = {
-  activeModelMode: SupportedModelMode | null;
+  activeSessionMode: SessionModeId | null;
   hasPendingChanges: boolean;
   isApplying: boolean;
-  selectedModelMode: SupportedModelMode;
+  selectedSessionMode: SessionModeId;
   status: RealtimeStatus;
 };
 
@@ -22,19 +25,19 @@ const STATUS_LABELS: Record<RealtimeStatus, string> = {
 };
 
 export function StatusSummary({
-  activeModelMode,
+  activeSessionMode,
   hasPendingChanges,
   isApplying,
-  selectedModelMode,
+  selectedSessionMode,
   status,
 }: StatusSummaryProps) {
-  const modelConfig = getModelConfig(activeModelMode ?? selectedModelMode);
+  const sessionConfig = getSessionModeConfig(activeSessionMode ?? selectedSessionMode);
   const isIdle = status === "idle" || status === "disconnected";
   const changeLabel = isIdle ? "Ready" : isApplying ? "Sending" : hasPendingChanges ? "Pending" : "Synced";
 
   return (
     <div className="grid grid-cols-3 gap-1.5">
-      <StatusCell label="Model" value={modelConfig.shortLabel} />
+      <StatusCell label="Mode" value={sessionConfig.shortLabel} />
       <StatusCell
         label="Session"
         value={STATUS_LABELS[status]}

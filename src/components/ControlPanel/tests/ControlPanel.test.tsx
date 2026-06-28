@@ -5,8 +5,8 @@ import { ControlPanel } from "../ControlPanel";
 
 function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0]> = {}) {
   const props = {
-    activeModelMode: null,
-    canChangeModel: true,
+    activeSessionMode: null,
+    canChangeSessionMode: true,
     elapsedLabel: "00:00",
     enhancePrompt: false,
     error: null,
@@ -15,12 +15,12 @@ function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0
     imagePreviewUrl: null,
     isApplying: false,
     isVisible: true,
-    modelMode: "lucy-2.1" as const,
+    sessionMode: "local" as const,
     onApply: vi.fn(),
     onEnhancePromptChange: vi.fn(),
     onImageChange: vi.fn(),
     onImageError: vi.fn(),
-    onModelModeChange: vi.fn(),
+    onSessionModeChange: vi.fn(),
     onPromptChange: vi.fn(),
     onReset: vi.fn(),
     onStart: vi.fn(),
@@ -39,21 +39,31 @@ describe("ControlPanel", () => {
   it("renders the main controls and status summary", () => {
     renderControlPanel();
 
-    expect(screen.getByText("Lucy 2.1")).toBeInTheDocument();
+    expect(screen.getAllByText("Local camera").length).toBeGreaterThan(0);
     expect(screen.getByText("Session")).toBeInTheDocument();
+    expect(screen.getByText("Mode")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
+  });
+
+  it("renders model controls when Lucy is selected", () => {
+    renderControlPanel({ enhancePrompt: true, sessionMode: "lucy-2.1" });
+
+    expect(screen.getAllByText("Lucy 2.1").length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
     expect(screen.getByLabelText(/Transformation prompt/i)).toHaveAttribute(
       "placeholder",
       "Describe one clear transformation",
     );
-    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).toBeChecked();
     expect(screen.getByLabelText("Reference portrait")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
   });
 
   it("passes prompt and model changes upward", async () => {
     const user = userEvent.setup();
-    const props = renderControlPanel();
+    const props = renderControlPanel({ sessionMode: "lucy-2.1" });
 
     fireEvent.change(screen.getByLabelText(/Transformation prompt/i), {
       target: { value: "Make it cinematic" },
@@ -61,17 +71,19 @@ describe("ControlPanel", () => {
     await user.click(screen.getByRole("button", { name: /VTON/i }));
 
     expect(props.onPromptChange).toHaveBeenLastCalledWith("Make it cinematic");
-    expect(props.onModelModeChange).toHaveBeenCalledWith("lucy-vton-3");
+    expect(props.onSessionModeChange).toHaveBeenCalledWith("lucy-vton-3");
   });
 
   it("disables model changes while a session is active", () => {
     renderControlPanel({
-      canChangeModel: false,
+      canChangeSessionMode: false,
+      sessionMode: "lucy-2.1",
       status: "connected",
     });
 
-    expect(screen.getByRole("button", { name: /Lucy/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /VTON/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Local camera/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Lucy VTON 3/i })).toBeDisabled();
   });
 
   it("shows useful API or validation errors", () => {

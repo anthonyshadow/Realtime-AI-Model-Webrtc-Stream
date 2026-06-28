@@ -7,12 +7,14 @@ const meta = {
   component: SessionControls,
   tags: ["autodocs"],
   args: {
+    canApplyChanges: true,
     hasPendingChanges: false,
     isApplying: false,
     onApply: fn(),
     onReset: fn(),
     onStart: fn(),
     onStop: fn(),
+    startLabel: "Start Lucy session",
     status: "idle",
   },
   decorators: [
@@ -32,10 +34,10 @@ export const Idle: Story = {
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByRole("button", { name: "Start" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
     await expect(canvas.getByRole("button", { name: "Apply" })).toBeDisabled();
 
-    await userEvent.click(canvas.getByRole("button", { name: "Start" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
 
     await expect(args.onStart).toHaveBeenCalled();
   },
@@ -61,12 +63,12 @@ export const ConnectedWithPendingChanges: Story = {
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByRole("button", { name: "Stop" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Stop session" })).toBeEnabled();
     await expect(canvas.getByRole("button", { name: "Apply" })).toBeEnabled();
     await expect(canvas.getByRole("button", { name: "Reset" })).toBeEnabled();
 
     await userEvent.click(canvas.getByRole("button", { name: "Apply" }));
-    await userEvent.click(canvas.getByRole("button", { name: "Stop" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Stop session" }));
     await userEvent.click(canvas.getByRole("button", { name: "Reset" }));
 
     await expect(args.onApply).toHaveBeenCalled();
@@ -92,5 +94,13 @@ export const Applying: Story = {
 export const ErrorState: Story = {
   args: {
     status: "error",
+  },
+};
+
+export const LocalConnected: Story = {
+  args: {
+    canApplyChanges: false,
+    startLabel: "Start local camera",
+    status: "connected",
   },
 };

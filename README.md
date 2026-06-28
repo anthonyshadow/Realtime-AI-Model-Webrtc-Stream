@@ -1,14 +1,15 @@
 # Decart Realtime Webcam Studio
 > Last updated: 2026-06-28
 
-Local TypeScript React app for realtime webcam transformation with Decart.
+Local TypeScript React app for local webcam preview and realtime webcam transformation with Decart.
 
-Supported modes:
+Supported session modes:
 
+- Local camera, `local`, for webcam and microphone preview without Decart.
 - Lucy 2.1, `lucy-2.1`, for realtime character/video transformation.
 - Lucy VTON 3, `lucy-vton-3`, for realtime virtual try-on.
 
-The modes run separately. Combined mode is intentionally not implemented.
+The model-backed modes run separately. Combined mode is intentionally not implemented.
 
 ## Start Here
 
@@ -74,10 +75,10 @@ GET /api/health
 POST /api/realtime-token
 ```
 
-`POST /api/realtime-token` accepts `{ "model": "lucy-2.1" }` or `{ "model": "lucy-vton-3" }`. If omitted, the server defaults to `lucy-2.1` for backward compatibility and returns a short-lived `ek_` client token scoped to localhost and the selected model.
+`POST /api/realtime-token` accepts `{ "model": "lucy-2.1" }` or `{ "model": "lucy-vton-3" }`. Local camera sessions do not call this endpoint. If omitted, the server defaults to `lucy-2.1` for backward compatibility and returns a short-lived `ek_` client token scoped to localhost and the selected model.
 
 ## Current Scope
 
-The app opens directly into a full-screen video surface with a compact floating control panel. It supports model selection, prompts, reference/garment uploads, prompt enhancement, Start/Stop/Apply/Reset, status, timer, friendly errors, and panel auto-hide while video is live.
+The app opens directly into a full-screen video surface with a compact floating control panel. It supports local camera preview, model selection, prompts, reference/garment uploads, prompt enhancement, Start/Stop/Apply/Reset, status, timer, friendly errors, and panel auto-hide while video is live.
 
 Out of scope unless explicitly requested: auth, database, recording, gallery, payments, analytics, deployment hardening, shared sessions, prompt galleries, cloud uploads, and combined Lucy plus VTON mode.

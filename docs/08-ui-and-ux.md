@@ -10,7 +10,8 @@ The app opens directly into the working video experience, not a marketing page.
 Before start:
 
 - dark full-screen video placeholder
-- current selected model visible
+- Local camera selected by default
+- current selected session mode visible
 - floating control panel visible
 
 While connecting:
@@ -18,13 +19,13 @@ While connecting:
 - show connection state
 - keep Stop available
 - disable Apply until connected or generating
-- prevent model switching until stopped
+- prevent session mode switching until stopped
 
 While running:
 
 - show transformed remote stream when available
 - timer counts active session time
-- prompt and image can be updated with Apply
+- prompt and image can be updated with Apply for model-backed sessions
 - panel may auto-hide so video remains primary
 
 After stop:
@@ -39,11 +40,11 @@ After stop:
 
 The panel includes:
 
-- model mode selector
+- session mode selector with Local camera, Lucy 2.1, and Lucy VTON 3
 - status summary
-- prompt input with an empty initial value and placeholder-only guidance
-- image upload and clear action
-- options disclosure with Enhance prompt toggle on by default
+- prompt input with an empty initial value and placeholder-only guidance for model-backed sessions
+- image upload and clear action for model-backed sessions
+- options disclosure with Enhance prompt toggle on by default for model-backed sessions
 - Start, Stop, Apply, and Reset actions
 - error banner
 - session timer

@@ -38,6 +38,8 @@ If `model` is omitted, the server defaults to `lucy-2.1`. Unsupported model ids 
 - localhost HTTP and HTTPS origins for the configured port
 - realtime `maxSessionDuration: 300`
 
+Local camera mode is frontend-only. It must not call `/api/realtime-token`, and `local` must not be added to the backend Decart model allow-list.
+
 ## Security Boundary
 
 - `DECART_API_KEY` stays in `.env` and backend code.

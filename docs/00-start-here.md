@@ -10,7 +10,8 @@ Best first file for humans and agents. Read this, then open only the task-specif
 - Backend: Express same-origin API.
 - Package manager: npm with `package-lock.json`.
 - Runtime: `http://localhost:3000` and `https://localhost:3000`.
-- Supported model modes: `lucy-2.1` and `lucy-vton-3`.
+- Supported session modes: `local`, `lucy-2.1`, and `lucy-vton-3`.
+- Local camera mode does not call Decart or `/api/realtime-token`.
 - Default tests and stories use mocks. They must not call live Decart.
 
 ## Use These Docs

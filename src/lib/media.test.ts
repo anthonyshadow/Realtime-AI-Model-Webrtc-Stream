@@ -4,7 +4,12 @@ import {
   mockGetUserMedia,
   type MockMediaStreamTrack,
 } from "../test/mocks/browserMocks";
-import { attachStreamToVideo, getCameraStream, stopMediaStream } from "./media";
+import {
+  attachStreamToVideo,
+  getCameraStream,
+  getLocalCameraStream,
+  stopMediaStream,
+} from "./media";
 
 describe("media helpers", () => {
   it("requests a camera stream using the selected model dimensions", async () => {
@@ -21,6 +26,20 @@ describe("media helpers", () => {
         facingMode: "user",
       },
       audio: false,
+    });
+  });
+
+  it("requests local camera and microphone without model dimensions", async () => {
+    const stream = createMockMediaStream({ audio: true, width: 640, height: 360 });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+
+    await expect(getLocalCameraStream()).resolves.toBe(stream);
+
+    expect(mockGetUserMedia).toHaveBeenCalledWith({
+      video: {
+        facingMode: "user",
+      },
+      audio: true,
     });
   });
 
@@ -42,6 +61,18 @@ describe("media helpers", () => {
     stopMediaStream(stream);
 
     expect(track.stop).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops every local video and audio track in a stream", () => {
+    const stream = createMockMediaStream({ audio: true });
+    const tracks = stream.getTracks() as MockMediaStreamTrack[];
+
+    stopMediaStream(stream);
+
+    expect(tracks).toHaveLength(2);
+    for (const track of tracks) {
+      expect(track.stop).toHaveBeenCalledTimes(1);
+    }
   });
 
   it("attaches and clears streams on video elements", () => {

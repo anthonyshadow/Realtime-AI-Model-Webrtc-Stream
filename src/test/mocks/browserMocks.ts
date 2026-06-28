@@ -9,6 +9,7 @@ import {
 } from "./mediaFakes";
 
 type MockTrackOptions = {
+  audio?: boolean;
   height?: number;
   kind?: string;
   width?: number;
@@ -61,12 +62,16 @@ export function resetBrowserMocks() {
 }
 
 export function createMockMediaStream({
+  audio = false,
   height = 720,
   width = 1280,
-}: Pick<MockTrackOptions, "height" | "width"> = {}) {
-  const stream = createFakeMediaStream({ height, width });
-  const [track] = stream.getTracks();
-  vi.spyOn(track, "stop");
+}: Pick<MockTrackOptions, "audio" | "height" | "width"> = {}) {
+  const stream = createFakeMediaStream({ audio, height, width });
+
+  for (const track of stream.getTracks()) {
+    vi.spyOn(track, "stop");
+  }
+
   return stream;
 }
 

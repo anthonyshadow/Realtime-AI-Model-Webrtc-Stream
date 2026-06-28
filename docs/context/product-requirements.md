@@ -6,8 +6,9 @@ Use this for product behavior and acceptance criteria. For code boundaries, read
 ## Required Experience
 
 - App opens directly into the video workspace.
-- User can choose Lucy 2.1 or Lucy VTON 3 before starting.
-- User can start camera, connect Decart realtime, apply prompt/image updates, and stop cleanly.
+- User can choose Local camera, Lucy 2.1, or Lucy VTON 3 before starting.
+- User can start local webcam and microphone preview without Decart.
+- User can start camera, connect Decart realtime for model-backed modes, apply prompt/image updates, and stop cleanly.
 - Video remains primary; controls stay compact and usable on mobile and desktop.
 - Errors must be understandable without exposing secrets or raw token values.
 
@@ -24,6 +25,7 @@ Use this for product behavior and acceptance criteria. For code boundaries, read
 - `npm run dev` opens the local app.
 - `GET /api/health` returns `{ "ok": true }`.
 - `/api/realtime-token` returns model-scoped short-lived client tokens.
+- Local camera start does not call Decart or `/api/realtime-token`.
 - `DECART_API_KEY` remains server-only.
 - Prompt-only, image-only where supported, and prompt-plus-image updates work atomically.
-- Stop disconnects Decart and turns off camera tracks.
+- Stop disconnects Decart when present and turns off local media tracks.

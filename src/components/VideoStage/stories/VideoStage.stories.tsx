@@ -12,7 +12,9 @@ const meta = {
   component: VideoStage,
   tags: ["autodocs"],
   args: {
-    modelLabel: "Lucy 2.1",
+    placeholderDescription:
+      "Your live camera preview appears here after the browser grants camera and microphone access.",
+    placeholderEyebrow: "Local camera",
     remoteStream: null,
     status: "idle",
     streamPreset: "none",
@@ -24,7 +26,7 @@ const meta = {
         streamPreset === "mock"
           ? createStorybookMediaStream({
               accent: "#34d399",
-              label: `${args.modelLabel} mock output`,
+              label: `${args.placeholderEyebrow} mock output`,
             })
           : null
       }
@@ -39,11 +41,21 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const EmptyLucyStage: Story = {};
+export const EmptyLocalStage: Story = {};
+
+export const EmptyLucyStage: Story = {
+  args: {
+    placeholderDescription:
+      "Your live preview appears here first, then Decart replaces it with the transformed stream.",
+    placeholderEyebrow: "Lucy 2.1 realtime",
+  },
+};
 
 export const EmptyVtonStage: Story = {
   args: {
-    modelLabel: "Lucy VTON 3",
+    placeholderDescription:
+      "Your live preview appears here first, then Decart replaces it with the transformed stream.",
+    placeholderEyebrow: "Lucy VTON 3 realtime",
   },
 };
 
@@ -56,7 +68,9 @@ export const ConnectedStream: Story = {
 
 export const GeneratingStream: Story = {
   args: {
-    modelLabel: "Lucy VTON 3",
+    placeholderDescription:
+      "Your live preview appears here first, then Decart replaces it with the transformed stream.",
+    placeholderEyebrow: "Lucy VTON 3 realtime",
     status: "generating",
     streamPreset: "mock",
   },

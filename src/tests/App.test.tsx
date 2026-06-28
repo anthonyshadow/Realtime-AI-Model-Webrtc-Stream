@@ -57,25 +57,75 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Start camera to begin" })).toBeInTheDocument();
-    expect(screen.getByText("Lucy 2.1 realtime")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
-    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveAttribute(
-      "placeholder",
-      "Describe one clear transformation",
-    );
-    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).toBeChecked();
-    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+    expect(screen.getAllByText("Local camera").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Camera and microphone").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
+  });
+
+  it("starts a local camera session without touching Decart", async () => {
+    const user = userEvent.setup();
+    const stream = createMockMediaStream({ audio: true });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled());
+    expect(mockGetUserMedia).toHaveBeenCalledWith({
+      video: {
+        facingMode: "user",
+      },
+      audio: true,
+    });
+    expect(decartMocks.getRealtimeModel).not.toHaveBeenCalled();
+    expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
+    expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
+    expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
+    expect(decartMocks.realtimeClient.disconnect).not.toHaveBeenCalled();
+    expect(screen.getByText("Live")).toBeInTheDocument();
+  });
+
+  it("stops every local camera and microphone track", async () => {
+    const user = userEvent.setup();
+    const stream = createMockMediaStream({ audio: true });
+    const tracks = stream.getTracks() as MockMediaStreamTrack[];
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled());
+
+    await user.click(screen.getByRole("button", { name: "Stop session" }));
+
+    for (const track of tracks) {
+      expect(track.stop).toHaveBeenCalledTimes(1);
+    }
+    expect(decartMocks.realtimeClient.disconnect).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
+    expect(screen.getByText("Stopped")).toBeInTheDocument();
   });
 
   it("starts a mocked Lucy session with the current draft", async () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     await waitFor(() => {
       expect(decartMocks.connectRealtimeModel).toHaveBeenCalled();
+    });
+    expect(mockGetUserMedia).toHaveBeenCalledWith({
+      video: {
+        frameRate: 24,
+        width: 640,
+        height: 360,
+        facingMode: "user",
+      },
+      audio: false,
     });
     expect(decartMocks.fetchRealtimeToken).toHaveBeenCalledWith("lucy-2.1");
     expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
@@ -89,7 +139,7 @@ describe("App", () => {
         modelLabel: "Lucy 2.1",
       }),
     );
-    expect(screen.getByRole("button", { name: "Stop" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
     expect(screen.getByText("Live")).toBeInTheDocument();
   });
 
@@ -100,7 +150,7 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: /VTON/i }));
     expect(screen.getByLabelText(/Garment prompt/i)).toHaveValue("");
     await user.type(screen.getByLabelText(/Garment prompt/i), "Substitute the top with denim");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start VTON session" }));
 
     await waitFor(() => {
       expect(decartMocks.connectRealtimeModel).toHaveBeenCalled();
@@ -123,7 +173,8 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await selectLucyMode(user);
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     expect(
       screen.getByText("Enter a transformation prompt or choose a reference portrait before starting."),
@@ -137,9 +188,10 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
     await user.clear(screen.getByLabelText(/Transformation prompt/i));
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene neon");
@@ -160,10 +212,11 @@ describe("App", () => {
     const file = new File(["portrait"], "portrait.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     await user.upload(screen.getByLabelText("Reference portrait"), file);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
     expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
       expect.objectContaining({
         initialState: expect.objectContaining({
@@ -194,10 +247,11 @@ describe("App", () => {
     const secondFile = new File(["portrait 2"], "portrait-2.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     await user.upload(screen.getByLabelText("Reference portrait"), firstFile);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
     await user.upload(screen.getByLabelText("Reference portrait"), secondFile);
     await user.click(screen.getByRole("button", { name: "Apply" }));
@@ -217,10 +271,11 @@ describe("App", () => {
     const file = new File(["portrait"], "portrait.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     await user.upload(screen.getByLabelText("Reference portrait"), file);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
     await user.click(screen.getByRole("checkbox", { name: /Enhance prompt/i }));
     await user.click(screen.getByRole("button", { name: "Apply" }));
@@ -240,10 +295,11 @@ describe("App", () => {
     const file = new File(["portrait"], "portrait.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     await user.upload(screen.getByLabelText("Reference portrait"), file);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Clear" }));
     await user.click(screen.getByRole("button", { name: "Apply" }));
@@ -262,9 +318,10 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await user.click(screen.getByRole("checkbox", { name: /Enhance prompt/i }));
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     await waitFor(() => {
       expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
@@ -282,6 +339,7 @@ describe("App", () => {
     const file = new File(["portrait"], "portrait.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     await user.upload(screen.getByLabelText("Reference portrait"), file);
 
     expect(screen.getByAltText("Reference portrait preview")).toBeInTheDocument();
@@ -302,10 +360,11 @@ describe("App", () => {
     const file = new File(["portrait"], "portrait.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     await user.upload(screen.getByLabelText("Reference portrait"), file);
     await user.click(screen.getByRole("button", { name: "Clear" }));
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     await waitFor(() => {
       expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
@@ -324,13 +383,14 @@ describe("App", () => {
     const file = new File(["portrait"], "portrait.png", { type: "image/png" });
     render(<App />);
 
+    await selectLucyMode(user);
     const imageInput = screen.getByLabelText("Reference portrait");
     const promptInput = screen.getByLabelText(/Transformation prompt/i);
 
     await user.upload(imageInput, file);
     await user.type(promptInput, "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
     await user.click(screen.getByRole("button", { name: "Reset" }));
 
@@ -372,12 +432,13 @@ describe("App", () => {
     decartMocks.fetchRealtimeToken.mockReturnValueOnce(tokenRequest.promise);
     render(<App />);
 
+    await selectLucyMode(user);
     const imageInput = screen.getByLabelText("Reference portrait");
     const promptInput = screen.getByLabelText(/Transformation prompt/i);
 
     await user.upload(imageInput, file);
     await user.type(promptInput, "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
     await waitFor(() => expect(decartMocks.fetchRealtimeToken).toHaveBeenCalledWith("lucy-2.1"));
 
     await user.click(screen.getByRole("button", { name: "Reset" }));
@@ -392,7 +453,7 @@ describe("App", () => {
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
     expect(screen.getAllByText("Idle").length).toBeGreaterThan(0);
   });
 
@@ -403,15 +464,16 @@ describe("App", () => {
     mockGetUserMedia.mockResolvedValueOnce(stream);
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
-    await user.click(screen.getByRole("button", { name: "Stop" }));
+    await user.click(screen.getByRole("button", { name: "Stop session" }));
 
     expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalled();
     expect(track.stop).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
     expect(screen.getByText("Stopped")).toBeInTheDocument();
   });
 
@@ -422,9 +484,10 @@ describe("App", () => {
     mockGetUserMedia.mockResolvedValueOnce(stream);
     const { unmount } = render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Stop" })).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
 
     unmount();
 
@@ -438,8 +501,9 @@ describe("App", () => {
     mockGetUserMedia.mockRejectedValueOnce(permissionError);
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     expect(
       await screen.findByText("Camera permission was denied. Allow camera access and try again."),
@@ -458,8 +522,9 @@ describe("App", () => {
     );
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     expect(
       await screen.findByText(
@@ -480,8 +545,9 @@ describe("App", () => {
     );
     render(<App />);
 
+    await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
-    await user.click(screen.getByRole("button", { name: "Start" }));
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     expect(
       await screen.findByText(
@@ -503,4 +569,8 @@ function createDeferred<T>() {
 
 function flushPromises() {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+
+async function selectLucyMode(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: /Lucy 2.1/i }));
 }

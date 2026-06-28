@@ -1,22 +1,27 @@
-import { getModelConfig, type SupportedModelMode } from "../../constants/models";
+import { getModelConfig } from "../../constants/models";
+import {
+  getSessionModeConfig,
+  isModelBackedSessionMode,
+  type SessionModeId,
+} from "../../constants/sessionModes";
 import type { RealtimeStatus } from "../../types/realtime";
 import { EnhanceToggle } from "./EnhanceToggle";
 import { ErrorBanner } from "./ErrorBanner";
 import { ImageUpload } from "./ImageUpload";
-import { ModelModeSelector } from "./ModelModeSelector";
 import { PromptInput } from "./PromptInput";
 import { SessionControls } from "./SessionControls";
+import { SessionModeSelector } from "./SessionModeSelector";
 import { StatusSummary } from "./StatusSummary";
 import { TimerDisplay } from "./TimerDisplay";
 
 export type ControlPanelProps = {
-  activeModelMode: SupportedModelMode | null;
-  canChangeModel: boolean;
+  activeSessionMode: SessionModeId | null;
+  canChangeSessionMode: boolean;
   enhancePrompt: boolean;
   hasPendingChanges: boolean;
   isVisible: boolean;
   isApplying: boolean;
-  modelMode: SupportedModelMode;
+  sessionMode: SessionModeId;
   prompt: string;
   imageFile: File | null;
   imagePreviewUrl: string | null;
@@ -24,7 +29,7 @@ export type ControlPanelProps = {
   elapsedLabel: string;
   error: string | null;
   onEnhancePromptChange: (value: boolean) => void;
-  onModelModeChange: (value: SupportedModelMode) => void;
+  onSessionModeChange: (value: SessionModeId) => void;
   onPromptChange: (value: string) => void;
   onImageChange: (file: File | null) => void;
   onImageError: (message: string | null) => void;
@@ -35,13 +40,13 @@ export type ControlPanelProps = {
 };
 
 export function ControlPanel({
-  activeModelMode,
-  canChangeModel,
+  activeSessionMode,
+  canChangeSessionMode,
   enhancePrompt,
   hasPendingChanges,
   isVisible,
   isApplying,
-  modelMode,
+  sessionMode,
   prompt,
   imageFile,
   imagePreviewUrl,
@@ -49,7 +54,7 @@ export function ControlPanel({
   elapsedLabel,
   error,
   onEnhancePromptChange,
-  onModelModeChange,
+  onSessionModeChange,
   onPromptChange,
   onImageChange,
   onImageError,
@@ -58,7 +63,10 @@ export function ControlPanel({
   onStop,
   onApply,
 }: ControlPanelProps) {
-  const modelConfig = getModelConfig(modelMode);
+  const sessionConfig = getSessionModeConfig(sessionMode);
+  const modelConfig = isModelBackedSessionMode(sessionMode)
+    ? getModelConfig(sessionMode)
+    : null;
   const visibilityClassName = isVisible
     ? "translate-y-0 opacity-100"
     : "pointer-events-none translate-y-3 opacity-0";
@@ -70,10 +78,10 @@ export function ControlPanel({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[11px] font-medium uppercase text-cyan-200/70">
-            {modelConfig.eyebrow}
+            {sessionConfig.eyebrow}
           </p>
           <h2 className="mt-0.5 truncate text-base font-semibold text-white">
-            {modelConfig.label}
+            {sessionConfig.label}
           </h2>
         </div>
         <TimerDisplay elapsedLabel={elapsedLabel} />
@@ -81,46 +89,52 @@ export function ControlPanel({
 
       <div className="mt-3 space-y-3">
         <StatusSummary
-          activeModelMode={activeModelMode}
+          activeSessionMode={activeSessionMode}
           hasPendingChanges={hasPendingChanges}
           isApplying={isApplying}
-          selectedModelMode={modelMode}
+          selectedSessionMode={sessionMode}
           status={status}
         />
-        <ModelModeSelector
-          disabled={!canChangeModel}
-          value={modelMode}
-          onChange={onModelModeChange}
+        <SessionModeSelector
+          disabled={!canChangeSessionMode}
+          value={sessionMode}
+          onChange={onSessionModeChange}
         />
-        <PromptInput
-          helperText={modelConfig.promptHelperText}
-          label={modelConfig.promptLabel}
-          placeholder={modelConfig.promptPlaceholder}
-          value={prompt}
-          onChange={onPromptChange}
-        />
-        <ImageUpload
-          actionText={modelConfig.imageActionText}
-          altText={modelConfig.imageAltText}
-          emptyLabel={modelConfig.imageEmptyLabel}
-          file={imageFile}
-          helperText={modelConfig.imageHelperText}
-          label={modelConfig.imageLabel}
-          previewUrl={imagePreviewUrl}
-          onChange={onImageChange}
-          onError={onImageError}
-        />
-        <details className="rounded-md border border-white/10 bg-white/3">
-          <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-neutral-100">
-            Options
-          </summary>
-          <div className="px-3 pb-3">
-            <EnhanceToggle checked={enhancePrompt} onChange={onEnhancePromptChange} />
-          </div>
-        </details>
+        {modelConfig ? (
+          <>
+            <PromptInput
+              helperText={modelConfig.promptHelperText}
+              label={modelConfig.promptLabel}
+              placeholder={modelConfig.promptPlaceholder}
+              value={prompt}
+              onChange={onPromptChange}
+            />
+            <ImageUpload
+              actionText={modelConfig.imageActionText}
+              altText={modelConfig.imageAltText}
+              emptyLabel={modelConfig.imageEmptyLabel}
+              file={imageFile}
+              helperText={modelConfig.imageHelperText}
+              label={modelConfig.imageLabel}
+              previewUrl={imagePreviewUrl}
+              onChange={onImageChange}
+              onError={onImageError}
+            />
+            <details className="rounded-md border border-white/10 bg-white/3">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-neutral-100">
+                Options
+              </summary>
+              <div className="px-3 pb-3">
+                <EnhanceToggle checked={enhancePrompt} onChange={onEnhancePromptChange} />
+              </div>
+            </details>
+          </>
+        ) : null}
         <SessionControls
+          canApplyChanges={modelConfig !== null}
           hasPendingChanges={hasPendingChanges}
           isApplying={isApplying}
+          startLabel={sessionConfig.startLabel}
           status={status}
           onReset={onReset}
           onStart={onStart}

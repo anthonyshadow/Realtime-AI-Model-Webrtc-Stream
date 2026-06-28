@@ -6,10 +6,10 @@ const meta = {
   component: StatusSummary,
   tags: ["autodocs"],
   args: {
-    activeModelMode: null,
+    activeSessionMode: null,
     hasPendingChanges: false,
     isApplying: false,
-    selectedModelMode: "lucy-2.1",
+    selectedSessionMode: "local",
     status: "idle",
   },
   decorators: [
@@ -29,25 +29,26 @@ export const Ready: Story = {};
 
 export const LiveSynced: Story = {
   args: {
-    activeModelMode: "lucy-vton-3",
-    selectedModelMode: "lucy-vton-3",
+    activeSessionMode: "lucy-vton-3",
+    selectedSessionMode: "lucy-vton-3",
     status: "connected",
   },
 };
 
 export const PendingChanges: Story = {
   args: {
-    activeModelMode: "lucy-2.1",
+    activeSessionMode: "lucy-2.1",
     hasPendingChanges: true,
+    selectedSessionMode: "lucy-2.1",
     status: "generating",
   },
 };
 
 export const SendingChanges: Story = {
   args: {
-    activeModelMode: "lucy-vton-3",
+    activeSessionMode: "lucy-vton-3",
     isApplying: true,
-    selectedModelMode: "lucy-vton-3",
+    selectedSessionMode: "lucy-vton-3",
     status: "connected",
   },
 };

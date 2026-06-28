@@ -6,7 +6,9 @@ const meta = {
   component: VideoPlaceholder,
   tags: ["autodocs"],
   args: {
-    modelLabel: "Lucy 2.1",
+    description:
+      "Your live camera preview appears here after the browser grants camera and microphone access.",
+    eyebrow: "Local camera",
   },
   decorators: [
     (Story) => (
@@ -24,10 +26,20 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const Lucy: Story = {};
+export const Local: Story = {};
+
+export const Lucy: Story = {
+  args: {
+    description:
+      "Your live preview appears here first, then Decart replaces it with the transformed stream.",
+    eyebrow: "Lucy 2.1 realtime",
+  },
+};
 
 export const Vton: Story = {
   args: {
-    modelLabel: "Lucy VTON 3",
+    description:
+      "Your live preview appears here first, then Decart replaces it with the transformed stream.",
+    eyebrow: "Lucy VTON 3 realtime",
   },
 };

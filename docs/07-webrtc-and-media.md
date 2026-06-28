@@ -16,6 +16,8 @@ Use this for camera, media stream, video attachment, and realtime lifecycle beha
 
 `getCameraStream(model)` requests the browser camera with the selected model's `fps`, `width`, and `height`, plus `facingMode: "user"` and `audio: false`.
 
+`getLocalCameraStream()` requests local webcam preview with `facingMode: "user"` and `audio: true`. It is used only by Local camera mode and must not call Decart, model resolution, or `/api/realtime-token`.
+
 After permission succeeds, it waits briefly for video track dimensions. If dimensions never appear, it stops the stream and throws a user-mapped error.
 
 ## Video Attachment
@@ -30,7 +32,7 @@ Stop must:
 - disconnect any realtime client
 - stop local media tracks
 - clear local and remote streams
-- clear the active model mode
+- clear the active session mode
 - reset applying state
 - set status to `disconnected`
 
