@@ -1,21 +1,25 @@
 import type { ConnectionState } from "@decartai/sdk";
-import { REALTIME_MODEL_ID } from "../constants/app";
+import type { SupportedModelMode } from "../constants/models";
 import type { RealtimeTokenResponse } from "../types/decart";
-import type { ApplyLucyStateInput } from "../types/realtime";
-import { buildLucyStatePayload } from "./realtimeState";
+import type { ApplyRealtimeStateInput } from "../types/realtime";
+import { buildRealtimeStatePayload } from "./realtimeState";
 
 type DecartSdk = typeof import("@decartai/sdk");
 type BrowserDecartClient = ReturnType<DecartSdk["createDecartClient"]>;
-type LucyModel = ReturnType<DecartSdk["models"]["realtime"]>;
+type RealtimeModel = ReturnType<DecartSdk["models"]["realtime"]>;
 
 let decartSdkPromise: Promise<DecartSdk> | null = null;
 
-export async function fetchRealtimeToken(): Promise<RealtimeTokenResponse> {
+export async function fetchRealtimeToken(modelMode: SupportedModelMode): Promise<RealtimeTokenResponse> {
   let response: Response;
 
   try {
     response = await fetch("/api/realtime-token", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: modelMode }),
       cache: "no-store",
     });
   } catch {
@@ -39,13 +43,9 @@ export async function fetchRealtimeToken(): Promise<RealtimeTokenResponse> {
   return body;
 }
 
-export function getLucyModelId() {
-  return REALTIME_MODEL_ID;
-}
-
-export async function getLucyModel() {
+export async function getRealtimeModel(modelMode: SupportedModelMode) {
   const { models } = await getDecartSdk();
-  return models.realtime(REALTIME_MODEL_ID);
+  return models.realtime(modelMode);
 }
 
 export async function createBrowserDecartClient(token: RealtimeTokenResponse) {
@@ -58,23 +58,25 @@ export async function createBrowserDecartClient(token: RealtimeTokenResponse) {
   });
 }
 
-type ConnectLucyRealtimeInput = {
+type ConnectRealtimeInput = {
   client: BrowserDecartClient;
   stream: MediaStream;
-  model: LucyModel;
-  initialState?: ApplyLucyStateInput;
+  model: RealtimeModel;
+  initialState: ApplyRealtimeStateInput;
+  modelLabel: string;
   onRemoteStream: (stream: MediaStream) => void;
   onConnectionChange: (state: ConnectionState) => void;
 };
 
-export async function connectLucyRealtime({
+export async function connectRealtimeModel({
   client,
   stream,
   model,
   initialState,
+  modelLabel,
   onRemoteStream,
   onConnectionChange,
-}: ConnectLucyRealtimeInput) {
+}: ConnectRealtimeInput) {
   try {
     return await client.realtime.connect(stream, {
       model,
@@ -87,30 +89,37 @@ export async function connectLucyRealtime({
       initialState: buildInitialState(initialState),
     });
   } catch {
-    throw new Error(
-      "Could not connect to Lucy 2.1 realtime. Check API access, model availability, and network.",
-    );
+    throw new Error(`Could not connect to ${modelLabel}. Check API access, model availability, and network.`);
   }
 }
 
-function buildInitialState(input?: ApplyLucyStateInput) {
-  if (!input) {
-    return undefined;
-  }
-
-  const payload = buildLucyStatePayload(input);
+function buildInitialState(input: ApplyRealtimeStateInput) {
+  const payload = buildRealtimeStatePayload(input);
 
   if (!payload) {
     return undefined;
   }
 
-  return {
-    prompt: {
+  const initialState: {
+    prompt?: {
+      text: string;
+      enhance: boolean;
+    };
+    image?: File;
+  } = {};
+
+  if (payload.prompt) {
+    initialState.prompt = {
       text: payload.prompt,
       enhance: payload.enhance,
-    },
-    image: payload.image,
-  };
+    };
+  }
+
+  if (payload.image) {
+    initialState.image = payload.image;
+  }
+
+  return initialState;
 }
 
 function getDecartSdk() {

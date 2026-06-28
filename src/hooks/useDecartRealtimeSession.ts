@@ -1,18 +1,23 @@
 import type { RealTimeClient } from "@decartai/sdk";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  connectLucyRealtime,
+  getModelConfig,
+  type ModelModeConfig,
+  type SupportedModelMode,
+} from "../constants/models";
+import {
+  connectRealtimeModel,
   createBrowserDecartClient,
   fetchRealtimeToken,
-  getLucyModel,
+  getRealtimeModel,
 } from "../lib/decartClient";
 import { toUserMessage } from "../lib/errors";
 import { getCameraStream, stopMediaStream } from "../lib/media";
-import { buildLucyStatePayload } from "../lib/realtimeState";
+import { buildRealtimeStatePayload } from "../lib/realtimeState";
 import type {
-  ApplyLucyStateInput,
+  ApplyRealtimeStateInput,
   RealtimeStatus,
-  UseLucyRealtimeReturn,
+  UseDecartRealtimeSessionReturn,
 } from "../types/realtime";
 
 const RUNNING_STATUSES = new Set<RealtimeStatus>([
@@ -29,11 +34,13 @@ const CONNECTING_STATUSES = new Set<RealtimeStatus>([
 
 const APPLY_STATUSES = new Set<RealtimeStatus>(["connected", "generating"]);
 
-export function useLucyRealtime(): UseLucyRealtimeReturn {
+export function useDecartRealtimeSession(): UseDecartRealtimeSessionReturn {
   const [status, setStatus] = useState<RealtimeStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [activeModelMode, setActiveModelMode] = useState<SupportedModelMode | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const realtimeClientRef = useRef<RealTimeClient | null>(null);
   const startRequestIdRef = useRef(0);
@@ -56,47 +63,59 @@ export function useLucyRealtime(): UseLucyRealtimeReturn {
   const resetSession = useCallback(() => {
     disconnectRealtimeClient();
     clearStreams();
+    setActiveModelMode(null);
+    setIsApplying(false);
   }, [clearStreams, disconnectRealtimeClient]);
 
-  const start = useCallback(async (initialState?: ApplyLucyStateInput) => {
+  const start = useCallback(async (initialState: ApplyRealtimeStateInput) => {
     const requestId = startRequestIdRef.current + 1;
     startRequestIdRef.current = requestId;
+    const config = getModelConfig(initialState.modelMode);
+    const initialPayload = buildRealtimeStatePayload(initialState);
+
+    if (!initialPayload) {
+      setError(getMissingInputMessage(config, "starting"));
+      setStatus("idle");
+      return false;
+    }
 
     setError(null);
     setStatus("requesting-camera");
     resetSession();
 
     try {
-      const model = await getLucyModel();
+      const model = await getRealtimeModel(initialState.modelMode);
       const stream = await getCameraStream(model);
 
       if (startRequestIdRef.current !== requestId) {
         stopMediaStream(stream);
-        return;
+        return false;
       }
 
       streamRef.current = stream;
       setLocalStream(stream);
       setRemoteStream(stream);
+      setActiveModelMode(initialState.modelMode);
 
       setStatus("requesting-token");
-      const token = await fetchRealtimeToken();
+      const token = await fetchRealtimeToken(initialState.modelMode);
 
       if (startRequestIdRef.current !== requestId) {
-        return;
+        return false;
       }
 
       const client = await createBrowserDecartClient(token);
       setStatus("connecting");
 
-      const realtimeClient = await connectLucyRealtime({
+      const realtimeClient = await connectRealtimeModel({
         client,
         stream,
         model,
         initialState,
-        onRemoteStream: (remoteStream) => {
+        modelLabel: config.label,
+        onRemoteStream: (nextRemoteStream) => {
           if (startRequestIdRef.current === requestId) {
-            setRemoteStream(remoteStream);
+            setRemoteStream(nextRemoteStream);
           }
         },
         onConnectionChange: (state) => {
@@ -108,12 +127,12 @@ export function useLucyRealtime(): UseLucyRealtimeReturn {
 
       if (startRequestIdRef.current !== requestId) {
         realtimeClient.disconnect();
-        return;
+        return false;
       }
 
       realtimeClient.on("error", () => {
         if (startRequestIdRef.current === requestId) {
-          setError("Could not connect to Lucy 2.1 realtime. Check API access, model availability, and network.");
+          setError(`Could not connect to ${config.label}. Check API access, model availability, and network.`);
           setStatus("error");
         }
       });
@@ -126,14 +145,16 @@ export function useLucyRealtime(): UseLucyRealtimeReturn {
 
       realtimeClientRef.current = realtimeClient;
       setStatus(realtimeClient.getConnectionState());
+      return true;
     } catch (startError) {
       if (startRequestIdRef.current !== requestId) {
-        return;
+        return false;
       }
 
       resetSession();
       setError(toUserMessage(startError));
       setStatus("error");
+      return false;
     }
   }, [resetSession]);
 
@@ -145,26 +166,38 @@ export function useLucyRealtime(): UseLucyRealtimeReturn {
   }, [resetSession]);
 
   const apply = useCallback(
-    async (input: ApplyLucyStateInput) => {
+    async (input: ApplyRealtimeStateInput) => {
       const realtimeClient = realtimeClientRef.current;
 
       if (!APPLY_STATUSES.has(status) || !realtimeClient) {
-        setError("Start Lucy and wait for it to connect before applying changes.");
-        return;
+        setError(`Start ${getModelConfig(input.modelMode).label} and wait for it to connect before applying changes.`);
+        return false;
       }
 
-      const payload = buildLucyStatePayload(input);
+      const payload = buildRealtimeStatePayload(input);
 
       if (!payload) {
-        setError("Enter a prompt or choose a reference image before applying changes.");
-        return;
+        setError(getMissingInputMessage(getModelConfig(input.modelMode), "applying"));
+        return false;
       }
+
+      const requestId = startRequestIdRef.current;
 
       try {
         setError(null);
+        setIsApplying(true);
         await realtimeClient.set(payload);
+        return true;
       } catch {
-        setError("Could not apply those changes. Check that Lucy is still connected and try again.");
+        if (startRequestIdRef.current === requestId) {
+          setError("Could not apply those changes. Check that the realtime session is still connected and try again.");
+        }
+
+        return false;
+      } finally {
+        if (startRequestIdRef.current === requestId) {
+          setIsApplying(false);
+        }
       }
     },
     [status],
@@ -191,12 +224,31 @@ export function useLucyRealtime(): UseLucyRealtimeReturn {
       error,
       localStream,
       remoteStream,
+      activeModelMode,
       isRunning,
       isConnecting,
+      isApplying,
       start,
       stop,
       apply,
     }),
-    [apply, error, isConnecting, isRunning, localStream, remoteStream, start, status, stop],
+    [
+      activeModelMode,
+      apply,
+      error,
+      isApplying,
+      isConnecting,
+      isRunning,
+      localStream,
+      remoteStream,
+      start,
+      status,
+      stop,
+    ],
   );
+}
+
+function getMissingInputMessage(config: ModelModeConfig, action: "applying" | "starting") {
+  const imageLabel = config.id === "lucy-vton-3" ? "garment image" : "reference portrait";
+  return `Enter a ${config.promptLabel.toLowerCase()} or choose a ${imageLabel} before ${action}.`;
 }

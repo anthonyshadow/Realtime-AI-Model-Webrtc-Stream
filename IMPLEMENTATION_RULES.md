@@ -2,9 +2,9 @@
 
 ## Prime Directive
 
-Do not overbuild. Build the smallest local MVP that proves the live Lucy 2.1 webcam transformation loop.
+Keep the app small, local, and reliable. Protect the existing Lucy 2.1 flow while supporting Lucy VTON 3 as a separate model mode.
 
-Create code only when explicitly asked for the implementation phase. The first phase is documentation/context only.
+Do not implement combined model mode until Lucy 2.1 and Lucy VTON 3 are both stable independently and Decart's realtime pipeline options are verified.
 
 ## Required Runtime
 
@@ -21,9 +21,25 @@ Use:
 - Vite
 - Tailwind CSS
 - Express
-- `@decartai/sdk`
+- `@decartai/sdk` `0.1.9`
 
 Do not add unrelated dependencies.
+
+## Supported Model Modes
+
+Current supported modes:
+
+```ts
+"lucy-2.1" | "lucy-vton-3"
+```
+
+Rules:
+
+- Add supported frontend modes in `src/constants/models.ts`.
+- Add supported backend token modes in `server/decartToken.ts`.
+- Keep mode-specific labels, defaults, and image behavior in the registry.
+- Do not scatter model-specific string literals through components.
+- Do not use `lucy-vton-latest` for this app unless explicitly requested; use pinned `lucy-vton-3`.
 
 ## Security Rules
 
@@ -32,32 +48,35 @@ Do not add unrelated dependencies.
 - Never use `VITE_DECART_API_KEY`.
 - The frontend must call `POST /api/realtime-token`.
 - The backend must create short-lived Decart client tokens.
-- Token scope should include `allowedModels: ["lucy-2.1"]`.
-- Token scope should include `allowedOrigins: ["http://localhost:3000", "https://localhost:3000"]`.
-- Token constraints should cap realtime session duration for the MVP.
+- Token scope must include the requested allowed model only.
+- Token scope must include current localhost `http` and `https` origins.
+- Token constraints should cap realtime session duration.
 - Do not log permanent API keys.
 - Do not log client tokens.
-- Do not persist uploaded reference images.
+- Do not persist uploaded reference or garment images.
 - Do not commit `.env`.
 
 ## Architecture Rules
 
 - Keep files small and responsibility-focused.
 - Do not put orchestration logic in `App.tsx`.
-- `App.tsx` should only compose hooks and components.
+- `App.tsx` may own selected mode and form draft state.
 - Hooks own lifecycle and orchestration logic.
 - `lib/` helpers own isolated utilities.
 - `components/` own UI only.
-- `constants/` own static text, app constants, and prompt defaults.
-- `types/` own shared TypeScript types.
+- `constants/models.ts` owns model configuration.
+- `constants/prompts.ts` owns prompt defaults.
+- `types/` owns shared TypeScript types.
 - Backend token creation belongs in `server/`.
 
 ## App Boundary Rules
 
 `App.tsx` may:
 
+- Hold selected model mode.
+- Hold current prompt/image/enhance draft.
+- Track pending changes.
 - Create hook instances.
-- Hold page-level form state if needed.
 - Pass props to components.
 - Compose the page.
 
@@ -72,13 +91,14 @@ Do not add unrelated dependencies.
 
 ## Hook Rules
 
-`useLucyRealtime` owns:
+`useDecartRealtimeSession` owns:
 
+- Input validation before start/apply.
 - Camera start.
 - Token fetch orchestration.
-- Lucy realtime connection.
+- Decart realtime connection.
 - Remote stream state.
-- Apply prompt/image behavior.
+- Apply prompt/image/enhance behavior.
 - Stop/disconnect cleanup.
 - Error and status transitions.
 
@@ -95,24 +115,29 @@ Do not add unrelated dependencies.
 
 ## Helper Rules
 
-`lib/media.ts` owns media utilities:
+`lib/media.ts` owns:
 
 - `getCameraStream(model)`
 - `stopMediaStream(stream)`
-- `attachStreamToVideo(videoElement, stream)`
+- `attachStreamToVideo(video, stream)`
 
 `lib/decartClient.ts` owns browser-safe Decart utilities:
 
-- `fetchRealtimeToken()`
+- `fetchRealtimeToken(modelMode)`
 - `createBrowserDecartClient(token)`
-- `getLucyModel()`
+- `getRealtimeModel(modelMode)`
+- `connectRealtimeModel(input)`
 
-`lib/realtimeState.ts` owns Lucy state payload creation:
+This file must never import or read `DECART_API_KEY`.
+
+`lib/realtimeState.ts` owns realtime payload creation:
 
 - Prompt only.
-- Image only with default character prompt.
+- Image only.
 - Prompt plus image atomically.
-- No-op when neither exists.
+- Lucy 2.1 image-only default prompt.
+- VTON image-only without invented prompt.
+- No-op when neither prompt nor image exists.
 
 `lib/errors.ts` owns user-friendly error mapping.
 
@@ -122,63 +147,69 @@ Do not add unrelated dependencies.
 
 Components should be presentational. They receive state and callbacks through props.
 
-Required UI pieces for the final app:
+Current UI pieces:
 
 - `VideoStage`
 - `VideoPlaceholder`
 - `StatusBadge`
+- `AutoHidingControlPanel`
 - `ControlPanel`
+- `ModelModeSelector`
+- `StatusSummary`
 - `PromptInput`
 - `ImageUpload`
+- `EnhanceToggle`
 - `SessionControls`
 - `TimerDisplay`
 - `ErrorBanner`
 
 Do not put all UI into one component.
 
-## Lucy State Rules
+## Realtime State Rules
 
-`realtimeClient.set()` replaces the full Lucy state.
+`realtimeClient.set()` replaces the full realtime state.
 
 When prompt and image should both remain active, send both in the same `set()` call.
 
-Use `enhance: true` by default.
+Use the selected model registry to decide image-only behavior:
 
-For image-only apply, include the default character prompt:
-
-```text
-Substitute the character in the video with the person in the reference image.
-```
+- Lucy 2.1 image-only: send image plus default character substitution prompt.
+- Lucy VTON 3 image-only: send image only.
 
 Do not make separate `set()` calls for prompt and image when the user intends them to work together.
 
 ## UI Rules
 
-The final app should be a single-page, full-screen video experience.
+The app should be a single-page, full-screen video experience.
 
 Required controls:
 
-- `Start`
-- `Stop`
-- `Apply`
-- Prompt input
-- Image upload
-- Clear image
-- Status
-- Errors
-- Session timer
+- Model mode selector.
+- Start.
+- Stop.
+- Apply.
+- Reset.
+- Prompt input.
+- Image upload.
+- Clear image.
+- Enhance prompt toggle.
+- Status.
+- Errors.
+- Session timer.
 
-Use a polished floating control panel over the video. Keep styling simple and focused.
+Use a polished floating control panel over the video. Video remains primary. The panel may auto-hide during active generation, but setup, connection, and error states must remain easy to read.
 
-Disable `Apply` unless the realtime session is connected or generating.
+Disable Apply unless the realtime session is connected or generating.
+
+Disable model switching while a session is running or connecting.
 
 Before start, show a dark placeholder and a clear prompt to start the camera.
 
-After stop, clear the stream, stop camera tracks, disconnect Lucy, reset timer, and return to idle.
+After stop, clear the stream, stop camera tracks, disconnect Decart, reset timer, and return to disconnected.
 
 ## Environment Rules
 
-`.env.example` should eventually include:
+`.env.example` should include:
 
 ```text
 DECART_API_KEY=dct_your_server_side_key_here
@@ -192,50 +223,45 @@ Do not create `.env` automatically.
 
 Do not add these unless the user explicitly asks:
 
-- Auth
-- Database
-- Recording
-- Payments
-- Gallery
-- Analytics
-- Deployment
-- Sharing
-- Cloud uploads
-- Session history
-- Prompt preset gallery
-- Admin panel
+- Combined model mode.
+- Auth.
+- Database.
+- Recording.
+- Payments.
+- Gallery.
+- Analytics.
+- Deployment.
+- Sharing.
+- Cloud uploads.
+- Session history.
+- Prompt preset gallery.
+- Admin panel.
 
-## Implementation Order
+## Verification Checklist
 
-1. Context files and rules.
-2. Project scaffolding.
-3. Backend token endpoint.
-4. Webcam preview without Decart.
-5. Lucy 2.1 realtime connection.
-6. Prompt and reference image apply logic.
-7. Polish and MVP readiness audit.
+Before calling the app ready, verify:
 
-Do not skip ahead unless explicitly requested.
-
-## Acceptance Checklist
-
-Before calling the MVP done, verify:
-
-- App runs on `http://localhost:3000`.
-- `POST /api/realtime-token` creates short-lived client tokens.
+- `npm run typecheck` passes.
+- `npm run build` passes.
+- `GET /api/health` works.
+- `POST /api/realtime-token` defaults to a Lucy 2.1-scoped token.
+- `POST /api/realtime-token` scopes `lucy-2.1` correctly.
+- `POST /api/realtime-token` scopes `lucy-vton-3` correctly.
+- Unsupported model ids return `400`.
 - `DECART_API_KEY` remains server-only.
 - No `VITE_DECART_API_KEY` exists.
-- `Start` requests camera permission.
-- Webcam stream connects to `lucy-2.1`.
-- Remote transformed stream displays.
-- Prompt-only apply works.
-- Image-only apply works.
-- Prompt plus image apply works.
-- Prompt and image are sent together when both are intended.
-- `Stop` disconnects realtime client.
-- `Stop` turns off camera tracks.
+- Start requests camera permission.
+- Lucy 2.1 prompt-only works.
+- Lucy 2.1 reference image works.
+- Lucy 2.1 prompt plus reference image works.
+- Lucy VTON 3 prompt-only works.
+- Lucy VTON 3 garment image works.
+- Lucy VTON 3 prompt plus garment image works.
+- Stop disconnects realtime client.
+- Stop turns off camera tracks.
+- Start, Stop, Start works repeatedly.
+- Switching model after stopping works.
 - Timer starts, stops, and resets correctly.
 - Errors are readable.
 - Components remain small.
-- `App.tsx` remains composition only.
 - No out-of-scope product features were added.

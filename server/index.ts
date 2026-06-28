@@ -5,7 +5,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { createServer as createViteServer } from "vite";
-import { createRealtimeToken } from "./decartToken.js";
+import {
+  createRealtimeToken,
+  readSupportedRealtimeModel,
+  UnsupportedRealtimeModelError,
+} from "./decartToken.js";
 import { listenWithHttpAndHttps } from "./dualProtocolServer.js";
 import { env } from "./env.js";
 import { getLocalhostCertificate } from "./localhostCertificate.js";
@@ -23,11 +27,19 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/api/realtime-token", async (_req, res) => {
+app.post("/api/realtime-token", async (req, res) => {
   try {
-    const token = await createRealtimeToken();
+    const model = readSupportedRealtimeModel(req.body?.model);
+    const token = await createRealtimeToken(model);
     res.json(token);
-  } catch {
+  } catch (error) {
+    if (error instanceof UnsupportedRealtimeModelError) {
+      res.status(400).json({
+        error: "Unsupported realtime model.",
+      });
+      return;
+    }
+
     res.status(500).json({
       error: "Could not create realtime session token. Check DECART_API_KEY on the local server.",
     });
@@ -68,7 +80,7 @@ listenWithHttpAndHttps({
   httpsServer,
   port: env.PORT,
   onListen: () => {
-    console.log(`Lucy Webcam MVP running in ${mode}:`);
+    console.log(`Decart Realtime Webcam Studio running in ${mode}:`);
     console.log(`  http://localhost:${env.PORT}`);
     console.log(`  https://localhost:${env.PORT}${distNote}`);
   },

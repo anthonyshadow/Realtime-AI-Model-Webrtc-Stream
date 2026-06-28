@@ -1,4 +1,6 @@
-# Decart Lucy 2.1 Notes
+# Decart Realtime Notes
+
+This file covers the Decart realtime integration used by the local webcam app.
 
 ## SDK
 
@@ -8,10 +10,17 @@ Use:
 import { createDecartClient, models } from "@decartai/sdk";
 ```
 
-Realtime model:
+Installed SDK:
+
+```text
+@decartai/sdk 0.1.9
+```
+
+Supported realtime models:
 
 ```ts
-const model = models.realtime("lucy-2.1");
+models.realtime("lucy-2.1");
+models.realtime("lucy-vton-3");
 ```
 
 ## Backend Token Endpoint
@@ -20,17 +29,23 @@ The browser calls:
 
 ```text
 POST /api/realtime-token
+Content-Type: application/json
+
+{ "model": "lucy-vton-3" }
 ```
 
 The local Express server creates a short-lived Decart client token using server-side `DECART_API_KEY`.
 
-Recommended MVP token options:
+Token options:
 
 ```ts
 {
   expiresIn: 300,
-  allowedModels: ["lucy-2.1"],
-  allowedOrigins: ["http://localhost:3000", "https://localhost:3000"],
+  allowedModels: [requestedModel],
+  allowedOrigins: [
+    `http://localhost:${PORT}`,
+    `https://localhost:${PORT}`,
+  ],
   constraints: {
     realtime: {
       maxSessionDuration: 300,
@@ -43,25 +58,27 @@ This means:
 
 - Token can be used for 5 minutes to start a connection.
 - Realtime session is capped at 5 minutes.
-- Only `lucy-2.1` is allowed.
-- Only `http://localhost:3000` and `https://localhost:3000` are allowed as origins.
+- Token is scoped to exactly one requested model.
+- Token is scoped to the local app origin.
 
 ## Browser Realtime Flow
 
 The frontend should:
 
-1. Request a token from `POST /api/realtime-token`.
-2. Request webcam permission with `navigator.mediaDevices.getUserMedia`.
-3. Use Lucy model specs for camera constraints.
-4. Connect to Decart realtime.
-5. Attach the remote transformed stream to the main video element.
-6. Listen for connection state, errors, and generation ticks where supported.
-7. Stop and disconnect cleanly.
+1. Select a model mode.
+2. Resolve `models.realtime(modelMode)`.
+3. Request webcam permission with that model's `fps`, `width`, and `height`.
+4. Request a token from `POST /api/realtime-token`.
+5. Create a browser Decart client with the temporary `ek_` token.
+6. Connect to Decart realtime.
+7. Attach the remote transformed stream to the main video element.
+8. Listen for connection state, errors, and generation ticks.
+9. Stop and disconnect cleanly.
 
 Connection shape:
 
 ```ts
-const model = models.realtime("lucy-2.1");
+const model = models.realtime(modelMode);
 
 const stream = await navigator.mediaDevices.getUserMedia({
   video: {
@@ -77,32 +94,33 @@ const client = createDecartClient({ apiKey: token.apiKey });
 
 const realtimeClient = await client.realtime.connect(stream, {
   model,
-  mirror: "auto",
+  mirror: false,
   onRemoteStream: (remoteStream) => {
     outputVideo.srcObject = remoteStream;
   },
   initialState: {
     prompt: {
       text: initialPrompt,
-      enhance: true,
+      enhance,
     },
+    image: referenceOrGarmentFile,
   },
 });
 ```
 
-Adjust exact SDK calls during implementation if the installed SDK version differs. Keep the same security model and architecture.
+The app uses `mirror: false` because Decart's auto-mirror path previously caused generated track dimension issues during LiveKit reconnect republishes.
 
 ## Important `set()` Behavior
 
-`realtimeClient.set()` replaces the full Lucy state.
+`realtimeClient.set()` replaces the full realtime state.
 
 When applying prompt and image together, send both in the same call:
 
 ```ts
 await realtimeClient.set({
   prompt: promptText,
-  image: referenceImageFile,
-  enhance: true,
+  image: imageFile,
+  enhance,
 });
 ```
 
@@ -110,33 +128,42 @@ Do not split intended combined state across multiple calls:
 
 ```ts
 await realtimeClient.set({ prompt: promptText });
-await realtimeClient.set({ image: referenceImageFile });
+await realtimeClient.set({ image: imageFile });
 ```
 
 The second call can clear the first field.
 
-## Atomic State Helper
+## Lucy 2.1 State Rules
 
-Create one helper during implementation:
+Lucy 2.1 supports:
 
-```ts
-applyRealtimeState({
-  prompt,
-  image,
-  enhance: true,
-});
+- Prompt only.
+- Reference portrait only.
+- Prompt + reference portrait.
+
+For image-only Lucy 2.1 updates, include the default character substitution prompt:
+
+```text
+Substitute the character in the video with the person in the reference image.
 ```
 
-The helper should decide:
+## Lucy VTON 3 State Rules
 
-- If prompt and image exist, send both.
-- If only prompt exists, send prompt only.
-- If only image exists, send image with the default character prompt.
-- If neither exists, do nothing and surface a friendly message.
+Lucy VTON 3 supports:
 
-Use `enhance: true` by default.
+- Garment prompt only.
+- Garment image only.
+- Garment prompt + garment image.
 
-## Reference Image Rules
+Best results come from pairing a clean garment image with a descriptive prompt. Image-only VTON updates should not invent a prompt; Decart can use the garment image by itself.
+
+Prompt pattern:
+
+```text
+Substitute the current top with a navy blue hoodie with a white logo on the chest
+```
+
+## Reference and Garment Image Rules
 
 Supported upload formats:
 
@@ -144,29 +171,14 @@ Supported upload formats:
 - `image/png`
 - `image/webp`
 
-The UI should guide the user toward high-quality inputs:
+Recommended:
 
-```text
-Best: clear front-facing portrait, well-lit, head-and-shoulders, JPEG/PNG/WebP.
-```
+- At least 512x512 pixels.
+- Under 5MB for faster updates.
+- Lucy 2.1 portraits: clear, front-facing, well-lit, one face.
+- VTON garments: clean clothing item, plain background, no person if possible.
 
-Do not store uploaded reference images permanently for this MVP.
-
-## Prompt Guidance
-
-Default reference-image prompt:
-
-```text
-Substitute the character in the video with the person in the reference image.
-```
-
-Default text-only prompt:
-
-```text
-Change the person into a cinematic cyberpunk character with realistic lighting.
-```
-
-Encourage one clear edit intent per prompt. The app should not block complex prompts, but helper text should guide users toward focused transformations.
+Do not store uploaded images permanently for this local app.
 
 ## Error Cases
 
@@ -188,10 +200,16 @@ Token creation failed:
 Could not create realtime session token. Check DECART_API_KEY on the local server.
 ```
 
+Unsupported model:
+
+```text
+Unsupported realtime model.
+```
+
 Decart connection failed:
 
 ```text
-Could not connect to Lucy 2.1 realtime. Check API access, model availability, and network.
+Could not connect to {model label}. Check API access, model availability, and network.
 ```
 
 Unsupported image type:
@@ -202,15 +220,23 @@ Please upload a JPEG, PNG, or WebP image.
 
 Apply before connected:
 
-- Disable `Apply` unless status is `connected` or `generating`.
+- Disable Apply unless status is `connected` or `generating`.
 
 Stop during connecting:
 
-- Abort if possible.
+- Increment the active request id.
 - Disconnect any partial realtime client.
 - Stop local media tracks.
 - Reset UI safely.
 
 ## Cost Notes
 
-Realtime Lucy 2.1 is billed per active generation second. The MVP should make `Stop` obvious, show a visible timer, disconnect on page unload, and use `maxSessionDuration`.
+Realtime models are billed per active generation second. The app should make Stop obvious, show a visible timer, disconnect on page unload, and use `maxSessionDuration`.
+
+## Official Documentation
+
+- JavaScript SDK overview: https://docs.platform.decart.ai/sdks/javascript
+- JavaScript realtime API: https://docs.platform.decart.ai/sdks/javascript-realtime
+- Realtime virtual try-on: https://docs.platform.decart.ai/models/realtime/virtual-try-on
+- Realtime reference images: https://docs.platform.decart.ai/models/realtime/reference-images
+- Client tokens: https://docs.platform.decart.ai/getting-started/client-tokens

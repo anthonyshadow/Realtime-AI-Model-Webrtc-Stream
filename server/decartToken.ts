@@ -6,21 +6,19 @@ import {
 } from "@decartai/sdk";
 import { env } from "./env.js";
 
-const REALTIME_MODEL = "lucy-2.1";
+const DEFAULT_REALTIME_MODEL = "lucy-2.1";
+const SUPPORTED_REALTIME_MODELS = ["lucy-2.1", "lucy-vton-3"] as const;
 const TOKEN_EXPIRES_IN_SECONDS = 300;
 const MAX_SESSION_DURATION_SECONDS = 300;
-const ALLOWED_ORIGINS = ["http://localhost:3000", "https://localhost:3000"];
+const ALLOWED_ORIGINS = [`http://localhost:${env.PORT}`, `https://localhost:${env.PORT}`];
 
-const tokenOptions = {
-  expiresIn: TOKEN_EXPIRES_IN_SECONDS,
-  allowedModels: [REALTIME_MODEL],
-  allowedOrigins: ALLOWED_ORIGINS,
-  constraints: {
-    realtime: {
-      maxSessionDuration: MAX_SESSION_DURATION_SECONDS,
-    },
-  },
-} satisfies CreateTokenOptions;
+export type SupportedRealtimeModel = (typeof SUPPORTED_REALTIME_MODELS)[number];
+
+export class UnsupportedRealtimeModelError extends Error {
+  constructor() {
+    super("Unsupported realtime model.");
+  }
+}
 
 const decartClient = createDecartClient({
   apiKey: env.DECART_API_KEY,
@@ -33,7 +31,35 @@ export type RealtimeTokenPayload = Pick<
   "apiKey" | "expiresAt" | "permissions" | "constraints"
 >;
 
-export async function createRealtimeToken(): Promise<RealtimeTokenPayload> {
+export function readSupportedRealtimeModel(value: unknown): SupportedRealtimeModel {
+  if (value === undefined || value === null) {
+    return DEFAULT_REALTIME_MODEL;
+  }
+
+  if (
+    typeof value === "string" &&
+    SUPPORTED_REALTIME_MODELS.includes(value as SupportedRealtimeModel)
+  ) {
+    return value as SupportedRealtimeModel;
+  }
+
+  throw new UnsupportedRealtimeModelError();
+}
+
+export async function createRealtimeToken(
+  model: SupportedRealtimeModel = DEFAULT_REALTIME_MODEL,
+): Promise<RealtimeTokenPayload> {
+  const tokenOptions = {
+    expiresIn: TOKEN_EXPIRES_IN_SECONDS,
+    allowedModels: [model],
+    allowedOrigins: ALLOWED_ORIGINS,
+    constraints: {
+      realtime: {
+        maxSessionDuration: MAX_SESSION_DURATION_SECONDS,
+      },
+    },
+  } satisfies CreateTokenOptions;
+
   const token = await decartClient.tokens.create(tokenOptions);
 
   return {

@@ -1,7 +1,10 @@
 import type { RealtimeStatus } from "../../types/realtime";
 
 type SessionControlsProps = {
+  hasPendingChanges: boolean;
+  isApplying: boolean;
   status: RealtimeStatus;
+  onReset: () => void;
   onStart: () => void;
   onStop: () => void;
   onApply: () => void;
@@ -20,7 +23,10 @@ const CONNECTING_STATUSES = new Set<RealtimeStatus>([
 ]);
 
 export function SessionControls({
+  hasPendingChanges,
+  isApplying,
   status,
+  onReset,
   onStart,
   onStop,
   onApply,
@@ -28,32 +34,39 @@ export function SessionControls({
   const isRunning = RUNNING_STATUSES.has(status);
   const isConnecting = CONNECTING_STATUSES.has(status);
   const canApply = APPLY_STATUSES.has(status);
+  const startStopLabel = isRunning || isConnecting ? "Stop" : "Start";
+  const startStopClassName =
+    isRunning || isConnecting
+      ? "border border-red-300/35 bg-red-500/15 text-red-50 hover:border-red-200/60"
+      : "bg-cyan-300 text-neutral-950 hover:bg-cyan-200";
+  const applyClassName = hasPendingChanges
+    ? "bg-white text-neutral-950 hover:bg-neutral-200"
+    : "border border-white/15 text-white hover:border-white/30";
 
   return (
     <div className="grid grid-cols-3 gap-2">
       <button
-        className="rounded-md bg-cyan-300 px-3 py-2.5 text-sm font-semibold text-neutral-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className={`rounded-md px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${startStopClassName}`}
         type="button"
-        disabled={isRunning || isConnecting}
-        onClick={onStart}
+        onClick={isRunning || isConnecting ? onStop : onStart}
       >
-        Start
+        {startStopLabel}
+      </button>
+      <button
+        className={`rounded-md px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${applyClassName}`}
+        type="button"
+        disabled={!canApply || isApplying}
+        onClick={onApply}
+      >
+        {isApplying ? "Applying" : "Apply"}
       </button>
       <button
         className="rounded-md border border-white/15 px-3 py-2.5 text-sm font-semibold text-white transition hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-50"
         type="button"
-        disabled={!isRunning && !isConnecting}
-        onClick={onStop}
+        disabled={isApplying}
+        onClick={onReset}
       >
-        Stop
-      </button>
-      <button
-        className="rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-        type="button"
-        disabled={!canApply}
-        onClick={onApply}
-      >
-        Apply
+        Reset
       </button>
     </div>
   );

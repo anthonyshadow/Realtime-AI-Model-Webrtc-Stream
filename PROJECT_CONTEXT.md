@@ -1,16 +1,15 @@
 # Project Context
 
-## MVP Goal
+## Current Goal
 
-Build a local TypeScript React MVP for Decart Lucy 2.1 realtime webcam transformation.
+This project is a local TypeScript React app for Decart realtime webcam transformation.
 
-The app should run at:
+It currently supports two separate model modes:
 
-```text
-http://localhost:3000
-```
+- `lucy-2.1`: Lucy 2.1 realtime character/video transformation.
+- `lucy-vton-3`: Lucy VTON 3 realtime virtual try-on.
 
-The finished MVP will be a single-page, full-screen webcam video UI where Decart Lucy 2.1 transforms the live camera stream over WebRTC. A floating control panel overlays the video and lets the user start and stop the session, enter a prompt, upload a reference image, apply updates while running, see status and errors, and track elapsed session time.
+The modes are selected independently. The app does not currently run both models together.
 
 ## Required Stack
 
@@ -19,54 +18,67 @@ The finished MVP will be a single-page, full-screen webcam video UI where Decart
 - Vite
 - Tailwind CSS
 - Express
-- `@decartai/sdk`
+- `@decartai/sdk` `0.1.9`
 
-Use one local Express server on port `3000`. The Express server should serve the React app through Vite middleware during development and expose same-origin API endpoints.
+Use one local Express server on port `3000`. The Express server serves the React app through Vite middleware during development and exposes same-origin API endpoints.
 
-## Core Product Scope
+## Product Scope
 
-Required MVP capabilities:
+Current capabilities:
 
 - Full-screen video stage.
-- Floating prompt and image control panel.
-- `Start`, `Stop`, and `Apply` controls.
+- Floating, auto-hiding control panel.
+- Model mode selector.
 - Prompt textarea.
-- JPEG, PNG, and WebP reference image upload.
+- JPEG, PNG, and WebP upload.
+- Lucy 2.1 reference portrait mode.
+- Lucy VTON 3 garment image mode.
+- Enhance prompt toggle.
+- Start, Stop, Apply, and Reset controls.
 - Connection status.
+- Pending changes status.
 - User-friendly error display.
 - Session timer.
 - Webcam permission flow.
-- Decart Lucy 2.1 realtime WebRTC connection.
-- Live prompt and reference image updates without reconnecting.
+- Decart realtime WebRTC connection.
+- Live prompt and image updates without reconnecting.
 
 Out of scope unless explicitly requested:
 
-- Auth
-- Database
-- Recording
-- Payments
-- Gallery
-- Analytics
-- Deployment
-- Cloud upload
-- Multi-user sessions
-- Admin tools
+- Combined model mode.
+- Auth.
+- Database.
+- Recording.
+- Payments.
+- Gallery.
+- Analytics.
+- Deployment.
+- Cloud upload.
+- Multi-user sessions.
+- Admin tools.
 
 ## Decart Basics
 
-Use the realtime model:
+Use realtime models through:
 
 ```ts
-models.realtime("lucy-2.1")
+models.realtime("lucy-2.1");
+models.realtime("lucy-vton-3");
 ```
 
-The frontend must call:
+The frontend calls:
 
 ```text
 POST /api/realtime-token
 ```
 
-The backend creates a short-lived Decart client token using server-side `DECART_API_KEY`.
+with an optional JSON body:
+
+```json
+{ "model": "lucy-vton-3" }
+```
+
+The backend creates a short-lived Decart client token using server-side `DECART_API_KEY`. The token is scoped to the requested model and current localhost origin.
 
 Never expose the permanent Decart API key to browser code. Do not use `VITE_DECART_API_KEY`.
 
@@ -76,25 +88,27 @@ Never expose the permanent Decart API key to browser code. Do not use `VITE_DECA
 
 ## UX Direction
 
-The final app should open directly into the working MVP experience, not a marketing page.
+The app opens directly into the working video experience, not a marketing page.
 
 Before start:
 
 - Dark full-screen video placeholder.
-- Centered message such as `Start camera to begin`.
-- Floating control panel visible.
+- Current selected model is visible.
+- Floating control panel is visible.
 
 While connecting:
 
-- Show loading state.
-- Disable `Start`.
-- Disable `Apply` until connected.
+- Show connection state.
+- Keep Stop available.
+- Disable Apply until connected.
+- Prevent model switching until stopped.
 
 While running:
 
-- Show transformed remote Lucy stream.
+- Show transformed remote stream when Decart provides it.
 - Timer counts active session time.
-- Prompt and image can be updated.
+- Prompt and image can be updated with Apply.
+- Panel may auto-hide so video remains primary.
 
 After stop:
 
@@ -102,33 +116,25 @@ After stop:
 - Stop camera tracks.
 - Clear video stream.
 - Reset timer.
-- Return status to idle.
+- Return status to disconnected.
 
 ## Acceptance Criteria
 
-The MVP is complete when:
+The current app is healthy when:
 
 - `npm run dev` opens `http://localhost:3000`.
-- The page is a single full-screen video experience.
-- `Start` asks for webcam permission.
-- A Decart realtime token is created through the backend.
-- The webcam stream connects to `lucy-2.1`.
-- The transformed output stream displays on the page.
-- The user can enter and apply a prompt.
-- The user can upload and apply a JPEG, PNG, or WebP reference image.
-- Prompt and image can be applied together.
-- `Stop` disconnects Lucy and turns off the camera.
-- Timer shows elapsed active session time.
-- No permanent API key appears in frontend source.
-- Files are split into small components, hooks, helpers, constants, and types.
-
-## Implementation Phases
-
-1. Create context files and project rules.
-2. Scaffold React, TypeScript, Vite, Tailwind, and Express on port `3000`.
-3. Add backend Decart token endpoint.
-4. Add local webcam start/stop and timer without Decart.
-5. Connect webcam to Lucy 2.1 realtime.
-6. Add prompt and reference image apply logic.
-7. Polish loading, disabled states, errors, cleanup, and MVP readiness.
-
+- `npm run typecheck` passes.
+- `npm run build` passes.
+- `POST /api/realtime-token` creates scoped short-lived client tokens.
+- `DECART_API_KEY` remains server-only.
+- No `VITE_DECART_API_KEY` exists.
+- `Start` requests camera permission.
+- Lucy 2.1 connects and transforms the webcam stream.
+- Lucy VTON 3 connects and transforms the webcam stream.
+- Prompt-only updates work.
+- Image-only updates work where supported.
+- Prompt plus image updates work atomically.
+- `Stop` disconnects Decart and turns off camera tracks.
+- Model switching is done after stopping.
+- Timer and status states are clear.
+- Components remain small and responsibility-focused.

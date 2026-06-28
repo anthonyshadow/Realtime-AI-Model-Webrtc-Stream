@@ -1,3 +1,5 @@
+import type { SupportedModelMode } from "../constants/models";
+
 export type RealtimeStatus =
   | "idle"
   | "requesting-camera"
@@ -9,20 +11,23 @@ export type RealtimeStatus =
   | "disconnected"
   | "error";
 
-export type ApplyLucyStateInput = {
+export type ApplyRealtimeStateInput = {
+  modelMode: SupportedModelMode;
   prompt: string;
   image: File | null;
-  enhance?: boolean;
+  enhance: boolean;
 };
 
-export type UseLucyRealtimeReturn = {
+export type UseDecartRealtimeSessionReturn = {
   status: RealtimeStatus;
   error: string | null;
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
+  activeModelMode: SupportedModelMode | null;
   isRunning: boolean;
   isConnecting: boolean;
-  start: (initialState?: ApplyLucyStateInput) => Promise<void>;
+  isApplying: boolean;
+  start: (initialState: ApplyRealtimeStateInput) => Promise<boolean>;
   stop: () => void;
-  apply: (input: ApplyLucyStateInput) => Promise<void>;
+  apply: (input: ApplyRealtimeStateInput) => Promise<boolean>;
 };

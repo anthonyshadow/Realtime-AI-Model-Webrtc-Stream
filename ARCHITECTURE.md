@@ -4,15 +4,18 @@
 
 ```text
 Browser React app
-  -> POST /api/realtime-token
+  -> selected model mode: lucy-2.1 or lucy-vton-3
+  -> POST /api/realtime-token { model }
 Local Express server
+  -> validates model id
   -> creates short-lived Decart token using DECART_API_KEY
 Decart API
   -> returns temporary client token
 Local Express server
   -> returns temporary token to browser
 Browser React app
-  -> connects webcam stream to Lucy 2.1 realtime using temporary token
+  -> requests webcam with selected model dimensions
+  -> connects stream to Decart realtime using temporary token
 Decart realtime WebRTC
   -> returns transformed video stream
 Browser React app
@@ -26,20 +29,30 @@ Use one local Express server on port `3000`.
 Responsibilities:
 
 - Serve the React app through Vite middleware during development.
+- Expose `GET /api/health`.
 - Expose `POST /api/realtime-token`.
 - Keep `DECART_API_KEY` server-side.
+- Validate requested realtime model ids.
 - Create scoped, short-lived Decart client tokens.
 - Serve the built app in production preview if needed.
 
-Do not add auth, database, deployment, analytics, payments, recording, or unrelated backend features.
+Supported token model ids:
 
-## Recommended Structure
+```ts
+"lucy-2.1" | "lucy-vton-3"
+```
+
+If no model is supplied, the server defaults to `lucy-2.1` for backward compatibility. Unsupported model ids return `400`.
+
+## Current Structure
 
 ```text
 server/
   index.ts
   env.ts
   decartToken.ts
+  localhostCertificate.ts
+  dualProtocolServer.ts
 src/
   main.tsx
   App.tsx
@@ -50,14 +63,18 @@ src/
       VideoPlaceholder.tsx
       StatusBadge.tsx
     ControlPanel/
+      AutoHidingControlPanel.tsx
       ControlPanel.tsx
+      ModelModeSelector.tsx
+      StatusSummary.tsx
       PromptInput.tsx
       ImageUpload.tsx
+      EnhanceToggle.tsx
       SessionControls.tsx
       TimerDisplay.tsx
       ErrorBanner.tsx
   hooks/
-    useLucyRealtime.ts
+    useDecartRealtimeSession.ts
     useSessionTimer.ts
     useObjectUrl.ts
   lib/
@@ -66,65 +83,65 @@ src/
     realtimeState.ts
     errors.ts
     time.ts
+  constants/
+    app.ts
+    models.ts
+    prompts.ts
   types/
     realtime.ts
     decart.ts
-  constants/
-    app.ts
-    prompts.ts
 ```
-
-This structure is guidance for future implementation. Do not create application code until the app-building phase.
 
 ## File Boundaries
 
 ### `src/App.tsx`
 
-Composition only.
+Composition and page-level UI state.
 
 Allowed responsibilities:
 
+- Hold selected model mode.
+- Hold current draft prompt/image/enhance values.
+- Track whether changes are pending.
 - Compose hooks.
 - Compose page-level components.
 - Pass state and callbacks down.
 
 Not allowed:
 
-- WebRTC orchestration.
-- Decart SDK orchestration.
-- Media stream setup.
-- Timer internals.
+- Direct Decart SDK calls.
+- Direct media device calls.
 - Direct token fetch details.
-- Large UI implementation.
+- WebRTC lifecycle internals.
+- Large presentational UI.
 
-Expected shape:
+### `src/constants/models.ts`
 
-```tsx
-export function App() {
-  const lucy = useLucyRealtime();
-  const timer = useSessionTimer(lucy.isRunning);
+Model registry.
 
-  return (
-    <main>
-      <VideoStage />
-      <ControlPanel />
-    </main>
-  );
-}
-```
+Responsibilities:
 
-### `src/hooks/useLucyRealtime.ts`
+- Define supported model modes.
+- Provide labels and mode-specific UI copy.
+- Provide default prompts.
+- Provide image-only behavior for each mode.
+- Keep model-specific branching out of random UI components.
+
+### `src/hooks/useDecartRealtimeSession.ts`
 
 Main lifecycle and orchestration hook.
 
 Responsibilities:
 
+- Validate start/apply input.
+- Get selected Decart realtime model.
 - Start webcam.
-- Fetch realtime client token.
-- Connect to Lucy 2.1 realtime.
-- Store local webcam stream.
+- Fetch scoped realtime client token.
+- Connect to selected Decart realtime model.
+- Store local preview stream.
 - Store remote transformed stream.
-- Apply prompt and image state.
+- Apply prompt/image/enhance updates.
+- Track applying state.
 - Disconnect realtime client.
 - Stop media tracks.
 - Handle SDK events.
@@ -139,69 +156,51 @@ Expose a small API:
   error,
   localStream,
   remoteStream,
+  activeModelMode,
   isRunning,
   isConnecting,
+  isApplying,
   start,
   stop,
   apply,
 }
 ```
 
-### `src/hooks/useSessionTimer.ts`
-
-Responsibilities:
-
-- Count elapsed seconds while running.
-- Reset on stop.
-- Return formatted elapsed label.
-
-### `src/hooks/useObjectUrl.ts`
-
-Responsibilities:
-
-- Create preview object URLs for uploaded images.
-- Revoke previous URLs on change.
-- Revoke URL on unmount.
-
-### `src/lib/media.ts`
-
-Responsibilities:
-
-- Request camera stream using Lucy model constraints.
-- Stop all tracks in a `MediaStream`.
-- Attach a stream to a video element.
-
 ### `src/lib/decartClient.ts`
 
+Browser-safe Decart utilities.
+
 Responsibilities:
 
-- Fetch a token from `POST /api/realtime-token`.
+- Fetch a scoped token from `POST /api/realtime-token`.
 - Create browser Decart client with the temporary token.
-- Return the Lucy realtime model.
+- Resolve `models.realtime(modelMode)`.
+- Connect the webcam stream to Decart realtime.
+- Build SDK `initialState` from the shared realtime payload helper.
 
 This file must never import or read `DECART_API_KEY`.
 
 ### `src/lib/realtimeState.ts`
 
-Responsibilities:
-
-- Build safe Lucy realtime state payloads.
-- Handle prompt-only, image-only, and prompt-plus-image states.
-- Ensure omitted fields are intentional because `realtimeClient.set()` replaces full state.
-
-### `src/lib/errors.ts`
+State payload construction.
 
 Responsibilities:
 
-- Convert low-level errors into user-friendly messages.
-- Keep error text consistent.
+- Build one atomic payload for `realtimeClient.set()`.
+- Preserve prompt/image/enhance together when the user intends them together.
+- For Lucy 2.1 image-only updates, include the default character-reference prompt.
+- For Lucy VTON 3 image-only updates, send the garment image without inventing a prompt.
+- Return `null` when there is no prompt and no image.
 
-### `src/lib/time.ts`
+### `src/lib/media.ts`
+
+Media utilities.
 
 Responsibilities:
 
-- Format elapsed seconds as timer labels.
-- Keep time utilities isolated from UI.
+- Request camera stream using selected model constraints.
+- Stop all tracks in a `MediaStream`.
+- Attach a stream to a video element.
 
 ### `components/`
 
@@ -211,7 +210,7 @@ Components may render state and call callbacks. They should not own Decart, WebR
 
 ## Type Boundaries
 
-Use shared types for realtime status and hook contracts.
+Realtime status:
 
 ```ts
 export type RealtimeStatus =
@@ -226,49 +225,47 @@ export type RealtimeStatus =
   | "error";
 ```
 
+Supported model mode:
+
 ```ts
-export type ApplyLucyStateInput = {
+export type SupportedModelMode = "lucy-2.1" | "lucy-vton-3";
+```
+
+Apply/start input:
+
+```ts
+export type ApplyRealtimeStateInput = {
+  modelMode: SupportedModelMode;
   prompt: string;
   image: File | null;
-  enhance?: boolean;
+  enhance: boolean;
 };
 ```
 
-## UI Component Boundaries
+## State Update Rule
 
-`VideoStage`:
+Decart realtime `set()` replaces the full session state. Omitted fields are cleared.
 
-- Render full-screen output video.
-- Render placeholder when no stream exists.
-- Render status badge.
+Always send all intended state in one call:
 
-`ControlPanel`:
+```ts
+await realtimeClient.set({
+  prompt,
+  image,
+  enhance,
+});
+```
 
-- Own form UI composition.
-- Render prompt input, image upload, session controls, timer, and errors.
-- Receive values and callbacks through props.
+Do not split intended combined state across separate calls.
 
-`PromptInput`:
+## Cleanup Rule
 
-- Textarea and prompt helper text.
+Stop and unmount must:
 
-`ImageUpload`:
+- Disconnect the realtime client.
+- Stop local camera tracks.
+- Clear local and remote stream state.
+- Clear active model state.
+- Reset applying state.
 
-- File input.
-- Preview thumbnail.
-- Clear image button.
-- Supported file validation UI.
-
-`SessionControls`:
-
-- `Start`, `Stop`, and `Apply` buttons.
-- Disabled and loading states.
-
-`TimerDisplay`:
-
-- Display elapsed running time.
-
-`ErrorBanner`:
-
-- Display friendly error messages.
-
+Uploaded images remain browser-only `File` objects and preview object URLs are revoked by `useObjectUrl`.
