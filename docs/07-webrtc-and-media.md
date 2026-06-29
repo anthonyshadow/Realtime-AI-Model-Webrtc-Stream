@@ -9,7 +9,9 @@ Use this for camera, media stream, video attachment, and realtime lifecycle beha
 - `src/hooks/useMediaSession.ts`
 - `src/hooks/useDecartModelSession.ts`
 - `src/hooks/useDecartRealtimeSession.ts`
+- `src/hooks/useSessionRecording.ts`
 - `src/lib/media.ts`
+- `src/lib/recording.ts`
 - `src/lib/decartClient.ts`
 - `src/test/mocks/browserMocks.ts`
 - `src/test/mocks/storybookBrowserMocks.ts`
@@ -27,7 +29,20 @@ Use this for camera, media stream, video attachment, and realtime lifecycle beha
 - `localStream`: the local camera input stream.
 - `displayStream`: the stream shown in `VideoStage`; local mode uses the local stream, while model-backed mode prefers the Decart output stream once available.
 - `modelOutputStream`: the Decart output stream, or `null` for local camera mode.
-- `recordableStream`: a placeholder recording source, currently equal to the safest available display/input stream. Recording is not implemented.
+- `recordableStream`: the stream a recording layer can consume, currently equal to the safest available display/input stream.
+
+## Recording Flow
+
+`useSessionRecording(stream, { sessionMode })` consumes a `MediaStream | null` and records with browser-native `MediaRecorder` when available. It is independent from Decart and does not request media, fetch tokens, connect realtime sessions, or stop source tracks.
+
+The hook owns:
+
+- explicit states: `idle`, `ready`, `recording`, `stopping`, `recorded`, and `error`
+- supported MIME type detection through `MediaRecorder.isTypeSupported()`
+- chunk collection, recorded `Blob`, object URL creation, filename, duration, and size
+- recorder cleanup and object URL revocation on replacement, reset/delete, and unmount
+
+`src/lib/recording.ts` owns pure helpers for MIME preferences, file extensions, timestamped filenames, duration labels, and file size labels. Final recording UI is not implemented yet.
 
 ## Camera Flow
 

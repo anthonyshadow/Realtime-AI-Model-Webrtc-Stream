@@ -63,11 +63,13 @@ tests/
 - `src/hooks/useMediaSession.ts`: camera and microphone acquisition, model camera acquisition, media status, permission/device errors, local input stream ownership, track stopping, and media cleanup.
 - `src/hooks/useDecartModelSession.ts`: Decart realtime model resolution, token/client/connect path, model output stream, realtime apply/reset, Decart errors, and Decart client cleanup.
 - `src/hooks/useDecartRealtimeSession.ts`: compatibility re-export for `useLiveSession`.
+- `src/hooks/useSessionRecording.ts`: model-agnostic `MediaRecorder` lifecycle, recording state, chunk collection, Blob/object URL ownership, elapsed time, filename, size, reset/delete, and URL cleanup.
 - `src/hooks/useSessionTimer.ts`: elapsed time and display label.
 - `src/hooks/useObjectUrl.ts`: object URL creation and revocation.
 - `src/lib/decartClient.ts`: browser-safe token fetch, SDK import, client creation, model resolution, realtime connection, and initial-state mapping.
 - `src/lib/realtimeState.ts`: atomic realtime state payload construction.
 - `src/lib/media.ts`: local media stream, model camera stream, stream stop, and video attachment helpers.
+- `src/lib/recording.ts`: MIME type selection, recording extension mapping, timestamped filename generation, duration formatting, and file size formatting.
 - `src/lib/errors.ts`: user-friendly error mapping.
 - `src/constants/models.ts`: supported model registry and mode-specific UI behavior.
 - `src/constants/sessionModes.ts`: local and model-backed session mode registry.

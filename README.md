@@ -1,5 +1,5 @@
 # Decart Realtime Webcam Studio
-> Last updated: 2026-06-28
+> Last updated: 2026-06-29
 
 Local TypeScript React app for local webcam preview and realtime webcam transformation with Decart.
 
@@ -81,4 +81,4 @@ POST /api/realtime-token
 
 The app opens directly into a full-screen video surface with a compact floating control panel. It supports local camera preview, model selection, prompts, reference/garment uploads, prompt enhancement, Start/Stop/Apply/Reset, status, timer, friendly errors, and panel auto-hide while video is live.
 
-Out of scope unless explicitly requested: auth, database, recording, gallery, payments, analytics, deployment hardening, shared sessions, prompt galleries, cloud uploads, and combined Lucy plus VTON mode.
+The codebase also includes a model-agnostic browser recording service and hook built on `MediaRecorder`. Final recording controls, gallery, cloud uploads, payments, analytics, deployment hardening, shared sessions, prompt galleries, and combined Lucy plus VTON mode remain out of scope unless explicitly requested.

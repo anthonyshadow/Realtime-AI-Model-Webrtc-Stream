@@ -30,6 +30,7 @@ The model-backed modes are independent. Combined Lucy plus VTON mode is not impl
 - Connection status, pending-change status, and session timer.
 - Friendly errors for camera, token, model, image, and connection failures.
 - Live prompt and image updates without reconnecting.
+- Model-agnostic recording helpers and hook for browser-native `MediaRecorder`.
 
 ## Runtime Flow
 
@@ -42,12 +43,13 @@ The model-backed modes are independent. Combined Lucy plus VTON mode is not impl
 7. Browser connects the webcam stream to `models.realtime(modelId)`.
 8. Decart returns a transformed model output stream; the live-session layer chooses the safest display stream.
 9. Apply sends prompt, image, and enhance through the realtime update path that preserves the intended control panel state.
-10. Stop disconnects Decart when present and stops local media tracks.
+10. The recording hook can consume the selected `recordableStream` without owning Decart or stopping source tracks.
+11. Stop disconnects Decart when present and stops local media tracks.
 
 ## Non-Goals
 
 - Combined model mode.
-- Auth, database, recording, payments, gallery, analytics, or admin tools.
+- Auth, database, final recording UI, payments, gallery, analytics, or admin tools.
 - Cloud uploads or persisted user media.
 - Deployment hardening.
 - Live Decart smoke tests in default test commands.

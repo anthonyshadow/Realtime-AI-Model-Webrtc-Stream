@@ -25,6 +25,7 @@ Use this to choose the minimum useful context for a task.
 5. `src/hooks/useLiveSession.ts`
 6. `src/hooks/useDecartModelSession.ts`
 7. `src/hooks/useMediaSession.ts`
+8. `src/hooks/useSessionRecording.ts`
 
 ## Tests
 
