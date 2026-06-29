@@ -13,6 +13,22 @@ const lucyConfig = getModelConfig("lucy-2.1");
 const vtonConfig = getModelConfig("lucy-vton-3");
 const localConfig = getSessionModeConfig("local");
 
+const standbyRecording = {
+  canRecord: false,
+  durationLabel: "00:00",
+  error: null,
+  filename: null,
+  hasRecordableStream: false,
+  isRecording: false,
+  isSupported: true,
+  objectUrl: null,
+  onDeleteRecording: fn(),
+  onStartRecording: fn(),
+  onStopRecording: fn(),
+  sizeLabel: "0 B",
+  state: "idle",
+} satisfies ControlPanelProps["recording"];
+
 const baseArgs = {
   activeSessionMode: null,
   canChangeSessionMode: true,
@@ -24,6 +40,7 @@ const baseArgs = {
   imagePreviewUrl: null,
   isApplying: false,
   isVisible: true,
+  recording: standbyRecording,
   sessionMode: "local",
   prompt: "",
   status: "idle",
@@ -119,9 +136,56 @@ export const ActiveVtonWithPendingChanges: Story = {
     hasPendingChanges: true,
     imageFile: createMockImageFile("cobalt-rain-jacket.png", "image/png"),
     imagePreviewUrl: garmentPreviewUrl,
+    recording: {
+      ...standbyRecording,
+      canRecord: true,
+      hasRecordableStream: true,
+      state: "ready",
+    },
     sessionMode: "lucy-vton-3",
     prompt: "Substitute the current top with a cobalt rain jacket with matte waterproof fabric.",
     status: "generating",
+  },
+};
+
+export const ActiveLocalRecording: Story = {
+  args: {
+    activeSessionMode: "local",
+    canChangeSessionMode: false,
+    elapsedLabel: "00:32",
+    recording: {
+      ...standbyRecording,
+      durationLabel: "00:12",
+      hasRecordableStream: true,
+      isRecording: true,
+      state: "recording",
+    },
+    status: "connected",
+  },
+};
+
+export const LocalClipCaptured: Story = {
+  args: {
+    activeSessionMode: "local",
+    canChangeSessionMode: false,
+    elapsedLabel: "01:02",
+    recording: {
+      ...standbyRecording,
+      canRecord: true,
+      durationLabel: "00:17",
+      filename: "session-local-2026-06-29-16-45.webm",
+      hasRecordableStream: true,
+      objectUrl: "blob:http://localhost/session-local-preview",
+      sizeLabel: "8.4 MB",
+      state: "recorded",
+    },
+    status: "connected",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
   },
 };
 

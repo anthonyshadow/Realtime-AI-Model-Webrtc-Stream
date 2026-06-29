@@ -58,7 +58,7 @@ tests/
 
 ## Ownership Boundaries
 
-- `src/App.tsx`: page composition, selected mode, draft prompt/image/enhance state, pending changes, hook composition.
+- `src/App.tsx`: page composition, selected mode, draft prompt/image/enhance state, pending changes, recording hook composition, and hook wiring.
 - `src/hooks/useLiveSession.ts`: live-session orchestration, local-vs-model branching, central lifecycle status, display stream, local input stream, model output stream, placeholder recordable stream, and cleanup routing.
 - `src/hooks/useMediaSession.ts`: camera and microphone acquisition, model camera acquisition, media status, permission/device errors, local input stream ownership, track stopping, and media cleanup.
 - `src/hooks/useDecartModelSession.ts`: Decart realtime model resolution, token/client/connect path, model output stream, realtime apply/reset, Decart errors, and Decart client cleanup.
@@ -85,7 +85,7 @@ Current UI pieces:
 - `VideoStage`, `VideoPlaceholder`, `StatusBadge`
 - `AutoHidingControlPanel`, `ControlPanel`, `SessionModeSelector`
 - `StatusSummary`, `PromptInput`, `ImageUpload`
-- `EnhanceToggle`, `SessionControls`, `TimerDisplay`, `ErrorBanner`
+- `EnhanceToggle`, `RecordingControls`, `RecordingPlaybackPanel`, `SessionControls`, `TimerDisplay`, `ErrorBanner`
 
 ## State Update Rule
 

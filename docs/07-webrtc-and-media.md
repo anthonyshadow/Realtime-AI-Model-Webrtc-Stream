@@ -35,14 +35,16 @@ Use this for camera, media stream, video attachment, and realtime lifecycle beha
 
 `useSessionRecording(stream, { sessionMode })` consumes a `MediaStream | null` and records with browser-native `MediaRecorder` when available. It is independent from Decart and does not request media, fetch tokens, connect realtime sessions, or stop source tracks.
 
+`App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `RecordingControls` renders the model-agnostic record, stop-recording, timer, and error states inside the control panel. After a clip is captured, `RecordingPlaybackPanel` uses the hook-owned object URL for local playback and download, and calls the hook's delete/reset path to revoke the URL.
+
 The hook owns:
 
 - explicit states: `idle`, `ready`, `recording`, `stopping`, `recorded`, and `error`
 - supported MIME type detection through `MediaRecorder.isTypeSupported()`
 - chunk collection, recorded `Blob`, object URL creation, filename, duration, and size
-- recorder cleanup and object URL revocation on replacement, reset/delete, and unmount
+- recorder cleanup and object URL revocation on new recording, reset/delete, and unmount
 
-`src/lib/recording.ts` owns pure helpers for MIME preferences, file extensions, timestamped filenames, duration labels, and file size labels. Final recording UI is not implemented yet.
+`src/lib/recording.ts` owns pure helpers for MIME preferences, file extensions, timestamped filenames, duration labels, and file size labels. Recording gallery UI is not implemented yet.
 
 ## Camera Flow
 

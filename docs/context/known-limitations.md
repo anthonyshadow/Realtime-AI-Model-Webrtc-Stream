@@ -6,7 +6,7 @@ Use this before expanding scope or promising production behavior.
 ## Current Limitations
 
 - Local MVP only. Deployment hardening is not included.
-- No auth, database, final recording UI, gallery, payments, analytics, sharing, or session history.
+- No auth, database, recording gallery, payments, analytics, sharing, or session history.
 - Uploaded reference and garment images stay in browser memory only.
 - The Decart SDK chunk is large enough that production builds may warn about chunk size.
 - Real webcam, microphone, WebRTC, account access, billing, and generated visual output still require manual browser QA.

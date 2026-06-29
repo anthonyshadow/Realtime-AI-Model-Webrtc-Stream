@@ -9,6 +9,10 @@ import { EnhanceToggle } from "./EnhanceToggle";
 import { ErrorBanner } from "./ErrorBanner";
 import { ImageUpload } from "./ImageUpload";
 import { PromptInput } from "./PromptInput";
+import {
+  RecordingControls,
+  type RecordingControlsProps,
+} from "./RecordingControls";
 import { SessionControls } from "./SessionControls";
 import { SessionModeSelector } from "./SessionModeSelector";
 import { StatusSummary } from "./StatusSummary";
@@ -25,6 +29,7 @@ export type ControlPanelProps = {
   prompt: string;
   imageFile: File | null;
   imagePreviewUrl: string | null;
+  recording: RecordingControlsProps;
   status: RealtimeStatus;
   elapsedLabel: string;
   error: string | null;
@@ -50,6 +55,7 @@ export function ControlPanel({
   prompt,
   imageFile,
   imagePreviewUrl,
+  recording,
   status,
   elapsedLabel,
   error,
@@ -100,6 +106,7 @@ export function ControlPanel({
           value={sessionMode}
           onChange={onSessionModeChange}
         />
+        <RecordingControls {...recording} />
         {modelConfig ? (
           <>
             <PromptInput

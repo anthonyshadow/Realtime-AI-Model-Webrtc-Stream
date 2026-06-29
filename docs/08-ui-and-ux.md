@@ -45,6 +45,8 @@ The panel includes:
 - prompt input with an empty initial value and placeholder-only guidance for model-backed sessions
 - image upload and clear action for model-backed sessions
 - options disclosure with Enhance prompt toggle on by default for model-backed sessions
+- recording controls that remain model-agnostic and only enable once a recordable stream exists
+- compact post-recording playback, download, and delete controls for the latest captured clip
 - Start, Stop, Apply, and Reset actions
 - error banner
 - session timer

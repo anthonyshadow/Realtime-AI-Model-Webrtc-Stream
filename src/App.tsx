@@ -12,6 +12,7 @@ import {
 } from "./constants/sessionModes";
 import { useLiveSession } from "./hooks/useLiveSession";
 import { useObjectUrl } from "./hooks/useObjectUrl";
+import { useSessionRecording } from "./hooks/useSessionRecording";
 import { useSessionTimer } from "./hooks/useSessionTimer";
 import type { ApplyRealtimeStateInput, StartRealtimeSessionInput } from "./types/realtime";
 
@@ -30,10 +31,14 @@ export function App() {
   );
   const sessionMode = draft.sessionMode;
   const activeSessionConfig = getSessionModeConfig(realtime.activeSessionMode ?? sessionMode);
+  const recording = useSessionRecording(realtime.recordableStream, {
+    sessionMode: realtime.activeSessionMode ?? sessionMode,
+  });
   const [formError, setFormError] = useState<string | null>(null);
   const [lastAppliedDraftKey, setLastAppliedDraftKey] = useState<string | null>(null);
   const imagePreviewUrl = useObjectUrl(draft.image);
-  const canChangeSessionMode = !realtime.isRunning && !realtime.isConnecting;
+  const canChangeSessionMode =
+    !realtime.isRunning && !realtime.isConnecting && !recording.isRecording;
 
   const draftKey = useMemo(() => createDraftKey(draft), [draft]);
   const hasPendingChanges =
@@ -97,6 +102,9 @@ export function App() {
 
   const handleStop = () => {
     setLastAppliedDraftKey(null);
+    if (recording.isRecording) {
+      recording.stopRecording();
+    }
     realtime.stop();
   };
 
@@ -135,6 +143,21 @@ export function App() {
         prompt={draft.prompt}
         imageFile={draft.image}
         imagePreviewUrl={imagePreviewUrl}
+        recording={{
+          canRecord: recording.canRecord,
+          durationLabel: recording.durationLabel,
+          error: recording.error,
+          filename: recording.filename,
+          hasRecordableStream: realtime.recordableStream !== null && realtime.isRunning,
+          isRecording: recording.isRecording,
+          isSupported: recording.isSupported,
+          objectUrl: recording.objectUrl,
+          sizeLabel: recording.sizeLabel,
+          state: recording.state,
+          onDeleteRecording: recording.deleteRecording,
+          onStartRecording: recording.startRecording,
+          onStopRecording: recording.stopRecording,
+        }}
         status={realtime.status}
         elapsedLabel={timer.elapsedLabel}
         error={formError ?? realtime.error}

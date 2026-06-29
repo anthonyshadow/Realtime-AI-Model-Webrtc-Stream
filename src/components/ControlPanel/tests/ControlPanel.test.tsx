@@ -3,6 +3,22 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { ControlPanel } from "../ControlPanel";
 
+const baseRecording = {
+  canRecord: false,
+  durationLabel: "00:00",
+  error: null,
+  filename: null,
+  hasRecordableStream: false,
+  isRecording: false,
+  isSupported: true,
+  objectUrl: null,
+  onDeleteRecording: vi.fn(),
+  onStartRecording: vi.fn(),
+  onStopRecording: vi.fn(),
+  sizeLabel: "0 B",
+  state: "idle" as const,
+};
+
 function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0]> = {}) {
   const props = {
     activeSessionMode: null,
@@ -26,6 +42,12 @@ function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0
     onStart: vi.fn(),
     onStop: vi.fn(),
     prompt: "",
+    recording: {
+      ...baseRecording,
+      onDeleteRecording: vi.fn(),
+      onStartRecording: vi.fn(),
+      onStopRecording: vi.fn(),
+    },
     status: "idle" as const,
     ...overrides,
   };
@@ -45,6 +67,7 @@ describe("ControlPanel", () => {
     expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Record" })).toBeDisabled();
   });
 
   it("renders model controls when Lucy is selected", () => {
@@ -84,6 +107,130 @@ describe("ControlPanel", () => {
     expect(screen.getByRole("button", { name: /Local camera/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Lucy VTON 3/i })).toBeDisabled();
+  });
+
+  it("shows recording controls when a local session has a stream", async () => {
+    const user = userEvent.setup();
+    const props = renderControlPanel({
+      canChangeSessionMode: false,
+      recording: {
+        ...baseRecording,
+        canRecord: true,
+        hasRecordableStream: true,
+        onDeleteRecording: vi.fn(),
+        onStartRecording: vi.fn(),
+        onStopRecording: vi.fn(),
+        state: "ready",
+      },
+      status: "connected",
+    });
+
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Record" }));
+
+    expect(props.recording.onStartRecording).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows recording controls when a model session has a stream", () => {
+    renderControlPanel({
+      activeSessionMode: "lucy-2.1",
+      canChangeSessionMode: false,
+      recording: {
+        ...baseRecording,
+        canRecord: true,
+        hasRecordableStream: true,
+        onDeleteRecording: vi.fn(),
+        onStartRecording: vi.fn(),
+        onStopRecording: vi.fn(),
+        state: "ready",
+      },
+      sessionMode: "lucy-2.1",
+      status: "connected",
+    });
+
+    expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
+    expect(screen.getAllByText("Lucy 2.1").length).toBeGreaterThan(0);
+  });
+
+  it("keeps Stop session and Stop recording as separate actions", async () => {
+    const user = userEvent.setup();
+    const props = renderControlPanel({
+      canChangeSessionMode: false,
+      recording: {
+        ...baseRecording,
+        durationLabel: "00:09",
+        hasRecordableStream: true,
+        isRecording: true,
+        onDeleteRecording: vi.fn(),
+        onStartRecording: vi.fn(),
+        onStopRecording: vi.fn(),
+        state: "recording",
+      },
+      status: "connected",
+    });
+
+    await user.click(screen.getByRole("button", { name: "Stop recording" }));
+
+    expect(props.recording.onStopRecording).toHaveBeenCalledTimes(1);
+    expect(props.onStop).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Stop session" }));
+
+    expect(props.onStop).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders recording errors inside the panel", () => {
+    renderControlPanel({
+      recording: {
+        ...baseRecording,
+        error: "Recording failed. Try starting a new recording.",
+        hasRecordableStream: true,
+        isSupported: true,
+        onDeleteRecording: vi.fn(),
+        onStartRecording: vi.fn(),
+        onStopRecording: vi.fn(),
+        state: "error",
+      },
+    });
+
+    expect(screen.getByText("Recording failed. Try starting a new recording.")).toBeInTheDocument();
+  });
+
+  it("renders the recording playback panel after a clip is captured", async () => {
+    const user = userEvent.setup();
+    const props = renderControlPanel({
+      canChangeSessionMode: false,
+      recording: {
+        ...baseRecording,
+        canRecord: true,
+        durationLabel: "00:07",
+        filename: "session-local-2026-06-29-16-45.webm",
+        hasRecordableStream: true,
+        objectUrl: "blob:http://localhost/clip",
+        onDeleteRecording: vi.fn(),
+        onStartRecording: vi.fn(),
+        onStopRecording: vi.fn(),
+        sizeLabel: "11 B",
+        state: "recorded",
+      },
+      status: "connected",
+    });
+
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/clip",
+    );
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
+      "download",
+      "session-local-2026-06-29-16-45.webm",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(props.recording.onDeleteRecording).toHaveBeenCalledTimes(1);
+    expect(props.onStop).not.toHaveBeenCalled();
   });
 
   it("shows useful API or validation errors", () => {

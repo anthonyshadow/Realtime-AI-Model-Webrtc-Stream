@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
 import {
   createMockMediaStream,
@@ -29,8 +29,64 @@ vi.mock("../lib/decartClient", () => ({
   getRealtimeModel: decartMocks.getRealtimeModel,
 }));
 
+class FakeMediaRecorder extends EventTarget {
+  static instances: FakeMediaRecorder[] = [];
+  static supportedMimeTypes = new Set<string>();
+  static isTypeSupported = vi.fn((mimeType: string) =>
+    FakeMediaRecorder.supportedMimeTypes.has(mimeType),
+  );
+
+  mimeType: string;
+  state: RecordingState = "inactive";
+  start = vi.fn(() => {
+    this.state = "recording";
+  });
+  stop = vi.fn(() => {
+    this.state = "inactive";
+  });
+
+  constructor(
+    public stream: MediaStream,
+    options: MediaRecorderOptions = {},
+  ) {
+    super();
+    this.mimeType = options.mimeType ?? "video/webm";
+    FakeMediaRecorder.instances.push(this);
+  }
+
+  emitData(data: Blob) {
+    const event = new Event("dataavailable") as BlobEvent;
+    Object.defineProperty(event, "data", {
+      value: data,
+    });
+    this.dispatchEvent(event);
+  }
+
+  emitError(error = new Error("encoder failed")) {
+    const event = new Event("error") as Event & { error: Error };
+    Object.defineProperty(event, "error", {
+      value: error,
+    });
+    this.dispatchEvent(event);
+  }
+
+  emitStop() {
+    this.dispatchEvent(new Event("stop"));
+  }
+
+  static reset(supportedMimeTypes = ["video/webm;codecs=vp8,opus"]) {
+    FakeMediaRecorder.instances = [];
+    FakeMediaRecorder.supportedMimeTypes = new Set(supportedMimeTypes);
+    FakeMediaRecorder.isTypeSupported.mockClear();
+  }
+}
+
+type RecordingState = "inactive" | "recording" | "paused";
+
 describe("App", () => {
   beforeEach(() => {
+    FakeMediaRecorder.reset();
+    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
     decartMocks.getRealtimeModel.mockResolvedValue({ fps: 24, height: 360, width: 640 });
     decartMocks.fetchRealtimeToken.mockResolvedValue({
       apiKey: "ek_test_client_token",
@@ -53,6 +109,10 @@ describe("App", () => {
     });
   });
 
+  afterEach(() => {
+    vi.stubGlobal("MediaRecorder", undefined);
+  });
+
   it("renders the idle video stage and ready controls", () => {
     render(<App />);
 
@@ -62,6 +122,7 @@ describe("App", () => {
     expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
+    expect(screen.getByText("Start a session and wait for the stream to be ready.")).toBeInTheDocument();
   });
 
   it("starts a local camera session without touching Decart", async () => {
@@ -85,6 +146,185 @@ describe("App", () => {
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
     expect(decartMocks.realtimeClient.disconnect).not.toHaveBeenCalled();
     expect(screen.getByText("Live")).toBeInTheDocument();
+  });
+
+  it("records an active local camera session without touching Decart", async () => {
+    const user = userEvent.setup();
+    const stream = createMockMediaStream({ audio: true });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+
+    await user.click(screen.getByRole("button", { name: "Record" }));
+
+    expect(FakeMediaRecorder.instances).toHaveLength(1);
+    expect(FakeMediaRecorder.instances[0].stream).toBe(stream);
+    expect(FakeMediaRecorder.instances[0].start).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText("Recording").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Stop recording" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
+    expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
+    expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
+  });
+
+  it("stops recording without stopping the live session", async () => {
+    const user = userEvent.setup();
+    const stream = createMockMediaStream({ audio: true });
+    const tracks = stream.getTracks() as MockMediaStreamTrack[];
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Record" }));
+    act(() => {
+      FakeMediaRecorder.instances[0].emitData(new Blob(["clip"], { type: "video/webm" }));
+    });
+    await user.click(screen.getByRole("button", { name: "Stop recording" }));
+
+    expect(FakeMediaRecorder.instances[0].stop).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Stopping recording" })).toBeDisabled();
+
+    act(() => {
+      FakeMediaRecorder.instances[0].emitStop();
+    });
+
+    await waitFor(() => expect(screen.getByText("Clip captured")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
+    for (const track of tracks) {
+      expect(track.stop).not.toHaveBeenCalled();
+    }
+    expect(decartMocks.realtimeClient.disconnect).not.toHaveBeenCalled();
+  });
+
+  it("shows playback, download, and delete after recording stops", async () => {
+    const user = userEvent.setup();
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:http://localhost/local-clip");
+    const stream = createMockMediaStream({ audio: true });
+    const tracks = stream.getTracks() as MockMediaStreamTrack[];
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Record" }));
+
+    act(() => {
+      FakeMediaRecorder.instances[0].emitData(new Blob(["clip"], { type: "video/webm" }));
+    });
+    await user.click(screen.getByRole("button", { name: "Stop recording" }));
+    act(() => {
+      FakeMediaRecorder.instances[0].emitStop();
+    });
+
+    await waitFor(() => expect(screen.getByLabelText("Recording playback")).toBeInTheDocument());
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/local-clip",
+    );
+    const download = screen.getByRole("link", { name: "Download" });
+    expect(download).toHaveAttribute("href", "blob:http://localhost/local-clip");
+    expect(download.getAttribute("download")).toMatch(/^session-local-.*\.webm$/);
+    expect(screen.getByText("4 B")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/local-clip");
+    expect(screen.queryByLabelText("Recording playback")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
+    for (const track of tracks) {
+      expect(track.stop).not.toHaveBeenCalled();
+    }
+  });
+
+  it("stops the recorder before stopping the session when recording is active", async () => {
+    const user = userEvent.setup();
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:http://localhost/stopped-session-clip");
+    const stream = createMockMediaStream({ audio: true });
+    const tracks = stream.getTracks() as MockMediaStreamTrack[];
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Record" }));
+
+    act(() => {
+      FakeMediaRecorder.instances[0].emitData(new Blob(["clip"], { type: "video/webm" }));
+    });
+    await user.click(screen.getByRole("button", { name: "Stop session" }));
+
+    expect(FakeMediaRecorder.instances[0].stop).toHaveBeenCalledTimes(1);
+    for (const track of tracks) {
+      expect(track.stop).toHaveBeenCalledTimes(1);
+    }
+
+    act(() => {
+      FakeMediaRecorder.instances[0].emitStop();
+    });
+
+    await waitFor(() => expect(screen.getByLabelText("Recording playback")).toBeInTheDocument());
+    expect(screen.getByText("Stopped")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record again" })).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
+      "href",
+      "blob:http://localhost/stopped-session-clip",
+    );
+  });
+
+  it("recording a later session replaces the previous object URL safely", async () => {
+    const user = userEvent.setup();
+    vi.mocked(URL.createObjectURL)
+      .mockReturnValueOnce("blob:http://localhost/first-clip")
+      .mockReturnValueOnce("blob:http://localhost/second-clip");
+    const firstStream = createMockMediaStream({ audio: true });
+    const secondStream = createMockMediaStream({ audio: true });
+    mockGetUserMedia
+      .mockResolvedValueOnce(firstStream)
+      .mockResolvedValueOnce(secondStream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Record" }));
+    act(() => {
+      FakeMediaRecorder.instances[0].emitData(new Blob(["first"], { type: "video/webm" }));
+    });
+    await user.click(screen.getByRole("button", { name: "Stop recording" }));
+    act(() => {
+      FakeMediaRecorder.instances[0].emitStop();
+    });
+    await waitFor(() => expect(screen.getByLabelText("Recording playback")).toBeInTheDocument());
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/first-clip",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Stop session" }));
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record again" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Record again" }));
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/first-clip");
+    expect(FakeMediaRecorder.instances[1].stream).toBe(secondStream);
+
+    act(() => {
+      FakeMediaRecorder.instances[1].emitData(new Blob(["second"], { type: "video/webm" }));
+    });
+    await user.click(screen.getByRole("button", { name: "Stop recording" }));
+    act(() => {
+      FakeMediaRecorder.instances[1].emitStop();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+        "src",
+        "blob:http://localhost/second-clip",
+      ),
+    );
   });
 
   it("stops every local camera and microphone track", async () => {
@@ -141,6 +381,46 @@ describe("App", () => {
     );
     expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
     expect(screen.getByText("Live")).toBeInTheDocument();
+  });
+
+  it("shows recording controls for a mocked model-backed stream", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await selectLucyMode(user);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+
+    await user.click(screen.getByRole("button", { name: "Record" }));
+
+    expect(FakeMediaRecorder.instances).toHaveLength(1);
+    expect(decartMocks.fetchRealtimeToken).toHaveBeenCalledWith("lucy-2.1");
+    expect(decartMocks.connectRealtimeModel).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Stop recording" })).toBeEnabled();
+  });
+
+  it("renders recorder errors from the recording hook", async () => {
+    const user = userEvent.setup();
+    const stream = createMockMediaStream({ audio: true });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Start local camera" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Record" }));
+
+    act(() => {
+      FakeMediaRecorder.instances[0].emitError(new Error("encoder failed"));
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Recording failed. Try starting a new recording. (encoder failed)"),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
   });
 
   it("switches to VTON and starts with the VTON draft defaults", async () => {

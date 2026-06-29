@@ -173,7 +173,7 @@ describe("useSessionRecording", () => {
     expect(result.current.sizeLabel).toBe("11 B");
   });
 
-  it("revokes object URLs on delete, reset, replacement, and unmount", () => {
+  it("revokes object URLs on delete, new recording, and unmount", () => {
     const createObjectUrlMock = vi.mocked(URL.createObjectURL);
     createObjectUrlMock
       .mockReturnValueOnce("blob:http://localhost/first-recording")
@@ -220,11 +220,12 @@ describe("useSessionRecording", () => {
       rerender({ currentStream: createMockMediaStream() });
     });
 
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/second-recording");
-    expect(result.current.state).toBe("ready");
-    expect(result.current.objectUrl).toBeNull();
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:http://localhost/second-recording");
+    expect(result.current.state).toBe("recorded");
+    expect(result.current.objectUrl).toBe("blob:http://localhost/second-recording");
 
     recordSingleChunk(result.current.startRecording);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/second-recording");
     act(() => {
       FakeMediaRecorder.instances[2].emitData(new Blob(["third"]));
       result.current.stopRecording();
@@ -295,7 +296,10 @@ describe("useSessionRecording", () => {
     expect(FakeMediaRecorder.instances).toHaveLength(0);
   });
 
-  it("resets readiness when the stream is replaced", () => {
+  it("keeps a recorded clip when the stream is replaced until recording again", () => {
+    vi.mocked(URL.createObjectURL)
+      .mockReturnValueOnce("blob:http://localhost/first-recording")
+      .mockReturnValueOnce("blob:http://localhost/second-recording");
     const firstStream = createMockMediaStream();
     const secondStream = createMockMediaStream({ audio: true });
     const { rerender, result } = renderHook(
@@ -317,20 +321,26 @@ describe("useSessionRecording", () => {
 
     expect(result.current.state).toBe("recorded");
     expect(result.current.blob).toBeInstanceOf(Blob);
+    expect(result.current.objectUrl).toBe("blob:http://localhost/first-recording");
 
     act(() => {
       rerender({ currentStream: secondStream });
     });
 
-    expect(result.current.state).toBe("ready");
-    expect(result.current.blob).toBeNull();
-    expect(result.current.objectUrl).toBeNull();
+    expect(result.current.state).toBe("recorded");
+    expect(result.current.blob).toBeInstanceOf(Blob);
+    expect(result.current.objectUrl).toBe("blob:http://localhost/first-recording");
 
     act(() => {
       result.current.startRecording();
+      FakeMediaRecorder.instances[1].emitData(new Blob(["second"]));
+      result.current.stopRecording();
+      FakeMediaRecorder.instances[1].emitStop();
     });
 
     expect(FakeMediaRecorder.instances[1].stream).toBe(secondStream);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/first-recording");
+    expect(result.current.objectUrl).toBe("blob:http://localhost/second-recording");
   });
 
   it("finalizes the active recorder when the source stream disappears", () => {
@@ -360,6 +370,45 @@ describe("useSessionRecording", () => {
 
     expect(result.current.state).toBe("recorded");
     expect(result.current.blob?.size).toBe(4);
+  });
+
+  it("deleting a recorded clip after the stream disappears returns to idle", () => {
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:http://localhost/stopped-recording");
+    const stream = createMockMediaStream();
+    const { rerender, result } = renderHook(
+      ({ currentStream }) =>
+        useSessionRecording(currentStream, { sessionMode: "local" }),
+      {
+        initialProps: {
+          currentStream: stream as MediaStream | null,
+        },
+      },
+    );
+
+    act(() => {
+      result.current.startRecording();
+      FakeMediaRecorder.instances[0].emitData(new Blob(["clip"]));
+      result.current.stopRecording();
+      FakeMediaRecorder.instances[0].emitStop();
+    });
+
+    expect(result.current.state).toBe("recorded");
+    expect(result.current.objectUrl).toBe("blob:http://localhost/stopped-recording");
+
+    act(() => {
+      rerender({ currentStream: null });
+    });
+
+    expect(result.current.state).toBe("recorded");
+    expect(result.current.objectUrl).toBe("blob:http://localhost/stopped-recording");
+
+    act(() => {
+      result.current.deleteRecording();
+    });
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/stopped-recording");
+    expect(result.current.state).toBe("idle");
+    expect(result.current.objectUrl).toBeNull();
   });
 
   it("finalizes the active recorder when the source stream is replaced while recording", () => {

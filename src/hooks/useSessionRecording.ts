@@ -354,6 +354,10 @@ export function useSessionRecording(
       return;
     }
 
+    if (stateRef.current === "recorded") {
+      return;
+    }
+
     resetToCurrentStreamState();
   }, [resetToCurrentStreamState, stopRecording, stream]);
 
