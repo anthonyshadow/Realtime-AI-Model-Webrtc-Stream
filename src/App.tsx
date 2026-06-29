@@ -10,7 +10,7 @@ import {
   isModelBackedSessionMode,
   type SessionModeId,
 } from "./constants/sessionModes";
-import { useDecartRealtimeSession } from "./hooks/useDecartRealtimeSession";
+import { useLiveSession } from "./hooks/useLiveSession";
 import { useObjectUrl } from "./hooks/useObjectUrl";
 import { useSessionTimer } from "./hooks/useSessionTimer";
 import type { ApplyRealtimeStateInput, StartRealtimeSessionInput } from "./types/realtime";
@@ -23,7 +23,7 @@ type ControlPanelDraft = {
 };
 
 export function App() {
-  const realtime = useDecartRealtimeSession();
+  const realtime = useLiveSession();
   const timer = useSessionTimer(realtime.isRunning);
   const [draft, setDraft] = useState<ControlPanelDraft>(() =>
     createControlPanelDraft(DEFAULT_SESSION_MODE),
@@ -120,9 +120,9 @@ export function App() {
   return (
     <main className="min-h-screen overflow-hidden bg-neutral-950 text-white">
       <VideoStage
+        displayStream={realtime.displayStream}
         placeholderDescription={activeSessionConfig.videoDescription}
         placeholderEyebrow={activeSessionConfig.videoEyebrow}
-        remoteStream={realtime.remoteStream}
         status={realtime.status}
       />
       <AutoHidingControlPanel

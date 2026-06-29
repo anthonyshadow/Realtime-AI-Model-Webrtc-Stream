@@ -1,5 +1,5 @@
 # Project Overview
-> Last updated: 2026-06-28
+> Last updated: 2026-06-29
 
 Use this for product scope and quick orientation. For implementation boundaries, read [02-architecture.md](02-architecture.md).
 
@@ -40,7 +40,7 @@ The model-backed modes are independent. Combined Lucy plus VTON mode is not impl
 5. Express creates a short-lived Decart client token with server-side `DECART_API_KEY`.
 6. Browser creates a Decart client with the temporary token.
 7. Browser connects the webcam stream to `models.realtime(modelId)`.
-8. Decart returns a transformed remote stream for the video stage.
+8. Decart returns a transformed model output stream; the live-session layer chooses the safest display stream.
 9. Apply sends prompt, image, and enhance through the realtime update path that preserves the intended control panel state.
 10. Stop disconnects Decart when present and stops local media tracks.
 

@@ -5,39 +5,42 @@ import { StatusBadge } from "./StatusBadge";
 import { VideoPlaceholder } from "./VideoPlaceholder";
 
 type VideoStageProps = {
+  displayStream: MediaStream | null;
   placeholderDescription: string;
   placeholderEyebrow: string;
-  remoteStream: MediaStream | null;
   status: RealtimeStatus;
 };
 
 export function VideoStage({
+  displayStream,
   placeholderDescription,
   placeholderEyebrow,
-  remoteStream,
   status,
 }: VideoStageProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    attachStreamToVideo(videoRef.current, remoteStream);
+    attachStreamToVideo(videoRef.current, displayStream);
 
     return () => {
       attachStreamToVideo(videoRef.current, null);
     };
-  }, [remoteStream]);
+  }, [displayStream]);
 
   return (
     <section className="fixed inset-0 bg-neutral-950">
       <video
         ref={videoRef}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-contain"
         autoPlay
         muted
         playsInline
       />
-      {!remoteStream ? (
-        <VideoPlaceholder description={placeholderDescription} eyebrow={placeholderEyebrow} />
+      {!displayStream ? (
+        <VideoPlaceholder
+          description={placeholderDescription}
+          eyebrow={placeholderEyebrow}
+        />
       ) : null}
       <div className="absolute left-5 top-5">
         <StatusBadge status={status} />

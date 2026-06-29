@@ -1,5 +1,5 @@
 # Agent Read Order
-> Last updated: 2026-06-28
+> Last updated: 2026-06-29
 
 Use this to choose the minimum useful context for a task.
 
@@ -22,7 +22,9 @@ Use this to choose the minimum useful context for a task.
 2. [../07-webrtc-and-media.md](../07-webrtc-and-media.md)
 3. `server/decartToken.ts`
 4. `src/lib/decartClient.ts`
-5. `src/hooks/useDecartRealtimeSession.ts`
+5. `src/hooks/useLiveSession.ts`
+6. `src/hooks/useDecartModelSession.ts`
+7. `src/hooks/useMediaSession.ts`
 
 ## Tests
 

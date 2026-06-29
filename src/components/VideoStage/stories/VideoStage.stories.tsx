@@ -15,14 +15,14 @@ const meta = {
     placeholderDescription:
       "Your live camera preview appears here after the browser grants camera and microphone access.",
     placeholderEyebrow: "Local camera",
-    remoteStream: null,
+    displayStream: null,
     status: "idle",
     streamPreset: "none",
   },
   render: ({ streamPreset, ...args }) => (
     <VideoStage
       {...args}
-      remoteStream={
+      displayStream={
         streamPreset === "mock"
           ? createStorybookMediaStream({
               accent: "#34d399",

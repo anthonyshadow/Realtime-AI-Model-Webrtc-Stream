@@ -1,5 +1,5 @@
 # Architecture
-> Last updated: 2026-06-28
+> Last updated: 2026-06-29
 
 Use this for source boundaries and runtime ownership. It reflects the current source tree after the documentation and scaffold migration.
 
@@ -59,7 +59,10 @@ tests/
 ## Ownership Boundaries
 
 - `src/App.tsx`: page composition, selected mode, draft prompt/image/enhance state, pending changes, hook composition.
-- `src/hooks/useDecartRealtimeSession.ts`: local camera start, model-backed token fetch orchestration, realtime connection, apply, stop, errors, streams, and lifecycle cleanup.
+- `src/hooks/useLiveSession.ts`: live-session orchestration, local-vs-model branching, central lifecycle status, display stream, local input stream, model output stream, placeholder recordable stream, and cleanup routing.
+- `src/hooks/useMediaSession.ts`: camera and microphone acquisition, model camera acquisition, media status, permission/device errors, local input stream ownership, track stopping, and media cleanup.
+- `src/hooks/useDecartModelSession.ts`: Decart realtime model resolution, token/client/connect path, model output stream, realtime apply/reset, Decart errors, and Decart client cleanup.
+- `src/hooks/useDecartRealtimeSession.ts`: compatibility re-export for `useLiveSession`.
 - `src/hooks/useSessionTimer.ts`: elapsed time and display label.
 - `src/hooks/useObjectUrl.ts`: object URL creation and revocation.
 - `src/lib/decartClient.ts`: browser-safe token fetch, SDK import, client creation, model resolution, realtime connection, and initial-state mapping.

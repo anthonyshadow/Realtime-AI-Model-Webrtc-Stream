@@ -1,16 +1,33 @@
 # WebRTC And Media
-> Last updated: 2026-06-28
+> Last updated: 2026-06-29
 
 Use this for camera, media stream, video attachment, and realtime lifecycle behavior.
 
 ## Source Areas
 
+- `src/hooks/useLiveSession.ts`
+- `src/hooks/useMediaSession.ts`
+- `src/hooks/useDecartModelSession.ts`
 - `src/hooks/useDecartRealtimeSession.ts`
 - `src/lib/media.ts`
 - `src/lib/decartClient.ts`
 - `src/test/mocks/browserMocks.ts`
 - `src/test/mocks/storybookBrowserMocks.ts`
 - `tests/e2e/app.spec.ts`
+
+## Runtime Ownership
+
+`useLiveSession()` is the browser-side lifecycle boundary. It branches on the selected session mode before any Decart-specific work:
+
+- Local camera sessions call `useMediaSession().startLocalCamera()` and never import or call the Decart client path.
+- Model-backed sessions call `useDecartModelSession().start()` and use `useMediaSession().startModelCamera()` for the local input stream.
+
+`useLiveSession()` exposes:
+
+- `localStream`: the local camera input stream.
+- `displayStream`: the stream shown in `VideoStage`; local mode uses the local stream, while model-backed mode prefers the Decart output stream once available.
+- `modelOutputStream`: the Decart output stream, or `null` for local camera mode.
+- `recordableStream`: a placeholder recording source, currently equal to the safest available display/input stream. Recording is not implemented.
 
 ## Camera Flow
 
@@ -29,9 +46,9 @@ After permission succeeds, it waits briefly for video track dimensions. If dimen
 Stop must:
 
 - increment the active request id
-- disconnect any realtime client
-- stop local media tracks
-- clear local and remote streams
+- disconnect any Decart realtime client when a model session owns one
+- stop local media tracks through `useMediaSession()`
+- clear local, display, and model output streams
 - clear the active session mode
 - reset applying state
 - set status to `disconnected`

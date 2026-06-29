@@ -1,5 +1,5 @@
 # UI And UX
-> Last updated: 2026-06-28
+> Last updated: 2026-06-29
 
 Use this before modifying the video stage, floating control panel, or component states.
 
@@ -23,7 +23,7 @@ While connecting:
 
 While running:
 
-- show transformed remote stream when available
+- show the live display stream; model-backed sessions prefer transformed output when available
 - timer counts active session time
 - prompt and image can be updated with Apply for model-backed sessions
 - panel may auto-hide so video remains primary

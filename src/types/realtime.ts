@@ -27,11 +27,13 @@ export type StartRealtimeSessionInput =
       sessionMode: SupportedModelMode;
     });
 
-export type UseDecartRealtimeSessionReturn = {
+export type UseLiveSessionReturn = {
   status: RealtimeStatus;
   error: string | null;
   localStream: MediaStream | null;
-  remoteStream: MediaStream | null;
+  displayStream: MediaStream | null;
+  modelOutputStream: MediaStream | null;
+  recordableStream: MediaStream | null;
   activeSessionMode: SessionModeId | null;
   isRunning: boolean;
   isConnecting: boolean;
@@ -41,3 +43,5 @@ export type UseDecartRealtimeSessionReturn = {
   apply: (input: ApplyRealtimeStateInput) => Promise<boolean>;
   resetRealtimeState: () => Promise<boolean>;
 };
+
+export type UseDecartRealtimeSessionReturn = UseLiveSessionReturn;
