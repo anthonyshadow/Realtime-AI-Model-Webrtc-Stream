@@ -69,8 +69,8 @@ The dock uses `useAutoHideOverlay()` with the same interaction contract as the c
 - show on keyboard interaction
 - show and remain visible while focus is inside
 - show and remain visible while the pointer is inside
-- hide after inactivity only when auto-hide is enabled and no critical state is active
-- force visible while recording, stopping, or showing a recording error
+- hide after inactivity while the camera/session is active, including while recording or stopping
+- force visible while showing a recording error
 
 Desktop behavior:
 
@@ -235,7 +235,8 @@ Unit and component coverage should protect:
 - recording controls are not rendered inside the control panel
 - dock hidden/off, ready, recording, stopping, recorded, error, expanded review, and collapsed review states
 - focus and keyboard interaction keep overlays visible
-- forced visibility while recording or in critical errors
+- auto-hide while recording after inactivity, with visibility restored by mouse, touch, keyboard, focus, or pointer interaction
+- forced visibility in critical errors
 - object URL creation and revocation on discard, replacement, and unmount
 - no duplicate local camera request during model release when the existing local stream is live
 

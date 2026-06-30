@@ -17,10 +17,10 @@ describe("model registry", () => {
     expect(getModelConfig("lucy-vton-3").imageOnlyPrompt).toBeNull();
   });
 
-  it("starts prompts empty and enhanced prompt enabled for all modes", () => {
+  it("starts prompts empty and prompt enhancement disabled for all modes", () => {
     for (const modelMode of MODEL_MODE_IDS) {
       expect(getModelConfig(modelMode).defaultPrompt).toBe("");
-      expect(getModelConfig(modelMode).enhanceDefault).toBe(true);
+      expect(getModelConfig(modelMode).enhanceDefault).toBe(false);
     }
   });
 

@@ -204,7 +204,7 @@ export const StartsVtonImageOnlySession: Story = {
       const sets = storyWindow?.__STORYBOOK_DECART_EVENTS__?.sets ?? [];
 
       expect(sets[sets.length - 1]).toEqual({
-        enhance: true,
+        enhance: false,
         imageName: "replacement-jacket.png",
         prompt: null,
       });

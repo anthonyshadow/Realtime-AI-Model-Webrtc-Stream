@@ -50,7 +50,7 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
     .toEqual({
       prompt: "Substitute the current top with a cobalt rain jacket",
-      enhance: true,
+      enhance: false,
       imageName: "jacket.png",
     });
 
@@ -61,7 +61,7 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
     .toEqual({
       prompt: "Substitute the current top with a matte black shell",
-      enhance: true,
+      enhance: false,
       imageName: "jacket.png",
     });
 
@@ -128,7 +128,7 @@ test("starts Lucy 2.1 through the Decart path", async ({ page }) => {
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
     .toEqual({
       prompt: "Make the scene cinematic",
-      enhance: true,
+      enhance: false,
       imageName: null,
     });
 });
@@ -155,7 +155,7 @@ test("applies Lucy prompt, image, and enhance changes atomically", async ({ page
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
     .toEqual({
       prompt: "Make the scene cinematic",
-      enhance: false,
+      enhance: true,
       imageName: "portrait.png",
     });
 
@@ -167,7 +167,7 @@ test("applies Lucy prompt, image, and enhance changes atomically", async ({ page
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
     .toEqual({
       prompt: "Make the scene neon",
-      enhance: true,
+      enhance: false,
       imageName: "portrait.png",
     });
 
@@ -179,7 +179,7 @@ test("applies Lucy prompt, image, and enhance changes atomically", async ({ page
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
     .toEqual({
       prompt: "Make the scene neon",
-      enhance: true,
+      enhance: false,
       imageName: null,
     });
 });
@@ -204,7 +204,7 @@ test("reset clears prompt, reference image, file input, and mocked realtime stat
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.initialStates.at(-1)))
     .toEqual({
       prompt: "Make the scene cinematic",
-      enhance: true,
+      enhance: false,
       imageName: "portrait.png",
     });
 
@@ -228,7 +228,7 @@ test("reset clears prompt, reference image, file input, and mocked realtime stat
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.sets.at(-1)))
     .toEqual({
       prompt: "After reset prompt",
-      enhance: true,
+      enhance: false,
       imageName: null,
     });
 });

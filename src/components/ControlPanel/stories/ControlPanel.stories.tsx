@@ -118,7 +118,7 @@ export const IdleLucyAdvancedExpanded: Story = {
     await expect(
       canvas.getByText("Use prompt enhancement when you want Decart to expand your wording."),
     ).toBeVisible();
-    await expect(canvas.getByRole("checkbox", { name: /Enhance prompt/i })).toBeChecked();
+    await expect(canvas.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
   },
 };
 

@@ -86,7 +86,7 @@ describe("FloatingRecordingDock", () => {
     expect(dock).toHaveClass("opacity-100");
   });
 
-  it("remains visible while recording", () => {
+  it("hides while recording and returns on keyboard activity", () => {
     renderFloatingRecordingDock({
       durationLabel: "00:12",
       isRecording: true,
@@ -94,7 +94,11 @@ describe("FloatingRecordingDock", () => {
     });
     const dock = screen.getByRole("region", { name: "Recording dock" });
 
-    advanceTimersByTime(10_000);
+    advanceTimersByTime(3000);
+
+    expect(dock).toHaveClass("opacity-0");
+
+    dispatchWindowEvent(new KeyboardEvent("keydown", { key: "Space" }));
 
     expect(dock).toHaveClass("opacity-100");
     expect(screen.getByText("REC")).toBeInTheDocument();

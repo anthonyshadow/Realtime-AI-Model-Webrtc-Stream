@@ -372,6 +372,7 @@ describe("App", () => {
     render(<App />);
 
     await selectLucyMode(user);
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
     expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
@@ -398,7 +399,7 @@ describe("App", () => {
           modelMode: "lucy-2.1",
           prompt: "Make the scene cinematic",
           image: null,
-          enhance: true,
+          enhance: false,
         }),
         modelLabel: "Lucy 2.1",
       }),
@@ -572,6 +573,7 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: /VTON/i }));
     expect(screen.getByLabelText(/Garment prompt/i)).toHaveValue("");
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     await user.type(screen.getByLabelText(/Garment prompt/i), "Substitute the top with denim");
     expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
     expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
@@ -589,7 +591,7 @@ describe("App", () => {
           modelMode: "lucy-vton-3",
           prompt: "Substitute the top with denim",
           image: null,
-          enhance: true,
+          enhance: false,
         }),
         modelLabel: "Lucy VTON 3",
       }),
@@ -628,7 +630,7 @@ describe("App", () => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene neon",
         image: null,
-        enhance: true,
+        enhance: false,
       });
     });
     expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
@@ -649,7 +651,7 @@ describe("App", () => {
         initialState: expect.objectContaining({
           prompt: "Make the scene cinematic",
           image: file,
-          enhance: true,
+          enhance: false,
         }),
       }),
     );
@@ -662,7 +664,7 @@ describe("App", () => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene neon",
         image: file,
-        enhance: true,
+        enhance: false,
       });
     });
     expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
@@ -687,7 +689,7 @@ describe("App", () => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene cinematic",
         image: secondFile,
-        enhance: true,
+        enhance: false,
       });
     });
     expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
@@ -711,7 +713,7 @@ describe("App", () => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene cinematic",
         image: file,
-        enhance: false,
+        enhance: true,
       });
     });
     expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
@@ -735,13 +737,13 @@ describe("App", () => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "Make the scene cinematic",
         image: null,
-        enhance: true,
+        enhance: false,
       });
     });
     expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
   });
 
-  it("can manually disable enhanced prompt for a session", async () => {
+  it("can manually enable enhanced prompt for a session", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -754,7 +756,7 @@ describe("App", () => {
       expect(decartMocks.connectRealtimeModel).toHaveBeenCalledWith(
         expect.objectContaining({
           initialState: expect.objectContaining({
-            enhance: false,
+            enhance: true,
           }),
         }),
       );
@@ -837,7 +839,7 @@ describe("App", () => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
         prompt: "After reset prompt",
         image: null,
-        enhance: true,
+        enhance: false,
       });
     });
     expect(decartMocks.realtimeClient.set).not.toHaveBeenCalledWith(

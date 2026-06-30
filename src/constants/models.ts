@@ -46,7 +46,7 @@ export const MODEL_REGISTRY: Record<SupportedModelMode, ModelModeConfig> = {
     imageHelperText: "Best as a clear, front-facing head-and-shoulders portrait.",
     imageAltText: "Reference portrait preview",
     imageActionText: "Use portrait",
-    enhanceDefault: true,
+    enhanceDefault: false,
   },
   "lucy-vton-3": {
     id: "lucy-vton-3",
@@ -64,7 +64,7 @@ export const MODEL_REGISTRY: Record<SupportedModelMode, ModelModeConfig> = {
     imageHelperText: "Best as a clean clothing item on a plain background, 512px or larger.",
     imageAltText: "Garment preview",
     imageActionText: "Use garment",
-    enhanceDefault: true,
+    enhanceDefault: false,
   },
 };
 

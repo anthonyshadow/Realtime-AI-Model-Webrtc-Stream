@@ -79,6 +79,22 @@ describe("AutoHidingControlPanel", () => {
     advanceTimersByTime(3000);
 
     expect(panel).toHaveClass("opacity-0");
+
+    dispatchWindowEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+
+    expect(panel).toHaveClass("opacity-100");
+  });
+
+  it("auto-hides while a model session is reconnecting", () => {
+    renderAutoHidingControlPanel({
+      canChangeSessionMode: false,
+      status: "reconnecting",
+    });
+    const panel = screen.getByRole("complementary", { name: "Live studio controls" });
+
+    advanceTimersByTime(3000);
+
+    expect(panel).toHaveClass("opacity-0");
   });
 
   it("keeps the control panel visible for critical errors", () => {

@@ -47,14 +47,15 @@ export function FloatingRecordingDock({
   const isStopping = state === "stopping";
   const hasRecordedClip = state === "recorded";
   const hasRecordingArtifact = hasRecordedClip || Boolean(filename || objectUrl);
-  const hasCriticalRecordingState = isRecording || isStopping || state === "error";
+  const hasRecordingError = state === "error";
+  const hasCriticalRecordingState = isRecording || isStopping || hasRecordingError;
   const shouldRenderDock =
     isSessionActive || hasCriticalRecordingState || hasRecordingArtifact;
   const [isReviewExpanded, setIsReviewExpanded] = useState(true);
 
   const { isVisible, rootProps } = useAutoHideOverlay<HTMLDivElement>({
-    enabled: isSessionActive && !hasCriticalRecordingState,
-    forceVisible: hasCriticalRecordingState,
+    enabled: isSessionActive && !hasRecordingError,
+    forceVisible: hasRecordingError,
     hideDelayMs: RECORDING_DOCK_IDLE_MS,
   });
 

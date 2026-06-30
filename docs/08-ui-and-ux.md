@@ -59,7 +59,7 @@ The model controls section appears only for model-backed sessions and includes:
 
 - prompt input with an empty initial value and placeholder-only guidance for model-backed sessions
 - image upload and clear action for model-backed sessions
-- options disclosure with Enhance prompt toggle on by default for model-backed sessions
+- options disclosure with Enhance prompt toggle off by default for model-backed sessions
 
 The actions and feedback areas include:
 
@@ -80,7 +80,8 @@ The dock:
 - receives recording state and callbacks from `App.tsx`
 - remains model-agnostic and does not know about Decart
 - uses `useAutoHideOverlay` for mouse, touch, keyboard, focus, inactivity, and forced visibility behavior
-- stays visible while recording or while a critical recording error is present
+- auto-hides after inactivity while the camera/session is active, including during recording
+- stays visible while a critical recording error is present
 - keeps Record and Stop recording visually separate from the main session Start/Stop action
 - shows timer, ready/waiting/error copy, REC state, model-ended review copy, and the latest captured clip review/download/discard controls
 - opens recorded clips in an expandable review surface with embedded playback and a compact collapsed state
@@ -97,6 +98,6 @@ Overlay controls should:
 - appear on mouse movement, touch interaction, keyboard interaction, or focus
 - hide after inactivity only while an active session is safe to auto-hide
 - remain visible while the user is focused inside or pointing inside the overlay
-- force visibility for critical states such as errors or active recording
+- force visibility for critical states such as errors
 - stay visible for setup, connecting, stopped, and error recovery states
 - respect reduced-motion preferences by avoiding transform-heavy overlay transitions

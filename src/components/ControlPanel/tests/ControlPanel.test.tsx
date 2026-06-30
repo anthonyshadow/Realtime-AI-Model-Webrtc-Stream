@@ -76,7 +76,7 @@ describe("ControlPanel", () => {
   });
 
   it("renders model controls when Lucy is selected", () => {
-    renderControlPanel({ enhancePrompt: true, sessionMode: "lucy-2.1" });
+    renderControlPanel({ sessionMode: "lucy-2.1" });
 
     expect(screen.getAllByText("Lucy 2.1").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Model controls" })).toBeInTheDocument();
@@ -88,14 +88,14 @@ describe("ControlPanel", () => {
       "placeholder",
       "Describe one clear transformation",
     );
-    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     expect(screen.getByLabelText("Reference portrait")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
   });
 
   it("keeps advanced model controls collapsed until opened", async () => {
     const user = userEvent.setup();
-    renderControlPanel({ enhancePrompt: true, sessionMode: "lucy-2.1" });
+    renderControlPanel({ sessionMode: "lucy-2.1" });
 
     const disclosure = screen.getByText("Options").closest("details");
 
@@ -104,7 +104,7 @@ describe("ControlPanel", () => {
     await user.click(screen.getByText("Options"));
 
     expect(disclosure).toHaveAttribute("open");
-    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     expect(
       screen.getByText("Use prompt enhancement when you want Decart to expand your wording."),
     ).toBeInTheDocument();
@@ -180,15 +180,12 @@ describe("ControlPanel", () => {
 
   it("passes enhance toggle changes upward", async () => {
     const user = userEvent.setup();
-    const props = renderControlPanel({
-      enhancePrompt: true,
-      sessionMode: "lucy-2.1",
-    });
+    const props = renderControlPanel({ sessionMode: "lucy-2.1" });
 
     await user.click(screen.getByText("Options"));
     await user.click(screen.getByRole("checkbox", { name: /Enhance prompt/i }));
 
-    expect(props.onEnhancePromptChange).toHaveBeenCalledWith(false);
+    expect(props.onEnhancePromptChange).toHaveBeenCalledWith(true);
   });
 
   it("keeps recording controls out of the control panel during active sessions", () => {
