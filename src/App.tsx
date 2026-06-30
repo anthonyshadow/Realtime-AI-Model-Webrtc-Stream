@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { AutoHidingControlPanel } from "./components/ControlPanel/AutoHidingControlPanel";
+import { FloatingRecordingDock } from "./components/RecordingDock/FloatingRecordingDock";
 import { VideoStage } from "./components/VideoStage/VideoStage";
 import {
   getModelConfig,
@@ -151,22 +152,6 @@ export function App() {
         prompt={draft.prompt}
         imageFile={draft.image}
         imagePreviewUrl={imagePreviewUrl}
-        recording={{
-          canRecord: recording.canRecord,
-          durationLabel: recording.durationLabel,
-          error: recording.error,
-          filename: recording.filename,
-          hasRecordableStream,
-          isRecording: recording.isRecording,
-          isSupported: recording.isSupported,
-          objectUrl: recording.objectUrl,
-          sizeLabel: recording.sizeLabel,
-          standbyMessage: recordingStandbyMessage,
-          state: recording.state,
-          onDeleteRecording: recording.deleteRecording,
-          onStartRecording: recording.startRecording,
-          onStopRecording: recording.stopRecording,
-        }}
         status={realtime.status}
         elapsedLabel={timer.elapsedLabel}
         error={formError ?? realtime.error}
@@ -179,6 +164,23 @@ export function App() {
         onStart={handleStart}
         onStop={handleStop}
         onApply={handleApply}
+      />
+      <FloatingRecordingDock
+        canRecord={recording.canRecord}
+        durationLabel={recording.durationLabel}
+        error={recording.error}
+        filename={recording.filename}
+        hasRecordableStream={hasRecordableStream}
+        isRecording={recording.isRecording}
+        isSessionActive={realtime.isRunning}
+        isSupported={recording.isSupported}
+        objectUrl={recording.objectUrl}
+        sizeLabel={recording.sizeLabel}
+        standbyMessage={recordingStandbyMessage}
+        state={recording.state}
+        onDeleteRecording={recording.deleteRecording}
+        onStartRecording={recording.startRecording}
+        onStopRecording={recording.stopRecording}
       />
     </main>
   );

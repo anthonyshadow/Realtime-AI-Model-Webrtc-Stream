@@ -1,5 +1,5 @@
 # Architecture
-> Last updated: 2026-06-29
+> Last updated: 2026-06-30
 
 Use this for source boundaries and runtime ownership. It reflects the current source tree after the documentation and scaffold migration.
 
@@ -63,6 +63,10 @@ src/
       *.tsx
       stories/
       tests/
+    RecordingDock/
+      *.tsx
+      stories/
+      tests/
     VideoStage/
       *.tsx
       stories/
@@ -84,6 +88,7 @@ tests/
 - `src/hooks/useDecartModelSession.ts`: Decart realtime model resolution, token/client/connect path, model output stream, realtime apply/reset, Decart errors, and Decart client cleanup.
 - `src/hooks/useDecartRealtimeSession.ts`: compatibility re-export for `useLiveSession`.
 - `src/hooks/useSessionRecording.ts`: model-agnostic `MediaRecorder` lifecycle, recording state, chunk collection, Blob/object URL ownership, elapsed time, filename, size, reset/delete, and URL cleanup.
+- `src/hooks/useAutoHideOverlay.ts`: reusable overlay visibility lifecycle for mouse, touch, keyboard, focus, inactivity timers, forced visibility, and cleanup.
 - `src/hooks/useSessionTimer.ts`: elapsed time and display label.
 - `src/hooks/useObjectUrl.ts`: object URL creation and revocation.
 - `src/lib/decartClient.ts`: browser-safe token fetch, SDK import, client creation, model resolution, realtime connection, and initial-state mapping.
@@ -106,7 +111,8 @@ Current UI pieces:
 - `VideoStage`, `VideoPlaceholder`, `StatusBadge`
 - `AutoHidingControlPanel`, `ControlPanel`, `SessionModeSelector`
 - `StatusSummary`, `PromptInput`, `ImageUpload`
-- `EnhanceToggle`, `RecordingControls`, `RecordingPlaybackPanel`, `SessionControls`, `TimerDisplay`, `ErrorBanner`
+- `EnhanceToggle`, `SessionControls`, `TimerDisplay`, `ErrorBanner`
+- `FloatingRecordingDock`, `RecordingDockButton`, `RecordingStatusBadge`, `RecordingPlaybackPanel`
 
 ## State Update Rule
 

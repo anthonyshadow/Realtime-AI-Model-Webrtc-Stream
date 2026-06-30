@@ -1,5 +1,5 @@
 # WebRTC And Media
-> Last updated: 2026-06-29
+> Last updated: 2026-06-30
 
 Use this for camera, media stream, video attachment, and realtime lifecycle behavior.
 
@@ -48,7 +48,7 @@ The branch is enforced in `useLiveSession().start()`: local input returns throug
 
 `useSessionRecording(stream, { sessionMode })` consumes a `MediaStream | null` and records with browser-native `MediaRecorder` when available. It is independent from Decart and does not request media, fetch tokens, connect realtime sessions, or stop source tracks.
 
-`App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `RecordingControls` renders the model-agnostic record, stop-recording, timer, availability, and error states inside the control panel. Model-backed sessions keep recording disabled with "Waiting for model output before recording." until the Decart output stream has video. After a clip is captured, `RecordingPlaybackPanel` uses the hook-owned object URL for local playback and download, and calls the hook's delete/reset path to revoke the URL.
+`App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `FloatingRecordingDock` renders the model-agnostic record, stop-recording, timer, availability, and error states outside the control panel as a bottom-center transport. Model-backed sessions keep recording disabled with "Waiting for model output before recording." until the Decart output stream has video. After a clip is captured, the dock's `RecordingPlaybackPanel` uses the hook-owned object URL for local playback and download, and calls the hook's delete/reset path to revoke the URL.
 
 `src/lib/streamComposition.ts` owns recordable stream selection:
 
@@ -82,7 +82,7 @@ State meanings:
 
 Object URLs are in-memory only. `useSessionRecording` revokes the previous object URL when a new recording starts, when delete/reset runs, when a URL is replaced, and on unmount. No backend upload, cloud persistence, or recording gallery exists in the MVP.
 
-Playback uses the recorded object URL in `RecordingPlaybackPanel`. Download is a local anchor download using the generated filename. Delete/reset clears the recording artifact and does not stop the active live session or source stream.
+Playback uses the recorded object URL in `src/components/RecordingDock/RecordingPlaybackPanel.tsx`. Download is a local anchor download using the generated filename. Delete/reset clears the recording artifact and does not stop the active live session or source stream.
 
 ## Camera Flow
 

@@ -4,18 +4,11 @@ import {
   isModelBackedSessionMode,
   type SessionModeId,
 } from "../../constants/sessionModes";
+import type { AutoHideOverlayRootProps } from "../../hooks/useAutoHideOverlay";
 import type { RealtimeStatus } from "../../types/realtime";
-import { EnhanceToggle } from "./EnhanceToggle";
-import { ErrorBanner } from "./ErrorBanner";
-import { ImageUpload } from "./ImageUpload";
-import { PromptInput } from "./PromptInput";
-import {
-  RecordingControls,
-  type RecordingControlsProps,
-} from "./RecordingControls";
-import { SessionControls } from "./SessionControls";
-import { SessionModeSelector } from "./SessionModeSelector";
-import { StatusSummary } from "./StatusSummary";
+import { ModelControlsSection } from "./ModelControlsSection";
+import { SessionActionsSection } from "./SessionActionsSection";
+import { SessionSetupSection } from "./SessionSetupSection";
 import { TimerDisplay } from "./TimerDisplay";
 
 export type ControlPanelProps = {
@@ -26,10 +19,10 @@ export type ControlPanelProps = {
   isVisible: boolean;
   isApplying: boolean;
   sessionMode: SessionModeId;
+  overlayProps?: AutoHideOverlayRootProps<HTMLElement>;
   prompt: string;
   imageFile: File | null;
   imagePreviewUrl: string | null;
-  recording: RecordingControlsProps;
   status: RealtimeStatus;
   elapsedLabel: string;
   error: string | null;
@@ -52,10 +45,10 @@ export function ControlPanel({
   isVisible,
   isApplying,
   sessionMode,
+  overlayProps,
   prompt,
   imageFile,
   imagePreviewUrl,
-  recording,
   status,
   elapsedLabel,
   error,
@@ -76,10 +69,14 @@ export function ControlPanel({
   const visibilityClassName = isVisible
     ? "translate-y-0 opacity-100"
     : "pointer-events-none translate-y-3 opacity-0";
+  const { ref: overlayRef, ...overlayEventProps } = overlayProps ?? {};
 
   return (
     <aside
+      {...overlayEventProps}
+      aria-label="Live studio controls"
       className={`fixed bottom-3 left-3 right-3 z-10 max-h-[calc(100vh-1.5rem)] overflow-y-auto overscroll-contain rounded-lg border border-white/15 bg-neutral-950/72 p-3 shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl transition duration-300 ease-out sm:bottom-4 sm:left-4 sm:right-auto sm:w-[23rem] ${visibilityClassName}`}
+      ref={overlayRef}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
@@ -94,61 +91,40 @@ export function ControlPanel({
       </div>
 
       <div className="mt-3 space-y-3">
-        <StatusSummary
+        <SessionSetupSection
           activeSessionMode={activeSessionMode}
+          canChangeSessionMode={canChangeSessionMode}
+          error={error}
           hasPendingChanges={hasPendingChanges}
           isApplying={isApplying}
-          selectedSessionMode={sessionMode}
+          sessionMode={sessionMode}
           status={status}
+          onSessionModeChange={onSessionModeChange}
         />
-        <SessionModeSelector
-          disabled={!canChangeSessionMode}
-          value={sessionMode}
-          onChange={onSessionModeChange}
-        />
-        <RecordingControls {...recording} />
         {modelConfig ? (
-          <>
-            <PromptInput
-              helperText={modelConfig.promptHelperText}
-              label={modelConfig.promptLabel}
-              placeholder={modelConfig.promptPlaceholder}
-              value={prompt}
-              onChange={onPromptChange}
-            />
-            <ImageUpload
-              actionText={modelConfig.imageActionText}
-              altText={modelConfig.imageAltText}
-              emptyLabel={modelConfig.imageEmptyLabel}
-              file={imageFile}
-              helperText={modelConfig.imageHelperText}
-              label={modelConfig.imageLabel}
-              previewUrl={imagePreviewUrl}
-              onChange={onImageChange}
-              onError={onImageError}
-            />
-            <details className="rounded-md border border-white/10 bg-white/3">
-              <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-neutral-100">
-                Options
-              </summary>
-              <div className="px-3 pb-3">
-                <EnhanceToggle checked={enhancePrompt} onChange={onEnhancePromptChange} />
-              </div>
-            </details>
-          </>
+          <ModelControlsSection
+            enhancePrompt={enhancePrompt}
+            imageFile={imageFile}
+            imagePreviewUrl={imagePreviewUrl}
+            modelConfig={modelConfig}
+            prompt={prompt}
+            onEnhancePromptChange={onEnhancePromptChange}
+            onImageChange={onImageChange}
+            onImageError={onImageError}
+            onPromptChange={onPromptChange}
+          />
         ) : null}
-        <SessionControls
+        <SessionActionsSection
           canApplyChanges={modelConfig !== null}
           hasPendingChanges={hasPendingChanges}
           isApplying={isApplying}
           startLabel={sessionConfig.startLabel}
           status={status}
+          onApply={onApply}
           onReset={onReset}
           onStart={onStart}
           onStop={onStop}
-          onApply={onApply}
         />
-        <ErrorBanner error={error} />
       </div>
     </aside>
   );

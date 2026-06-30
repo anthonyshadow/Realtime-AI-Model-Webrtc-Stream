@@ -122,7 +122,7 @@ describe("App", () => {
     expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
-    expect(screen.getByText("Start a session and wait for the stream to be ready.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Recording dock" })).not.toBeInTheDocument();
   });
 
   it("starts a local camera session without touching Decart", async () => {
@@ -146,6 +146,9 @@ describe("App", () => {
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
     expect(decartMocks.realtimeClient.disconnect).not.toHaveBeenCalled();
     expect(screen.getByText("Live")).toBeInTheDocument();
+    expect(
+      screen.getByRole("complementary", { name: "Live studio controls" }),
+    ).not.toContainElement(screen.getByRole("region", { name: "Recording dock" }));
   });
 
   it("records an active local camera session without touching Decart", async () => {
