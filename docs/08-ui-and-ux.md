@@ -46,6 +46,7 @@ The panel includes:
 - image upload and clear action for model-backed sessions
 - options disclosure with Enhance prompt toggle on by default for model-backed sessions
 - recording controls that remain model-agnostic and only enable once a recordable stream exists
+- model recording availability copy that clearly says when the app is waiting for transformed model output before recording
 - compact post-recording playback, download, and delete controls for the latest captured clip
 - Start, Stop, Apply, and Reset actions
 - error banner

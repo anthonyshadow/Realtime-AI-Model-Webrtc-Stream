@@ -64,7 +64,11 @@ describe("useLiveSession", () => {
     expect(result.current.activeSessionMode).toBe("local");
     expect(result.current.localStream).toBe(stream);
     expect(result.current.displayStream).toBe(stream);
-    expect(result.current.recordableStream).toBe(stream);
+    expect(result.current.recordableStream).not.toBeNull();
+    expect(result.current.recordableStream?.getVideoTracks()).toEqual(stream.getVideoTracks());
+    expect(result.current.recordableStream?.getAudioTracks()).toEqual(stream.getAudioTracks());
+    expect(result.current.recordableStreamSource).toBe("local");
+    expect(result.current.recordableAudioSource).toBe("local");
     expect(result.current.modelOutputStream).toBeNull();
     expect(mockGetUserMedia).toHaveBeenCalledWith({
       video: {
@@ -102,6 +106,12 @@ describe("useLiveSession", () => {
 
   it("starts the model branch through the token and Decart connect path", async () => {
     const stream = createMockMediaStream();
+    const outputStream = createMockMediaStream({ audio: true });
+    decartMocks.connectRealtimeModel.mockImplementationOnce(async ({ onConnectionChange, onRemoteStream }) => {
+      onRemoteStream(outputStream);
+      onConnectionChange("connected");
+      return decartMocks.realtimeClient;
+    });
     mockGetUserMedia.mockResolvedValueOnce(stream);
     const { result } = renderHook(() => useLiveSession());
     let didStart = false;
@@ -120,9 +130,13 @@ describe("useLiveSession", () => {
     expect(result.current.status).toBe("connected");
     expect(result.current.activeSessionMode).toBe("lucy-2.1");
     expect(result.current.localStream).toBe(stream);
-    expect(result.current.modelOutputStream).toBe(stream);
-    expect(result.current.displayStream).toBe(stream);
-    expect(result.current.recordableStream).toBe(stream);
+    expect(result.current.modelOutputStream).toBe(outputStream);
+    expect(result.current.displayStream).toBe(outputStream);
+    expect(result.current.recordableStream).not.toBeNull();
+    expect(result.current.recordableStream?.getVideoTracks()).toEqual(outputStream.getVideoTracks());
+    expect(result.current.recordableStream?.getAudioTracks()).toEqual(outputStream.getAudioTracks());
+    expect(result.current.recordableStreamSource).toBe("model-output");
+    expect(result.current.recordableAudioSource).toBe("model-output");
     expect(mockGetUserMedia).toHaveBeenCalledWith({
       video: {
         frameRate: 24,
@@ -130,11 +144,67 @@ describe("useLiveSession", () => {
         height: 360,
         facingMode: "user",
       },
-      audio: false,
+      audio: true,
     });
     expect(decartMocks.getRealtimeModel).toHaveBeenCalledWith("lucy-2.1");
     expect(decartMocks.fetchRealtimeToken).toHaveBeenCalledWith("lucy-2.1");
     expect(decartMocks.connectRealtimeModel).toHaveBeenCalled();
+  });
+
+  it("records model output video with local microphone audio when output audio is absent", async () => {
+    const localStream = createMockMediaStream({ audio: true });
+    const outputStream = createMockMediaStream();
+    decartMocks.connectRealtimeModel.mockImplementationOnce(async ({ onConnectionChange, onRemoteStream }) => {
+      onRemoteStream(outputStream);
+      onConnectionChange("connected");
+      return decartMocks.realtimeClient;
+    });
+    mockGetUserMedia.mockResolvedValueOnce(localStream);
+    const { result } = renderHook(() => useLiveSession());
+
+    await act(async () => {
+      await result.current.start({
+        sessionMode: "lucy-2.1",
+        modelMode: "lucy-2.1",
+        prompt: "Make the scene cinematic",
+        image: null,
+        enhance: true,
+      });
+    });
+
+    expect(result.current.recordableStream).not.toBeNull();
+    expect(result.current.recordableStream?.getVideoTracks()).toEqual(outputStream.getVideoTracks());
+    expect(result.current.recordableStream?.getAudioTracks()).toEqual(localStream.getAudioTracks());
+    expect(result.current.recordableStreamSource).toBe("model-output");
+    expect(result.current.recordableAudioSource).toBe("local");
+  });
+
+  it("keeps model recording unavailable until model output video arrives", async () => {
+    const localStream = createMockMediaStream({ audio: true });
+    decartMocks.connectRealtimeModel.mockImplementationOnce(async ({ onConnectionChange }) => {
+      onConnectionChange("connected");
+      return decartMocks.realtimeClient;
+    });
+    mockGetUserMedia.mockResolvedValueOnce(localStream);
+    const { result } = renderHook(() => useLiveSession());
+
+    await act(async () => {
+      await result.current.start({
+        sessionMode: "lucy-vton-3",
+        modelMode: "lucy-vton-3",
+        prompt: "Substitute the current top with denim",
+        image: null,
+        enhance: true,
+      });
+    });
+
+    expect(result.current.status).toBe("connected");
+    expect(result.current.localStream).toBe(localStream);
+    expect(result.current.modelOutputStream).toBeNull();
+    expect(result.current.displayStream).toBe(localStream);
+    expect(result.current.recordableStream).toBeNull();
+    expect(result.current.recordableStreamSource).toBe("none");
+    expect(result.current.recordableAudioSource).toBe("none");
   });
 
   it("fetches tokens only after a model-backed mode is selected", async () => {
@@ -191,5 +261,7 @@ describe("useLiveSession", () => {
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(result.current.status).toBe("disconnected");
     expect(result.current.displayStream).toBeNull();
+    expect(result.current.recordableStream).toBeNull();
+    expect(result.current.recordableStreamSource).toBe("none");
   });
 });

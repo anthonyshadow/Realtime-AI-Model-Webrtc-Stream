@@ -125,7 +125,7 @@ describe("ControlPanel", () => {
       status: "connected",
     });
 
-    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getAllByText("Ready").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
 
     await user.click(screen.getByRole("button", { name: "Record" }));
@@ -222,12 +222,12 @@ describe("ControlPanel", () => {
       "src",
       "blob:http://localhost/clip",
     );
-    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Download clip" })).toHaveAttribute(
       "download",
       "session-local-2026-06-29-16-45.webm",
     );
 
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Delete recording" }));
 
     expect(props.recording.onDeleteRecording).toHaveBeenCalledTimes(1);
     expect(props.onStop).not.toHaveBeenCalled();

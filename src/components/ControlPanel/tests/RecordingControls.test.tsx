@@ -35,6 +35,16 @@ describe("RecordingControls", () => {
     expect(screen.getByRole("button", { name: "Record" })).toBeDisabled();
   });
 
+  it("renders a custom standby message when the live session is waiting for output", () => {
+    renderRecordingControls({
+      standbyMessage: "Waiting for model output before recording.",
+    });
+
+    expect(screen.getByText("Standby")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for model output before recording.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record" })).toBeDisabled();
+  });
+
   it("starts recording when a stream is ready", async () => {
     const user = userEvent.setup();
     const props = renderRecordingControls({
@@ -102,6 +112,53 @@ describe("RecordingControls", () => {
     expect(screen.getByText("Recording failed. Try starting a new recording.")).toBeInTheDocument();
   });
 
+  it("keeps the saving status when the live stream disappears while stopping", () => {
+    renderRecordingControls({
+      durationLabel: "00:09",
+      hasRecordableStream: false,
+      isRecording: true,
+      state: "stopping",
+    });
+
+    expect(screen.getByText("Saving clip")).toBeInTheDocument();
+    expect(screen.getByText("Finalizing the recording.")).toBeInTheDocument();
+    expect(screen.queryByText("Standby")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Stopping recording" })).toBeDisabled();
+  });
+
+  it("keeps the captured clip status after the live session stops", () => {
+    renderRecordingControls({
+      canRecord: true,
+      durationLabel: "00:17",
+      filename: "session-local-2026-06-29-16-45.webm",
+      hasRecordableStream: false,
+      objectUrl: "blob:http://localhost/clip",
+      sizeLabel: "8.4 MB",
+      state: "recorded",
+    });
+
+    expect(screen.getByText("Clip captured")).toBeInTheDocument();
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/clip",
+    );
+    expect(screen.queryByText("Standby")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record again" })).toBeDisabled();
+  });
+
+  it("keeps recorder errors visible after the live stream disappears", () => {
+    renderRecordingControls({
+      error: "Recording failed. Try starting a new recording.",
+      hasRecordableStream: false,
+      isSupported: true,
+      state: "error",
+    });
+
+    expect(screen.getByText("Recorder error")).toBeInTheDocument();
+    expect(screen.getByText("Recording failed. Try starting a new recording.")).toBeInTheDocument();
+    expect(screen.queryByText("Standby")).not.toBeInTheDocument();
+  });
+
   it("renders playback, download, and delete actions after recording", async () => {
     const user = userEvent.setup();
     const props = renderRecordingControls({
@@ -115,7 +172,7 @@ describe("RecordingControls", () => {
     });
 
     const video = screen.getByLabelText("Recording playback");
-    const download = screen.getByRole("link", { name: "Download" });
+    const download = screen.getByRole("link", { name: "Download clip" });
 
     expect(video).toHaveAttribute("src", "blob:http://localhost/clip");
     expect(screen.getByText("session-local-2026-06-29-16-45.webm")).toBeInTheDocument();
@@ -124,7 +181,7 @@ describe("RecordingControls", () => {
     expect(download).toHaveAttribute("href", "blob:http://localhost/clip");
     expect(download).toHaveAttribute("download", "session-local-2026-06-29-16-45.webm");
 
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Delete recording" }));
 
     expect(props.onDeleteRecording).toHaveBeenCalledTimes(1);
   });
@@ -140,6 +197,6 @@ describe("RecordingControls", () => {
     });
 
     expect(screen.getByText("Recording preview unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Download clip" })).toBeDisabled();
   });
 });

@@ -81,7 +81,7 @@ export function useMediaSession(): UseMediaSessionReturn {
 
   const startModelCamera = useCallback(
     (model: LucyModelSpec, options?: StartMediaOptions) =>
-      startMedia(() => getCameraStream(model), options),
+      startMedia(() => getCameraStream(model, { audio: true }), options),
     [startMedia],
   );
 

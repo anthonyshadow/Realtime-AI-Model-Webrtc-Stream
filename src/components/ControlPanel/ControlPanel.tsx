@@ -79,7 +79,7 @@ export function ControlPanel({
 
   return (
     <aside
-      className={`fixed bottom-3 left-3 right-3 z-10 max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-lg border border-white/15 bg-neutral-950/72 p-3 shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl transition duration-300 ease-out sm:bottom-4 sm:left-4 sm:right-auto sm:w-90 ${visibilityClassName}`}
+      className={`fixed bottom-3 left-3 right-3 z-10 max-h-[calc(100vh-1.5rem)] overflow-y-auto overscroll-contain rounded-lg border border-white/15 bg-neutral-950/72 p-3 shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl transition duration-300 ease-out sm:bottom-4 sm:left-4 sm:right-auto sm:w-[23rem] ${visibilityClassName}`}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">

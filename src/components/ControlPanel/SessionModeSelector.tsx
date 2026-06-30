@@ -14,7 +14,7 @@ export function SessionModeSelector({ disabled, value, onChange }: SessionModeSe
   return (
     <fieldset>
       <legend className="mb-1.5 text-sm font-medium text-neutral-100">Session mode</legend>
-      <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-black/25 p-1">
+      <div className="grid grid-cols-1 gap-1 rounded-lg border border-white/10 bg-black/25 p-1 min-[420px]:grid-cols-3">
         {SESSION_MODE_IDS.map((sessionMode) => {
           const config = getSessionModeConfig(sessionMode);
           const isSelected = sessionMode === value;

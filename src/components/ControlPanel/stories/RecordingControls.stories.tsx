@@ -52,10 +52,24 @@ export const Ready: Story = {
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByText("Ready")).toBeVisible();
+    await expect(canvas.getAllByText("Ready")[0]).toBeVisible();
     await userEvent.click(canvas.getByRole("button", { name: "Record" }));
 
     await expect(args.onStartRecording).toHaveBeenCalled();
+  },
+};
+
+export const WaitingForModelOutput: Story = {
+  args: {
+    hasRecordableStream: false,
+    standbyMessage: "Waiting for model output before recording.",
+    state: "idle",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Waiting for model output before recording.")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Record" })).toBeDisabled();
   },
 };
 
@@ -110,7 +124,7 @@ export const ClipCaptured: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
-    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Delete" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download clip" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Delete recording" })).toBeVisible();
   },
 };

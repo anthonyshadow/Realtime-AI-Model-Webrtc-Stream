@@ -30,7 +30,7 @@ The model-backed modes are independent. Combined Lucy plus VTON mode is not impl
 - Connection status, pending-change status, and session timer.
 - Friendly errors for camera, token, model, image, and connection failures.
 - Live prompt and image updates without reconnecting.
-- Model-agnostic recording helpers and hook for browser-native `MediaRecorder`.
+- Model-agnostic recording helpers, stream composition, and hook for browser-native `MediaRecorder`.
 - Control panel recording controls for active local and model-backed sessions, with post-recording playback, download, and delete.
 
 ## Runtime Flow
@@ -42,10 +42,11 @@ The model-backed modes are independent. Combined Lucy plus VTON mode is not impl
 5. Express creates a short-lived Decart client token with server-side `DECART_API_KEY`.
 6. Browser creates a Decart client with the temporary token.
 7. Browser connects the webcam stream to `models.realtime(modelId)`.
-8. Decart returns a transformed model output stream; the live-session layer chooses the safest display stream.
+8. Decart returns a transformed model output stream; the live-session layer displays the transformed stream when available and waits for transformed output before enabling model recording.
 9. Apply sends prompt, image, and enhance through the realtime update path that preserves the intended control panel state.
-10. The recording hook consumes the selected `recordableStream` and the control panel exposes record/stop-recording, playback, download, and delete controls without owning Decart or stopping source tracks.
-11. Stop disconnects Decart when present and stops local media tracks.
+10. The live-session layer composes `recordableStream`: local sessions record local webcam plus mic, while model-backed sessions record model output video with model output audio or local mic fallback.
+11. The recording hook consumes the selected `recordableStream` and the control panel exposes record/stop-recording, playback, download, and delete controls without owning Decart or stopping source tracks.
+12. Stop disconnects Decart when present and stops local media tracks.
 
 ## Non-Goals
 

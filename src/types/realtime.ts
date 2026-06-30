@@ -1,5 +1,9 @@
 import type { SupportedModelMode } from "../constants/models";
 import type { LocalSessionModeId, SessionModeId } from "../constants/sessionModes";
+import type {
+  RecordableAudioSource,
+  RecordableStreamSource,
+} from "../lib/streamComposition";
 
 export type RealtimeStatus =
   | "idle"
@@ -33,7 +37,9 @@ export type UseLiveSessionReturn = {
   localStream: MediaStream | null;
   displayStream: MediaStream | null;
   modelOutputStream: MediaStream | null;
+  recordableAudioSource: RecordableAudioSource;
   recordableStream: MediaStream | null;
+  recordableStreamSource: RecordableStreamSource;
   activeSessionMode: SessionModeId | null;
   isRunning: boolean;
   isConnecting: boolean;

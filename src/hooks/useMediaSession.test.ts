@@ -57,6 +57,27 @@ describe("useMediaSession", () => {
     );
   });
 
+  it("starts model camera with microphone audio for output recording fallback", async () => {
+    const stream = createMockMediaStream({ audio: true });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    const { result } = renderHook(() => useMediaSession());
+
+    await act(async () => {
+      await result.current.startModelCamera({ fps: 24, height: 360, width: 640 });
+    });
+
+    expect(result.current.localStream).toBe(stream);
+    expect(mockGetUserMedia).toHaveBeenCalledWith({
+      video: {
+        frameRate: 24,
+        width: 640,
+        height: 360,
+        facingMode: "user",
+      },
+      audio: true,
+    });
+  });
+
   it("stops active media tracks on unmount", async () => {
     const stream = createMockMediaStream({ audio: true });
     const tracks = stream.getTracks() as MockMediaStreamTrack[];

@@ -14,6 +14,7 @@ import { useLiveSession } from "./hooks/useLiveSession";
 import { useObjectUrl } from "./hooks/useObjectUrl";
 import { useSessionRecording } from "./hooks/useSessionRecording";
 import { useSessionTimer } from "./hooks/useSessionTimer";
+import type { RecordableStreamSource } from "./lib/streamComposition";
 import type { ApplyRealtimeStateInput, StartRealtimeSessionInput } from "./types/realtime";
 
 type ControlPanelDraft = {
@@ -46,6 +47,13 @@ export function App() {
     realtime.isRunning &&
     lastAppliedDraftKey !== null &&
     lastAppliedDraftKey !== draftKey;
+  const hasRecordableStream = realtime.recordableStream !== null && realtime.isRunning;
+  const recordingStandbyMessage = getRecordingStandbyMessage({
+    activeSessionMode: realtime.activeSessionMode,
+    hasRecordableStream,
+    isRunning: realtime.isRunning,
+    recordableStreamSource: realtime.recordableStreamSource,
+  });
 
   const handleSessionModeChange = (nextMode: SessionModeId) => {
     if (!canChangeSessionMode || nextMode === sessionMode) {
@@ -148,11 +156,12 @@ export function App() {
           durationLabel: recording.durationLabel,
           error: recording.error,
           filename: recording.filename,
-          hasRecordableStream: realtime.recordableStream !== null && realtime.isRunning,
+          hasRecordableStream,
           isRecording: recording.isRecording,
           isSupported: recording.isSupported,
           objectUrl: recording.objectUrl,
           sizeLabel: recording.sizeLabel,
+          standbyMessage: recordingStandbyMessage,
           state: recording.state,
           onDeleteRecording: recording.deleteRecording,
           onStartRecording: recording.startRecording,
@@ -173,6 +182,29 @@ export function App() {
       />
     </main>
   );
+}
+
+function getRecordingStandbyMessage({
+  activeSessionMode,
+  hasRecordableStream,
+  isRunning,
+  recordableStreamSource,
+}: {
+  activeSessionMode: SessionModeId | null;
+  hasRecordableStream: boolean;
+  isRunning: boolean;
+  recordableStreamSource: RecordableStreamSource;
+}) {
+  if (
+    isRunning &&
+    !hasRecordableStream &&
+    recordableStreamSource === "none" &&
+    isModelBackedSessionMode(activeSessionMode)
+  ) {
+    return "Waiting for model output before recording.";
+  }
+
+  return undefined;
 }
 
 function createControlPanelDraft(sessionMode: SessionModeId): ControlPanelDraft {

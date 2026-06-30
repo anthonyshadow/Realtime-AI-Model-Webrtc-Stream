@@ -79,6 +79,6 @@ POST /api/realtime-token
 
 ## Current Scope
 
-The app opens directly into a full-screen video surface with a compact floating control panel. It supports local camera preview, model selection, prompts, reference/garment uploads, prompt enhancement, Start/Stop/Apply/Reset, status, timer, active-session recording controls, clip playback/download/delete, friendly errors, and panel auto-hide while video is live.
+The app opens directly into a full-screen video surface with a compact floating control panel. It supports local camera preview, model selection, prompts, reference/garment uploads, prompt enhancement, Start/Stop/Apply/Reset, status, timer, active-session recording controls, model-output recording when transformed output is available, clip playback/download/delete, friendly errors, and panel auto-hide while video is live.
 
 The codebase also includes a model-agnostic browser recording service and hook built on `MediaRecorder`. Recording gallery UI, cloud uploads, payments, analytics, deployment hardening, shared sessions, prompt galleries, and combined Lucy plus VTON mode remain out of scope unless explicitly requested.

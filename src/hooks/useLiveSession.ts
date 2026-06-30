@@ -6,6 +6,10 @@ import {
   type SessionModeId,
 } from "../constants/sessionModes";
 import { toUserMessage } from "../lib/errors";
+import {
+  createLocalRecordableStream,
+  createModelOutputRecordableStream,
+} from "../lib/streamComposition";
 import type {
   ApplyRealtimeStateInput,
   RealtimeStatus,
@@ -50,7 +54,21 @@ export function useLiveSession(): UseLiveSessionReturn {
   const startRequestIdRef = useRef(0);
 
   const displayStream = modelOutputStream ?? localStream;
-  const recordableStream = displayStream ?? localStream;
+  const recordableStreamComposition = useMemo(() => {
+    if (isLocalSessionMode(activeSessionMode)) {
+      return createLocalRecordableStream(localStream);
+    }
+
+    if (isModelBackedSessionMode(activeSessionMode)) {
+      return createModelOutputRecordableStream({
+        localStream,
+        modelOutputStream,
+      });
+    }
+
+    return createLocalRecordableStream(null);
+  }, [activeSessionMode, localStream, modelOutputStream]);
+  const recordableStream = recordableStreamComposition.stream;
   const isRunning = RUNNING_STATUSES.has(status);
   const isConnecting = CONNECTING_STATUSES.has(status);
   const error = sessionError ?? modelError ?? mediaError;
@@ -187,6 +205,12 @@ export function useLiveSession(): UseLiveSessionReturn {
     };
   }, [stopLowerSessions]);
 
+  useEffect(() => {
+    return () => {
+      recordableStreamComposition.cleanup();
+    };
+  }, [recordableStreamComposition]);
+
   return useMemo(
     () => ({
       status,
@@ -195,6 +219,8 @@ export function useLiveSession(): UseLiveSessionReturn {
       displayStream,
       modelOutputStream,
       recordableStream,
+      recordableAudioSource: recordableStreamComposition.audioSource,
+      recordableStreamSource: recordableStreamComposition.videoSource,
       activeSessionMode,
       isRunning,
       isConnecting,
@@ -214,6 +240,8 @@ export function useLiveSession(): UseLiveSessionReturn {
       isRunning,
       localStream,
       modelOutputStream,
+      recordableStreamComposition.audioSource,
+      recordableStreamComposition.videoSource,
       recordableStream,
       resetRealtimeState,
       start,

@@ -31,8 +31,8 @@ export const CapturedClip: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
-    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Delete" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download clip" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Delete recording" })).toBeVisible();
   },
 };
 
@@ -45,6 +45,6 @@ export const MissingUrl: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Recording preview unavailable")).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Download" })).toBeDisabled();
+    await expect(canvas.getByRole("button", { name: "Download clip" })).toBeDisabled();
   },
 };

@@ -39,7 +39,7 @@ describe("RecordingPlaybackPanel", () => {
   it("downloads with the generated filename", () => {
     renderRecordingPlaybackPanel();
 
-    const download = screen.getByRole("link", { name: "Download" });
+    const download = screen.getByRole("link", { name: "Download clip" });
 
     expect(download).toHaveAttribute("href", "blob:http://localhost/clip");
     expect(download).toHaveAttribute("download", "session-local-2026-06-29-16-45.webm");
@@ -49,7 +49,7 @@ describe("RecordingPlaybackPanel", () => {
     const user = userEvent.setup();
     const props = renderRecordingPlaybackPanel();
 
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Delete recording" }));
 
     expect(props.onDeleteRecording).toHaveBeenCalledTimes(1);
   });
@@ -61,6 +61,6 @@ describe("RecordingPlaybackPanel", () => {
     });
 
     expect(screen.getByText("Recording preview unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Download" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Download clip" })).toBeDisabled();
   });
 });

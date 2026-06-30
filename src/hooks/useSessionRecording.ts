@@ -88,6 +88,11 @@ export function useSessionRecording(
     stateRef.current = state;
   }, [state]);
 
+  const setRecordingState = useCallback((nextState: SessionRecordingState) => {
+    stateRef.current = nextState;
+    setState(nextState);
+  }, []);
+
   const revokeCurrentObjectUrl = useCallback(() => {
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
@@ -177,8 +182,8 @@ export function useSessionRecording(
     const nextState = getReadyStateForCurrentStream();
     setError(nextState.error);
     setMimeType(nextState.mimeType);
-    setState(nextState.state);
-  }, [clearRecordedArtifact, clearRecorder, getReadyStateForCurrentStream]);
+    setRecordingState(nextState.state);
+  }, [clearRecordedArtifact, clearRecorder, getReadyStateForCurrentStream, setRecordingState]);
 
   const handleRecorderError = useCallback(
     (event: Event) => {
@@ -193,15 +198,15 @@ export function useSessionRecording(
       clearRecordedArtifact();
       setMimeType(selectRecordingMimeType());
       setError(getRecorderErrorMessage(event));
-      setState("error");
+      setRecordingState("error");
     },
-    [clearRecordedArtifact, clearRecorder],
+    [clearRecordedArtifact, clearRecorder, setRecordingState],
   );
 
   const startRecording = useCallback(() => {
     if (!stream) {
       setError(NO_STREAM_RECORDING_ERROR);
-      setState("error");
+      setRecordingState("error");
       return false;
     }
 
@@ -210,7 +215,7 @@ export function useSessionRecording(
     if (!MediaRecorderConstructor) {
       setError(UNSUPPORTED_RECORDING_ERROR);
       setMimeType(null);
-      setState("error");
+      setRecordingState("error");
       return false;
     }
 
@@ -273,7 +278,7 @@ export function useSessionRecording(
         setDurationSeconds(finalDurationSeconds);
         setSizeBytes(finalBlob.size);
         setError(null);
-        setState("recorded");
+        setRecordingState("recorded");
       };
 
       const onError = (event: Event) => {
@@ -297,7 +302,7 @@ export function useSessionRecording(
       recordingMimeTypeRef.current = recorder.mimeType || selectedMimeType;
       setMimeType(recorder.mimeType || selectedMimeType);
       setStartedAt(startedAtDate);
-      setState("recording");
+      setRecordingState("recording");
       return true;
     } catch {
       clearRecorder({ stopRecorder: true });
@@ -310,7 +315,7 @@ export function useSessionRecording(
       setDurationSeconds(0);
       setMimeType(selectedMimeType);
       setError(RECORDER_START_ERROR);
-      setState("error");
+      setRecordingState("error");
       return false;
     }
   }, [
@@ -322,6 +327,7 @@ export function useSessionRecording(
     removeRecorderListeners,
     sessionMode,
     setNextObjectUrl,
+    setRecordingState,
     stream,
   ]);
 
@@ -332,14 +338,14 @@ export function useSessionRecording(
       return;
     }
 
-    setState("stopping");
+    setRecordingState("stopping");
 
     try {
       subscription.recorder.stop();
     } catch {
       handleRecorderError(new Event("error"));
     }
-  }, [handleRecorderError]);
+  }, [handleRecorderError, setRecordingState]);
 
   const resetRecording = useCallback(() => {
     resetToCurrentStreamState();
