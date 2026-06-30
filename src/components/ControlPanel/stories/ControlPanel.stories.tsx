@@ -136,7 +136,7 @@ export const LocalLiveSession: Story = {
     await expect(canvas.getByText("Local camera is on. Recording is available when the stream is ready.")).toBeVisible();
     await expect(canvas.queryByRole("button", { name: "Record" })).not.toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: "Stop session" })).toBeVisible();
-    await expect(canvas.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
+    await expect(canvas.queryByRole("button", { name: /Lucy 2.1/i })).not.toBeInTheDocument();
   },
 };
 

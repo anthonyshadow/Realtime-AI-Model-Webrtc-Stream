@@ -26,6 +26,7 @@ export type ControlPanelProps = {
   status: RealtimeStatus;
   elapsedLabel: string;
   error: string | null;
+  reserveRecordingDockSpace?: boolean;
   onEnhancePromptChange: (value: boolean) => void;
   onSessionModeChange: (value: SessionModeId) => void;
   onPromptChange: (value: string) => void;
@@ -52,6 +53,7 @@ export function ControlPanel({
   status,
   elapsedLabel,
   error,
+  reserveRecordingDockSpace = false,
   onEnhancePromptChange,
   onSessionModeChange,
   onPromptChange,
@@ -69,13 +71,16 @@ export function ControlPanel({
   const visibilityClassName = isVisible
     ? "translate-y-0 opacity-100"
     : "pointer-events-none translate-y-3 opacity-0";
+  const layoutClassName = reserveRecordingDockSpace
+    ? "bottom-[calc(env(safe-area-inset-bottom)+10rem)] max-h-[calc(100vh-env(safe-area-inset-bottom)-10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+8.75rem)] sm:max-h-[calc(100vh-env(safe-area-inset-bottom)-9.75rem)] xl:bottom-4 xl:max-h-[calc(100vh-2rem)]"
+    : "bottom-3 max-h-[calc(100vh-1.5rem)] sm:bottom-4 sm:max-h-[calc(100vh-2rem)]";
   const { ref: overlayRef, ...overlayEventProps } = overlayProps ?? {};
 
   return (
     <aside
       {...overlayEventProps}
       aria-label="Live studio controls"
-      className={`fixed bottom-3 left-3 right-3 z-10 max-h-[calc(100vh-1.5rem)] overflow-y-auto overscroll-contain rounded-lg border border-white/15 bg-neutral-950/72 p-3 shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl transition duration-300 ease-out sm:bottom-4 sm:left-4 sm:right-auto sm:w-[23rem] ${visibilityClassName}`}
+      className={`fixed left-3 right-3 z-10 overflow-y-auto overscroll-contain rounded-lg border border-white/15 bg-neutral-950/72 p-3 shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl transition duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:left-4 sm:right-auto sm:w-[23rem] ${layoutClassName} ${visibilityClassName}`}
       ref={overlayRef}
     >
       <div className="flex items-center justify-between gap-3">
@@ -114,17 +119,19 @@ export function ControlPanel({
             onPromptChange={onPromptChange}
           />
         ) : null}
-        <SessionActionsSection
-          canApplyChanges={modelConfig !== null}
-          hasPendingChanges={hasPendingChanges}
-          isApplying={isApplying}
-          startLabel={sessionConfig.startLabel}
-          status={status}
-          onApply={onApply}
-          onReset={onReset}
-          onStart={onStart}
-          onStop={onStop}
-        />
+        <div className="sticky bottom-0 z-20 rounded-b-md border-t border-white/10 bg-neutral-950 pt-3 shadow-[0_-18px_30px_rgb(0_0_0/0.34)]">
+          <SessionActionsSection
+            canApplyChanges={modelConfig !== null}
+            hasPendingChanges={hasPendingChanges}
+            isApplying={isApplying}
+            startLabel={sessionConfig.startLabel}
+            status={status}
+            onApply={onApply}
+            onReset={onReset}
+            onStart={onStart}
+            onStop={onStop}
+          />
+        </div>
       </div>
     </aside>
   );

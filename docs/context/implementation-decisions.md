@@ -12,7 +12,7 @@ Use this for decisions that explain why the project is shaped this way.
 - Recording is model-agnostic: `useSessionRecording` consumes an existing stream and owns only `MediaRecorder`, Blob, object URL, and recording metadata lifecycle; live session hooks continue to own source tracks.
 - Model-backed recording waits for transformed model output video, then records model output audio when present or local microphone audio as fallback. The stream composition helper does not stop source tracks.
 - Stopping a model-backed recording finalizes the recording first, then releases the model/API session to local preview so token-consuming usage ends without stopping the local camera.
-- A completed recording remains available after the live session stops so the user can preview, download, or delete it; starting another recording or deleting the clip revokes the previous object URL.
+- A completed recording remains available after the live session stops so the user can review, download, or discard it; starting another recording or confirming discard revokes the previous object URL.
 - Lucy 2.1 and Lucy VTON 3 are separate modes because combined mode has not been designed or verified.
 - Model-specific UI copy and image-only behavior live in `src/constants/models.ts`.
 - Realtime state is sent atomically because Decart `set()` replaces omitted fields.

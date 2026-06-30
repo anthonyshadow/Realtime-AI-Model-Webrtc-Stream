@@ -30,9 +30,9 @@ While running:
 
 After stopping a recording in a model-backed session:
 
-- finalize the recording and keep playback/download/delete available
+- finalize the recording and keep review playback/download/discard available
 - end model usage and return the live display to local camera preview
-- show concise dock copy that the model session ended and local camera is still on
+- show concise dock copy that the model session ended to save usage and local camera remains on
 
 After stop:
 
@@ -48,7 +48,8 @@ The panel is organized as compact progressive sections so setup, model controls,
 
 The setup section includes:
 
-- session mode selector with Local camera, Lucy 2.1, and Lucy VTON 3
+- session mode selector with Local camera, Lucy 2.1, and Lucy VTON 3 before a session starts
+- compact mode/session/changes summary while a session is active, without disabled mode buttons
 - status summary
 - next-step or error message
 
@@ -62,6 +63,7 @@ The actions and feedback areas include:
 
 - Start, Stop, Apply, and Reset actions
 - session timer
+- sticky action access inside the scrollable panel on constrained heights
 
 Components should stay presentational and receive state/callbacks through props.
 
@@ -78,8 +80,11 @@ The dock:
 - uses `useAutoHideOverlay` for mouse, touch, keyboard, focus, inactivity, and forced visibility behavior
 - stays visible while recording or while a critical recording error is present
 - keeps Record and Stop recording visually separate from the main session Start/Stop action
-- shows timer, ready/waiting/error copy, REC state, model-ended saved copy, and the latest captured clip review/download/delete controls
+- shows timer, ready/waiting/error copy, REC state, model-ended review copy, and the latest captured clip review/download/discard controls
+- opens recorded clips in an expandable review surface with embedded playback and a compact collapsed state
+- uses a two-step discard confirmation so removing the local clip is deliberate
 - stays bottom-center on desktop and safe-area aware near the bottom edge on mobile
+- reserves a bottom lane on phone, tablet, and laptop widths so the control panel and dock do not collide
 
 ## Overlay Behavior
 
@@ -92,3 +97,4 @@ Overlay controls should:
 - remain visible while the user is focused inside or pointing inside the overlay
 - force visibility for critical states such as errors or active recording
 - stay visible for setup, connecting, stopped, and error recovery states
+- respect reduced-motion preferences by avoiding transform-heavy overlay transitions

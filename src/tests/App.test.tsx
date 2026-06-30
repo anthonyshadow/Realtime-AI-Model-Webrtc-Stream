@@ -173,7 +173,7 @@ describe("App", () => {
     expect(screen.getAllByText("Recording").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Stop recording" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Lucy 2.1/i })).not.toBeInTheDocument();
     expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
@@ -209,7 +209,7 @@ describe("App", () => {
     expect(decartMocks.realtimeClient.disconnect).not.toHaveBeenCalled();
   });
 
-  it("shows playback, download, and delete after recording stops", async () => {
+  it("shows playback, download, and discard after recording stops", async () => {
     const user = userEvent.setup();
     vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:http://localhost/local-clip");
     const stream = createMockMediaStream({ audio: true });
@@ -235,12 +235,17 @@ describe("App", () => {
       "src",
       "blob:http://localhost/local-clip",
     );
-    const download = screen.getByRole("link", { name: "Download clip" });
+    const download = screen.getByRole("link", { name: "Download" });
     expect(download).toHaveAttribute("href", "blob:http://localhost/local-clip");
     expect(download.getAttribute("download")).toMatch(/^session-local-.*\.webm$/);
     expect(screen.getByText("4 B")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Delete recording" }));
+    await user.click(screen.getByRole("button", { name: "Discard" }));
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:http://localhost/local-clip");
+    expect(screen.getByText("Discard this take? This removes the local clip only.")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Discard clip" }));
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/local-clip");
     expect(screen.queryByLabelText("Recording playback")).not.toBeInTheDocument();
@@ -279,7 +284,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByLabelText("Recording playback")).toBeInTheDocument());
     expect(screen.getByText("Stopped")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Record again" })).toBeDisabled();
-    expect(screen.getByRole("link", { name: "Download clip" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
       "href",
       "blob:http://localhost/stopped-session-clip",
     );
@@ -466,7 +471,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Clip captured")).toBeInTheDocument());
     await waitFor(() =>
       expect(
-        screen.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+        screen.getByText("Recording ready. Model session ended to save usage. Local camera remains on."),
       ).toBeInTheDocument(),
     );
     expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalledTimes(1);
@@ -482,7 +487,7 @@ describe("App", () => {
       "src",
       "blob:http://localhost/model-clip",
     );
-    expect(screen.getByRole("link", { name: "Download clip" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
       "href",
       "blob:http://localhost/model-clip",
     );
@@ -491,11 +496,19 @@ describe("App", () => {
       expect(track.stop).not.toHaveBeenCalled();
     }
 
-    await user.click(screen.getByRole("button", { name: "Delete recording" }));
+    await user.click(screen.getByRole("button", { name: "Discard" }));
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:http://localhost/model-clip");
+    expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalledTimes(1);
+    expect(decartMocks.connectRealtimeModel).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Discard clip" }));
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/model-clip");
     expect(screen.queryByLabelText("Recording playback")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
+    expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalledTimes(1);
+    expect(decartMocks.connectRealtimeModel).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole("button", { name: "Stop session" }));
 

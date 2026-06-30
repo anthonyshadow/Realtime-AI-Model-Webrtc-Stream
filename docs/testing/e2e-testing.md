@@ -1,5 +1,5 @@
 # E2E Testing
-> Last updated: 2026-06-29
+> Last updated: 2026-06-30
 
 Use this for Playwright app and accessibility tests.
 
@@ -60,14 +60,14 @@ App E2E currently covers:
 - Lucy 2.1 and Lucy VTON 3 model-backed token/connect paths.
 - Atomic prompt/image/enhance Apply payloads.
 - Reset and clear-image behavior.
-- Recording start/stop, playback, download filename, delete/reset, stop-session-while-recording, start/stop/start again, and object URL revocation.
+- Recording start/stop, review playback, download filename, discard/reset, stop-session-while-recording, start/stop/start again, and object URL revocation.
 
 ## Manual Browser QA Checklist
 
 Run this checklist with a real browser and real devices before treating media behavior as production-ready:
 
 - Start Local camera from a fresh load; confirm camera and microphone permission prompts, local preview, timer, and Stop session.
-- Start Local camera, record a short clip, stop recording, play it back, download it, delete it, then stop the session.
+- Start Local camera, record a short clip, stop recording, play it back, download it, discard it, then stop the session.
 - Stop the session while recording; confirm the clip finalizes or the UI remains recoverable.
 - Start Lucy 2.1 with a prompt; confirm token creation, transformed output display, Apply, Reset, and Stop session.
 - Start Lucy 2.1 with a reference portrait; apply prompt/image/enhance changes and clear the portrait.
@@ -75,4 +75,4 @@ Run this checklist with a real browser and real devices before treating media be
 - In a model-backed session, confirm recording stays disabled until transformed output is available, then records the transformed video.
 - Check whether the Decart output stream includes audio in the target browser; confirm the fallback to local microphone audio is acceptable when output audio is absent.
 - Repeat recording checks in Chrome, Safari desktop, and iOS Safari where available because `MediaRecorder` MIME support differs.
-- Confirm the mobile-width control panel keeps Stop session, Stop recording, playback, Download clip, and Delete recording reachable and visually distinct.
+- Confirm the mobile-width layout keeps Stop session, Stop recording, review playback, Download, and Discard reachable and visually distinct.

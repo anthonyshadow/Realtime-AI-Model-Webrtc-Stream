@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { SessionRecordingState } from "../../hooks/useSessionRecording";
 import { useAutoHideOverlay } from "../../hooks/useAutoHideOverlay";
 import { RecordingDockButton } from "./RecordingDockButton";
@@ -20,7 +21,7 @@ export type FloatingRecordingDockProps = {
   sizeLabel: string;
   standbyMessage?: string;
   state: SessionRecordingState;
-  onDeleteRecording: () => void;
+  onDiscardRecording: () => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
@@ -39,7 +40,7 @@ export function FloatingRecordingDock({
   sizeLabel,
   standbyMessage,
   state,
-  onDeleteRecording,
+  onDiscardRecording,
   onStartRecording,
   onStopRecording,
 }: FloatingRecordingDockProps) {
@@ -49,12 +50,19 @@ export function FloatingRecordingDock({
   const hasCriticalRecordingState = isRecording || isStopping || state === "error";
   const shouldRenderDock =
     isSessionActive || hasCriticalRecordingState || hasRecordingArtifact;
+  const [isReviewExpanded, setIsReviewExpanded] = useState(true);
 
   const { isVisible, rootProps } = useAutoHideOverlay<HTMLDivElement>({
     enabled: isSessionActive && !hasCriticalRecordingState,
     forceVisible: hasCriticalRecordingState,
     hideDelayMs: RECORDING_DOCK_IDLE_MS,
   });
+
+  useEffect(() => {
+    if (hasRecordedClip) {
+      setIsReviewExpanded(true);
+    }
+  }, [filename, hasRecordedClip, objectUrl]);
 
   if (!shouldRenderDock) {
     return null;
@@ -79,6 +87,12 @@ export function FloatingRecordingDock({
   const shellClassName = hasRecordedClip
     ? "rounded-[1.1rem]"
     : "rounded-full";
+  const dockWidthClassName = hasRecordedClip
+    ? "w-[min(calc(100vw-1rem),42rem)]"
+    : "w-[min(calc(100vw-1.5rem),34rem)]";
+  const dockScrollClassName = hasRecordedClip
+    ? "max-h-[calc(100vh-env(safe-area-inset-bottom)-1rem)] overflow-y-auto overscroll-contain"
+    : "";
   const timerToneClassName = isRecording || isStopping
     ? "border-red-200/35 bg-red-500/15 text-red-50"
     : "border-white/10 bg-black/25 text-white";
@@ -87,7 +101,7 @@ export function FloatingRecordingDock({
     <div
       {...rootProps}
       aria-label="Recording dock"
-      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-20 w-[min(calc(100vw-1.5rem),34rem)] -translate-x-1/2 transition duration-300 ease-out sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${visibilityClassName}`}
+      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-20 -translate-x-1/2 transition duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${dockWidthClassName} ${dockScrollClassName} ${visibilityClassName}`}
       role="region"
     >
       <div
@@ -133,11 +147,15 @@ export function FloatingRecordingDock({
 
         {hasRecordedClip ? (
           <RecordingPlaybackPanel
+            completionMessage={completionMessage}
             durationLabel={durationLabel}
             filename={filename}
+            isExpanded={isReviewExpanded}
             objectUrl={objectUrl}
             sizeLabel={sizeLabel}
-            onDeleteRecording={onDeleteRecording}
+            onCollapse={() => setIsReviewExpanded(false)}
+            onDiscardRecording={onDiscardRecording}
+            onExpand={() => setIsReviewExpanded(true)}
           />
         ) : null}
       </div>
@@ -193,9 +211,11 @@ function getRecordingStatus({
     return {
       badgeLabel: "Saved",
       title: "Clip captured",
-      message: completionMessage ?? (filename
-        ? `${filename} - ${clipDetails}`
-        : "Review the latest recording when you are ready."),
+      message: completionMessage
+        ? "Model session ended. Local camera remains on."
+        : filename
+          ? `${filename} - ${clipDetails}`
+          : "Review the latest recording when you are ready.",
       tone: "recorded" as const,
     };
   }

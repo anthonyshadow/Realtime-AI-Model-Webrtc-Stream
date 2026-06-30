@@ -224,7 +224,7 @@ test("reset clears prompt, reference image, file input, and mocked realtime stat
     });
 });
 
-test("records, previews, downloads, deletes, and replaces local clips safely", async ({ page }) => {
+test("records, reviews, downloads, discards, and replaces local clips safely", async ({ page }) => {
   await page.goto("/");
 
   await page.getByRole("button", { name: "Start local camera" }).click();
@@ -248,14 +248,16 @@ test("records, previews, downloads, deletes, and replaces local clips safely", a
   const firstObjectUrl = await page.getByLabel("Recording playback").getAttribute("src");
   expect(firstObjectUrl).toBe("blob:http://localhost/e2e-object-url-1");
 
-  const firstDownload = page.getByRole("link", { name: "Download clip" });
+  const firstDownload = page.getByRole("link", { name: "Download" });
   await expect(firstDownload).toHaveAttribute("href", firstObjectUrl!);
   await expect(firstDownload).toHaveAttribute(
     "download",
     /^session-local-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}\.webm$/,
   );
 
-  await page.getByRole("button", { name: "Delete recording" }).click();
+  await page.getByRole("button", { name: "Discard" }).click();
+  await expect(page.getByText("Discard this take? This removes the local clip only.")).toBeVisible();
+  await page.getByRole("button", { name: "Discard clip" }).click();
 
   await expect(page.getByLabel("Recording playback")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Record" })).toBeEnabled();
@@ -279,7 +281,8 @@ test("records, previews, downloads, deletes, and replaces local clips safely", a
   const secondObjectUrl = await page.getByLabel("Recording playback").getAttribute("src");
   expect(secondObjectUrl).toBe("blob:http://localhost/e2e-object-url-2");
 
-  await page.getByRole("button", { name: "Delete recording" }).click();
+  await page.getByRole("button", { name: "Discard" }).click();
+  await page.getByRole("button", { name: "Discard clip" }).click();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_OBJECT_URL_EVENTS__.revoked))
     .toEqual([
@@ -307,7 +310,7 @@ test("stopping a model recording releases API usage and keeps local preview play
   await page.getByRole("button", { name: "Stop recording" }).click();
 
   await expect(
-    page.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+    page.getByText("Recording ready. Model session ended to save usage. Local camera remains on."),
   ).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.disconnects))
@@ -332,7 +335,7 @@ test("stopping a model recording releases API usage and keeps local preview play
     "src",
     "blob:http://localhost/e2e-object-url-1",
   );
-  await expect(page.getByRole("link", { name: "Download clip" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Download" })).toHaveAttribute(
     "href",
     "blob:http://localhost/e2e-object-url-1",
   );
@@ -340,7 +343,11 @@ test("stopping a model recording releases API usage and keeps local preview play
     .poll(() => page.evaluate(() => (window as any).__E2E_OBJECT_URL_EVENTS__.revoked))
     .toEqual([]);
 
-  await page.getByRole("button", { name: "Delete recording" }).click();
+  await page.getByRole("button", { name: "Discard" }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(1);
+  await page.getByRole("button", { name: "Discard clip" }).click();
 
   await expect(page.getByLabel("Recording playback")).toHaveCount(0);
   await expect
@@ -380,7 +387,8 @@ test("restarting a session and recording again revokes the previous clip URL", a
     .poll(() => page.evaluate(() => (window as any).__E2E_RECORDING_EVENTS__.starts))
     .toBe(2);
 
-  await page.getByRole("button", { name: "Delete recording" }).click();
+  await page.getByRole("button", { name: "Discard" }).click();
+  await page.getByRole("button", { name: "Discard clip" }).click();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_OBJECT_URL_EVENTS__.revoked))
     .toEqual([

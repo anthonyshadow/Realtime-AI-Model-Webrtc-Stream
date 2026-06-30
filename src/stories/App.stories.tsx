@@ -31,6 +31,124 @@ type StorybookDecartEvents = {
 
 export const Idle: Story = {};
 
+export const DesktopLocalIdle: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("heading", { name: "Start camera to begin" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start local camera" })).toBeVisible();
+  },
+};
+
+export const DesktopModelSetup: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
+
+    await expect(canvas.getByRole("heading", { name: "Model controls" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeVisible();
+  },
+};
+
+export const DesktopRecordingActive: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+
+    await expect(canvas.getByRole("button", { name: "Stop recording" })).toBeVisible();
+    await expect(canvas.getByText("REC")).toBeVisible();
+  },
+};
+
+export const DesktopReview: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Stop recording" }));
+
+    await expect(await canvas.findByRole("region", { name: "Recording review" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+  },
+};
+
+export const MobileLocalLive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toBeVisible();
+  },
+};
+
+export const MobileModelLive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByText("Model controls are synced. Adjust prompt or image when you want a new look.")).toBeVisible();
+  },
+};
+
+export const MobileRecordingActive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+
+    await expect(canvas.getByRole("button", { name: "Stop recording" })).toBeVisible();
+    await expect(canvas.getByText("REC")).toBeVisible();
+  },
+};
+
+export const MobileReview: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile1",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Stop recording" }));
+
+    await expect(await canvas.findByRole("region", { name: "Recording review" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
+  },
+};
+
 export const StartsMockedLucySession: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

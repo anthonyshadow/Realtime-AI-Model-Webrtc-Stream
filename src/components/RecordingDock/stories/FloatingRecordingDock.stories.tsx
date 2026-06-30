@@ -16,7 +16,7 @@ const standbyDock = {
   isSessionActive: false,
   isSupported: true,
   objectUrl: null,
-  onDeleteRecording: fn(),
+  onDiscardRecording: fn(),
   onStartRecording: fn(),
   onStopRecording: fn(),
   sizeLabel: "0 B",
@@ -38,6 +38,20 @@ const recordingDock = {
   state: "recording",
 } satisfies FloatingRecordingDockProps;
 
+const errorDock = {
+  ...readyDock,
+  error: "Recording failed. Try starting a new recording.",
+  state: "error",
+} satisfies FloatingRecordingDockProps;
+
+const unsupportedDock = {
+  ...readyDock,
+  canRecord: false,
+  error: "Recording is not supported in this browser.",
+  isSupported: false,
+  state: "error",
+} satisfies FloatingRecordingDockProps;
+
 const recordedDock = {
   ...readyDock,
   durationLabel: "00:17",
@@ -49,7 +63,7 @@ const recordedDock = {
 
 const modelReleasedDock = {
   ...recordedDock,
-  completionMessage: "Recording saved. Model usage has stopped; local camera is still on.",
+  completionMessage: "Recording ready. Model session ended to save usage. Local camera remains on.",
   filename: "session-lucy-2-1-2026-06-30-16-45.webm",
   objectUrl: "blob:http://localhost/session-model-preview",
 } satisfies FloatingRecordingDockProps;
@@ -85,7 +99,7 @@ const meta = {
   tags: ["autodocs"],
   args: readyDock,
   render: (args) => (
-    <div className="min-h-[320px] overflow-hidden bg-neutral-950 text-white">
+    <div className="min-h-[420px] overflow-hidden bg-neutral-950 text-white">
       <FloatingRecordingDock {...args} />
     </div>
   ),
@@ -131,33 +145,132 @@ export const Recording: Story = {
   },
 };
 
-export const Recorded: Story = {
+export const MobileRecordingActive: Story = {
+  args: recordingDock,
+  render: (args) => (
+    <div className="mx-auto min-h-[760px] w-[390px] max-w-full overflow-hidden bg-neutral-950 text-white">
+      <FloatingRecordingDock {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("button", { name: "Stop recording" })).toBeVisible();
+    await expect(canvas.getByText("REC")).toBeVisible();
+  },
+};
+
+export const ErrorState: Story = {
+  args: errorDock,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("alert")).toHaveTextContent(
+      "Recording failed. Try starting a new recording.",
+    );
+  },
+};
+
+export const RecordingUnsupported: Story = {
+  args: unsupportedDock,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("alert")).toHaveTextContent(
+      "Recording is not supported in this browser.",
+    );
+    await expect(canvas.getByRole("button", { name: "Record" })).toBeDisabled();
+  },
+};
+
+export const ReviewAfterLocalRecording: Story = {
   args: recordedDock,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Clip captured")).toBeVisible();
+    await expect(canvas.getByRole("region", { name: "Recording review" })).toBeVisible();
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
-    await expect(canvas.getByRole("link", { name: "Download clip" })).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Delete recording" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
   },
 };
 
-export const ModelReleased: Story = {
+export const ReviewAfterModelRecordingApiReleased: Story = {
   args: modelReleasedDock,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Clip captured")).toBeVisible();
     await expect(
-      canvas.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+      canvas.getByText("Recording ready. Model session ended to save usage. Local camera remains on."),
     ).toBeVisible();
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
   },
 };
 
+export const ReviewCollapsed: Story = {
+  args: recordedDock,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Collapse" }));
+
+    await expect(canvas.queryByLabelText("Recording playback")).not.toBeInTheDocument();
+    await expect(
+      canvas.getByRole("region", { name: "Recording review collapsed" }),
+    ).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Review" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+  },
+};
+
+export const ReviewExpanded: Story = {
+  args: recordedDock,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("region", { name: "Recording review" })).toBeVisible();
+    await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Collapse" })).toBeVisible();
+  },
+};
+
+export const MobileReviewSheet: Story = {
+  args: recordedDock,
+  render: (args) => (
+    <div className="mx-auto min-h-[760px] w-[390px] max-w-full overflow-hidden bg-neutral-950 text-white">
+      <FloatingRecordingDock {...args} />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("region", { name: "Recording dock" })).toHaveClass(
+      "bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]",
+      "w-[min(calc(100vw-1rem),42rem)]",
+    );
+    await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
+  },
+};
+
+export const DiscardConfirmation: Story = {
+  args: recordedDock,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Discard" }));
+
+    await expect(canvas.getByText("Discard this take? This removes the local clip only.")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Discard clip" })).toBeVisible();
+  },
+};
+
 export const DesktopWithPanel: Story = {
-  args: readyDock,
+  args: recordedDock,
   render: (args) => (
     <div className="min-h-screen overflow-hidden bg-neutral-950 text-white">
       <ControlPanel {...panelArgs} />
@@ -171,24 +284,7 @@ export const DesktopWithPanel: Story = {
 
     await expect(panel).toBeVisible();
     await expect(dock).toBeVisible();
+    await expect(canvas.getByRole("region", { name: "Recording review" })).toBeVisible();
     await expect(panel).not.toContainElement(dock);
-  },
-};
-
-export const MobileWidth: Story = {
-  args: recordingDock,
-  render: (args) => (
-    <div className="mx-auto min-h-[760px] w-[390px] max-w-full overflow-hidden bg-neutral-950 text-white">
-      <FloatingRecordingDock {...args} />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    await expect(canvas.getByRole("region", { name: "Recording dock" })).toHaveClass(
-      "bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]",
-      "w-[min(calc(100vw-1.5rem),34rem)]",
-    );
-    await expect(canvas.getByRole("button", { name: "Stop recording" })).toBeVisible();
   },
 };

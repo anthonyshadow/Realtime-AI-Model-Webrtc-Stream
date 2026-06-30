@@ -27,7 +27,11 @@ export function SessionActionsSection({
 }: SessionActionsSectionProps) {
   return (
     <ControlPanelSection
-      description="Start or stop the session, then apply model changes when needed."
+      description={
+        canApplyChanges
+          ? "Start or stop the session, then apply model changes when needed."
+          : "Start or stop the local camera preview."
+      }
       eyebrow="Run"
       title="Session actions"
     >

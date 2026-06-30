@@ -1,5 +1,5 @@
 # Product Requirements
-> Last updated: 2026-06-29
+> Last updated: 2026-06-30
 
 Use this for product behavior and acceptance criteria. For code boundaries, read [../02-architecture.md](../02-architecture.md).
 
@@ -10,7 +10,7 @@ Use this for product behavior and acceptance criteria. For code boundaries, read
 - User can start local webcam and microphone preview without Decart.
 - User can start camera, connect Decart realtime for model-backed modes, apply prompt/image updates, and stop cleanly.
 - User can record an active local or model-backed session when a recordable stream exists.
-- User can preview, download, and delete the latest recorded clip without backend storage.
+- User can review playback, download, and discard the latest recorded clip without backend storage.
 - Video remains primary; controls stay compact and usable on mobile and desktop.
 - Errors must be understandable without exposing secrets or raw token values.
 
@@ -33,4 +33,4 @@ Use this for product behavior and acceptance criteria. For code boundaries, read
 - Stop disconnects Decart when present and turns off local media tracks.
 - Local recording captures local webcam video plus local microphone audio.
 - Model-backed recording captures transformed model output video when available, using model output audio or local microphone audio fallback.
-- Recording artifacts stay in browser memory and object URLs are revoked on replacement, delete/reset, and unmount.
+- Recording artifacts stay in browser memory and object URLs are revoked on replacement, discard/reset, and unmount.

@@ -18,7 +18,7 @@ function renderFloatingRecordingDock(
     isSessionActive: true,
     isSupported: true,
     objectUrl: null,
-    onDeleteRecording: vi.fn(),
+    onDiscardRecording: vi.fn(),
     onStartRecording: vi.fn(),
     onStopRecording: vi.fn(),
     sizeLabel: "0 B",
@@ -153,7 +153,20 @@ describe("FloatingRecordingDock", () => {
     );
   });
 
-  it("renders playback, download, and delete actions after recording", () => {
+  it("renders unsupported recording as a disabled accessible action", () => {
+    renderFloatingRecordingDock({
+      error: "Recording is not supported in this browser.",
+      isSupported: false,
+      state: "error",
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Recording is not supported in this browser.",
+    );
+    expect(screen.getByRole("button", { name: "Record" })).toBeDisabled();
+  });
+
+  it("renders playback, download, and confirmed discard actions after recording", () => {
     const props = renderFloatingRecordingDock({
       durationLabel: "01:14",
       filename: "session-local-2026-06-30-16-45.webm",
@@ -163,21 +176,68 @@ describe("FloatingRecordingDock", () => {
     });
 
     const video = screen.getByLabelText("Recording playback");
-    const download = screen.getByRole("link", { name: "Download clip" });
+    const download = screen.getByRole("link", { name: "Download" });
 
     expect(screen.getByText("Clip captured")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Recording dock" })).toHaveClass(
+      "w-[min(calc(100vw-1rem),42rem)]",
+      "max-h-[calc(100vh-env(safe-area-inset-bottom)-1rem)]",
+      "overflow-y-auto",
+      "motion-reduce:transition-none",
+    );
+    expect(screen.getByRole("region", { name: "Recording review" })).toBeInTheDocument();
     expect(video).toHaveAttribute("src", "blob:http://localhost/clip");
     expect(download).toHaveAttribute("href", "blob:http://localhost/clip");
     expect(download).toHaveAttribute("download", "session-local-2026-06-30-16-45.webm");
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete recording" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
 
-    expect(props.onDeleteRecording).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Discard this take? This removes the local clip only.")).toBeInTheDocument();
+    expect(props.onDiscardRecording).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+
+    expect(screen.queryByText("Discard this take? This removes the local clip only.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard clip" }));
+
+    expect(props.onDiscardRecording).toHaveBeenCalledTimes(1);
+  });
+
+  it("collapses and expands recorded review without deleting the clip", () => {
+    const props = renderFloatingRecordingDock({
+      durationLabel: "01:14",
+      filename: "session-local-2026-06-30-16-45.webm",
+      objectUrl: "blob:http://localhost/clip",
+      sizeLabel: "8.4 MB",
+      state: "recorded",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
+
+    expect(screen.queryByLabelText("Recording playback")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Recording review collapsed" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute(
+      "href",
+      "blob:http://localhost/clip",
+    );
+    expect(screen.getByRole("button", { name: "Review" })).toBeVisible();
+    expect(props.onDiscardRecording).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Review" }));
+
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/clip",
+    );
   });
 
   it("shows a model-release completion message when provided", () => {
     renderFloatingRecordingDock({
-      completionMessage: "Recording saved. Model usage has stopped; local camera is still on.",
+      completionMessage: "Recording ready. Model session ended to save usage. Local camera remains on.",
       durationLabel: "00:18",
       filename: "session-lucy-2-1-2026-06-30-16-45.webm",
       objectUrl: "blob:http://localhost/model-clip",
@@ -187,7 +247,7 @@ describe("FloatingRecordingDock", () => {
 
     expect(screen.getByText("Clip captured")).toBeInTheDocument();
     expect(
-      screen.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+      screen.getByText("Recording ready. Model session ended to save usage. Local camera remains on."),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
       "src",

@@ -32,11 +32,13 @@ export function SessionSetupSection({
       eyebrow="Setup"
       title="Choose the session"
     >
-      <SessionModeSelector
-        disabled={!canChangeSessionMode}
-        value={sessionMode}
-        onChange={onSessionModeChange}
-      />
+      {canChangeSessionMode ? (
+        <SessionModeSelector
+          disabled={false}
+          value={sessionMode}
+          onChange={onSessionModeChange}
+        />
+      ) : null}
       <StatusSummary
         activeSessionMode={activeSessionMode}
         hasPendingChanges={hasPendingChanges}

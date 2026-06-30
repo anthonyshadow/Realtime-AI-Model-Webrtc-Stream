@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AutoHidingControlPanel } from "./components/ControlPanel/AutoHidingControlPanel";
 import { FloatingRecordingDock } from "./components/RecordingDock/FloatingRecordingDock";
 import { VideoStage } from "./components/VideoStage/VideoStage";
@@ -27,7 +27,7 @@ type ControlPanelDraft = {
 };
 
 const MODEL_RECORDING_RELEASE_MESSAGE =
-  "Recording saved. Model usage has stopped; local camera is still on.";
+  "Recording ready. Model session ended to save usage. Local camera remains on.";
 
 export function App() {
   const realtime = useLiveSession();
@@ -54,6 +54,12 @@ export function App() {
     lastAppliedDraftKey !== null &&
     lastAppliedDraftKey !== draftKey;
   const hasRecordableStream = realtime.recordableStream !== null && realtime.isRunning;
+  const hasRecordingArtifact =
+    recording.state === "recorded" || Boolean(recording.filename || recording.objectUrl);
+  const hasCriticalRecordingState =
+    recording.isRecording || recording.state === "stopping" || recording.state === "error";
+  const shouldRenderRecordingDock =
+    realtime.isRunning || hasCriticalRecordingState || hasRecordingArtifact;
   const recordingStandbyMessage = getRecordingStandbyMessage({
     activeSessionMode: realtime.activeSessionMode,
     hasRecordableStream,
@@ -158,12 +164,33 @@ export function App() {
     onModelSessionReleased: handleModelRecordingReleased,
   });
 
+  useEffect(() => {
+    if (
+      recording.state !== "recorded" ||
+      !isModelBackedSessionMode(recording.recordingSessionMode) ||
+      realtime.activeSessionMode !== DEFAULT_SESSION_MODE ||
+      recordingCompletionMessage !== null ||
+      sessionMode === DEFAULT_SESSION_MODE
+    ) {
+      return;
+    }
+
+    handleModelRecordingReleased();
+  }, [
+    handleModelRecordingReleased,
+    recording.recordingSessionMode,
+    recording.state,
+    recordingCompletionMessage,
+    realtime.activeSessionMode,
+    sessionMode,
+  ]);
+
   const handleStartRecording = () => {
     setRecordingCompletionMessage(null);
     recording.startRecording();
   };
 
-  const handleDeleteRecording = () => {
+  const handleDiscardRecording = () => {
     setRecordingCompletionMessage(null);
     recording.deleteRecording();
   };
@@ -189,6 +216,7 @@ export function App() {
         status={realtime.status}
         elapsedLabel={timer.elapsedLabel}
         error={formError ?? realtime.error}
+        reserveRecordingDockSpace={shouldRenderRecordingDock}
         onEnhancePromptChange={handleEnhancePromptChange}
         onSessionModeChange={handleSessionModeChange}
         onPromptChange={handlePromptChange}
@@ -213,7 +241,7 @@ export function App() {
         sizeLabel={recording.sizeLabel}
         standbyMessage={recordingStandbyMessage}
         state={recording.state}
-        onDeleteRecording={handleDeleteRecording}
+        onDiscardRecording={handleDiscardRecording}
         onStartRecording={handleStartRecording}
         onStopRecording={recording.stopRecording}
       />

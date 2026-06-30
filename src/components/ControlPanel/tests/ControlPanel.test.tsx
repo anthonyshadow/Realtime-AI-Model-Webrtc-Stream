@@ -42,6 +42,7 @@ describe("ControlPanel", () => {
     const panel = screen.getByRole("complementary", { name: "Live studio controls" });
 
     expect(panel).toHaveClass("max-h-[calc(100vh-1.5rem)]", "overflow-y-auto");
+    expect(screen.getByText("Start or stop the local camera preview.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Choose the session" })).toBeInTheDocument();
     expect(screen.getAllByText("Local camera").length).toBeGreaterThan(0);
     expect(
@@ -57,6 +58,21 @@ describe("ControlPanel", () => {
     expect(screen.queryByText("Options")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Record" })).not.toBeInTheDocument();
+  });
+
+  it("reserves a bottom lane when the recording dock is active", () => {
+    renderControlPanel({
+      reserveRecordingDockSpace: true,
+      status: "connected",
+    });
+
+    const panel = screen.getByRole("complementary", { name: "Live studio controls" });
+
+    expect(panel).toHaveClass(
+      "bottom-[calc(env(safe-area-inset-bottom)+10rem)]",
+      "max-h-[calc(100vh-env(safe-area-inset-bottom)-10.75rem)]",
+      "motion-reduce:transition-none",
+    );
   });
 
   it("renders model controls when Lucy is selected", () => {
@@ -133,16 +149,18 @@ describe("ControlPanel", () => {
     expect(props.onStart).toHaveBeenCalledTimes(1);
   });
 
-  it("disables model changes while a session is active", () => {
+  it("hides mode switching while a session is active", () => {
     renderControlPanel({
       canChangeSessionMode: false,
       sessionMode: "lucy-2.1",
       status: "connected",
     });
 
-    expect(screen.getByRole("button", { name: /Local camera/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Lucy 2.1/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Lucy VTON 3/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Local camera/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Lucy 2.1/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Lucy VTON 3/i })).not.toBeInTheDocument();
+    expect(screen.getByText("Mode")).toBeInTheDocument();
+    expect(screen.getByText("Lucy")).toBeInTheDocument();
   });
 
   it("clears selected reference images through the model section", async () => {

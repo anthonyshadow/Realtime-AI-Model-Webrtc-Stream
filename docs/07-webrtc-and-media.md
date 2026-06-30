@@ -50,7 +50,7 @@ The branch is enforced in `useLiveSession().start()`: local input returns throug
 
 `useSessionRecording(stream, { sessionMode })` consumes a `MediaStream | null` and records with browser-native `MediaRecorder` when available. It is independent from Decart and does not request media, fetch tokens, connect realtime sessions, or stop source tracks.
 
-`App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `FloatingRecordingDock` renders the model-agnostic record, stop-recording, timer, availability, and error states outside the control panel as a bottom-center transport. Model-backed sessions keep recording disabled with "Waiting for model output before recording." until the Decart output stream has video. After a clip is captured, the dock's `RecordingPlaybackPanel` uses the hook-owned object URL for local playback and download, and calls the hook's delete/reset path to revoke the URL.
+`App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `FloatingRecordingDock` renders the model-agnostic record, stop-recording, timer, availability, and error states outside the control panel as a bottom-center transport. Model-backed sessions keep recording disabled with "Waiting for model output before recording." until the Decart output stream has video. After a clip is captured, the dock's `RecordingPlaybackPanel` uses the hook-owned object URL for local review playback and download, and calls the hook's reset path after the user confirms discard.
 
 `useRecordingCompletionFlow()` is the App-level orchestration layer for stop-recording completion. It lets `useSessionRecording` finalize the `MediaRecorder` first. When the stopped recording reaches `recorded` or `error` from a model-backed session, it calls `useLiveSession().releaseModelSessionToLocalPreview()` so API/token usage ends while the local camera remains available for preview and future local recording.
 
@@ -71,7 +71,7 @@ The hook owns:
 - explicit states: `idle`, `ready`, `recording`, `stopping`, `recorded`, and `error`
 - supported MIME type detection through `MediaRecorder.isTypeSupported()`
 - chunk collection, recorded `Blob`, object URL creation, filename, duration, and size
-- recorder cleanup and object URL revocation on new recording, reset/delete, and unmount
+- recorder cleanup and object URL revocation on new recording, reset/discard, and unmount
 
 State meanings:
 
@@ -79,18 +79,18 @@ State meanings:
 - `ready`: a recordable stream exists and the browser exposes `MediaRecorder`.
 - `recording`: the recorder is actively collecting chunks.
 - `stopping`: the recorder has been asked to stop and is waiting for the browser `stop` event.
-- `recorded`: a `Blob`, object URL, filename, duration, and size are available for playback/download/delete.
+- `recorded`: a `Blob`, object URL, filename, duration, and size are available for review playback, download, or discard.
 - `error`: the browser does not support recording, no stream was available, start failed, or a recorder error event fired.
 
 `src/lib/recording.ts` owns pure helpers for MIME preferences, file extensions, timestamped filenames, duration labels, and file size labels. MIME detection checks `MediaRecorder.isTypeSupported()` in preference order: VP9 WebM, VP8 WebM, generic WebM, H.264/AAC MP4, then generic MP4. If none is supported but `MediaRecorder` exists, the hook lets the browser choose its default by constructing the recorder without a MIME option.
 
-Object URLs are in-memory only. `useSessionRecording` revokes the previous object URL when a new recording starts, when delete/reset runs, when a URL is replaced, and on unmount. No backend upload, cloud persistence, or recording gallery exists in the MVP.
+Object URLs are in-memory only. `useSessionRecording` revokes the previous object URL when a new recording starts, when discard/reset runs, when a URL is replaced, and on unmount. No backend upload, cloud persistence, or recording gallery exists in the MVP.
 
-Playback uses the recorded object URL in `src/components/RecordingDock/RecordingPlaybackPanel.tsx`. Download is a local anchor download using the generated filename. Delete/reset clears the recording artifact and does not stop the active live session or source stream.
+Playback uses the recorded object URL in `src/components/RecordingDock/RecordingPlaybackPanel.tsx`. Download is a local anchor download using the generated filename. The review can collapse without deleting the clip. Confirmed discard/reset clears the recording artifact and does not stop the active live session or source stream.
 
 When recording stops in Local camera mode, only the `MediaRecorder` is stopped. The local camera and microphone stream remains live until the user presses Stop session.
 
-When recording stops in a model-backed mode, the recording is finalized first, then the Decart realtime client is disconnected. If the existing local input stream still has a live video track, the app reuses it and switches the active session mode to `local`. If that stream is missing or no longer live, the app requests a fresh local camera stream through `useMediaSession().startLocalCamera()` and avoids creating a duplicate camera request when the existing stream is still healthy. The recorded object URL survives this model release and is revoked only by delete/reset, a new recording, or unmount.
+When recording stops in a model-backed mode, the recording is finalized first, then the Decart realtime client is disconnected. If the existing local input stream still has a live video track, the app reuses it and switches the active session mode to `local`. If that stream is missing or no longer live, the app requests a fresh local camera stream through `useMediaSession().startLocalCamera()` and avoids creating a duplicate camera request when the existing stream is still healthy. The recorded object URL survives this model release and is revoked only by confirmed discard/reset, a new recording, or unmount.
 
 ## Camera Flow
 
