@@ -1,5 +1,5 @@
 # Skill: Modifying Control Panel
-> Last updated: 2026-06-28
+> Last updated: 2026-06-30
 
 ## Use when
 
@@ -8,8 +8,10 @@
 ## Read first
 
 - [../../08-ui-and-ux.md](../../08-ui-and-ux.md)
+- [../../12-ux-recording-architecture.md](../../12-ux-recording-architecture.md)
 - `src/App.tsx`
 - `src/components/ControlPanel/`
+- `src/components/RecordingDock/` if the change touches recording, playback, or dock spacing.
 - Closest ControlPanel story and test.
 
 ## Steps
@@ -29,6 +31,7 @@
 ## Do not
 
 - Do not put Decart, media, or token orchestration in components.
+- Do not put recording transport, playback, Download, or Discard controls back into the control panel.
 - Do not hide setup, connecting, or error states behind auto-hide behavior.
 
 ## Update docs

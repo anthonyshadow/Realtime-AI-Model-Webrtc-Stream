@@ -50,6 +50,8 @@ The branch is enforced in `useLiveSession().start()`: local input returns throug
 
 `useSessionRecording(stream, { sessionMode })` consumes a `MediaStream | null` and records with browser-native `MediaRecorder` when available. It is independent from Decart and does not request media, fetch tokens, connect realtime sessions, or stop source tracks.
 
+The maintainer UX and API-release contract for recording lives in [12-ux-recording-architecture.md](12-ux-recording-architecture.md).
+
 `App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `FloatingRecordingDock` renders the model-agnostic record, stop-recording, timer, availability, and error states outside the control panel as a bottom-center transport. Model-backed sessions keep recording disabled with "Waiting for model output before recording." until the Decart output stream has video. After a clip is captured, the dock's `RecordingPlaybackPanel` uses the hook-owned object URL for local review playback and download, and calls the hook's reset path after the user confirms discard.
 
 `useRecordingCompletionFlow()` is the App-level orchestration layer for stop-recording completion. It lets `useSessionRecording` finalize the `MediaRecorder` first. When the stopped recording reaches `recorded` or `error` from a model-backed session, it calls `useLiveSession().releaseModelSessionToLocalPreview()` so API/token usage ends while the local camera remains available for preview and future local recording.

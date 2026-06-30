@@ -108,6 +108,8 @@ tests/
 
 Components are presentational. They receive state and callbacks through props and must not own Decart, token, WebRTC, camera, or timer orchestration.
 
+For the maintainer-level UX contract around what belongs in the control panel, what belongs in the recording dock, and how model/API release after recording works, use [12-ux-recording-architecture.md](12-ux-recording-architecture.md).
+
 Current UI pieces:
 
 - `VideoStage`, `VideoPlaceholder`, `StatusBadge`

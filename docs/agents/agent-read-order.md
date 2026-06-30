@@ -1,5 +1,5 @@
 # Agent Read Order
-> Last updated: 2026-06-29
+> Last updated: 2026-06-30
 
 Use this to choose the minimum useful context for a task.
 
@@ -12,27 +12,31 @@ Use this to choose the minimum useful context for a task.
 ## UI Or Control Panel
 
 1. [../08-ui-and-ux.md](../08-ui-and-ux.md)
-2. `src/App.tsx`
-3. `src/components/ControlPanel/`
-4. Closest stories and tests
+2. [../12-ux-recording-architecture.md](../12-ux-recording-architecture.md)
+3. `src/App.tsx`
+4. `src/components/ControlPanel/`
+5. `src/components/RecordingDock/`
+6. Closest stories and tests
 
 ## Decart Or API Integration
 
 1. [../06-api-and-integrations.md](../06-api-and-integrations.md)
 2. [../07-webrtc-and-media.md](../07-webrtc-and-media.md)
-3. `server/decartToken.ts`
-4. `src/lib/decartClient.ts`
-5. `src/hooks/useLiveSession.ts`
-6. `src/hooks/useDecartModelSession.ts`
-7. `src/hooks/useMediaSession.ts`
-8. `src/hooks/useSessionRecording.ts`
+3. [../12-ux-recording-architecture.md](../12-ux-recording-architecture.md)
+4. `server/decartToken.ts`
+5. `src/lib/decartClient.ts`
+6. `src/hooks/useLiveSession.ts`
+7. `src/hooks/useDecartModelSession.ts`
+8. `src/hooks/useMediaSession.ts`
+9. `src/hooks/useSessionRecording.ts`
 
 ## Tests
 
 1. [../04-testing.md](../04-testing.md)
 2. [../testing/test-strategy.md](../testing/test-strategy.md)
-3. Closest existing test file
-4. [../skills/testing/adding-unit-tests.md](../skills/testing/adding-unit-tests.md) or [../skills/testing/adding-e2e-tests.md](../skills/testing/adding-e2e-tests.md)
+3. [../12-ux-recording-architecture.md](../12-ux-recording-architecture.md#testing-contract)
+4. Closest existing test file
+5. [../skills/testing/adding-unit-tests.md](../skills/testing/adding-unit-tests.md) or [../skills/testing/adding-e2e-tests.md](../skills/testing/adding-e2e-tests.md)
 
 ## Storybook
 

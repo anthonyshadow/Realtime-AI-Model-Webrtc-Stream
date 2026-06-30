@@ -33,6 +33,10 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
   });
 
   await expect(page.getByText("jacket.png")).toBeVisible();
+  expect(realtimeTokenRequests.get(page)).toEqual([]);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(0);
 
   await page.getByRole("button", { name: "Start VTON session" }).click();
 
@@ -108,6 +112,11 @@ test("starts Lucy 2.1 through the Decart path", async ({ page }) => {
 
   await page.getByRole("button", { name: /Lucy 2.1/i }).click();
   await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
+  expect(realtimeTokenRequests.get(page)).toEqual([]);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(0);
+
   await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(page.getByRole("button", { name: "Stop session" })).toBeVisible();

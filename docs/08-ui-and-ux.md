@@ -3,6 +3,8 @@
 
 Use this before modifying the video stage, floating control panel, or component states.
 
+For the detailed maintainer contract covering control-panel boundaries, recording dock behavior, recording lifecycle, API release, stream strategy, cleanup, and QA guardrails, use [12-ux-recording-architecture.md](12-ux-recording-architecture.md).
+
 ## Product Shape
 
 The app opens directly into the working video experience, not a marketing page.

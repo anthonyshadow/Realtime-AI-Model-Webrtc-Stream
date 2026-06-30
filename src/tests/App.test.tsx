@@ -373,6 +373,10 @@ describe("App", () => {
 
     await selectLucyMode(user);
     await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
+    expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
+    expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
+
     await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     await waitFor(() => {
@@ -569,6 +573,10 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: /VTON/i }));
     expect(screen.getByLabelText(/Garment prompt/i)).toHaveValue("");
     await user.type(screen.getByLabelText(/Garment prompt/i), "Substitute the top with denim");
+    expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
+    expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
+    expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
+
     await user.click(screen.getByRole("button", { name: "Start VTON session" }));
 
     await waitFor(() => {

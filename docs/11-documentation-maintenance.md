@@ -1,5 +1,5 @@
 # Documentation Maintenance
-> Last updated: 2026-06-28
+> Last updated: 2026-06-30
 
 Use this when adding, moving, or updating docs, skills, stories, or tests.
 
@@ -26,7 +26,7 @@ Archived docs should use:
 
 - Root: keep `README.md` and compact required agent shims only.
 - `docs/00-start-here.md`: doc index and fastest orientation.
-- `docs/01-*` through `docs/11-*`: canonical project docs.
+- `docs/01-*` through `docs/12-*`: canonical project docs.
 - `docs/context/`: product requirements, decisions, and limitations.
 - `docs/testing/`: testing details.
 - `docs/storybook/`: Storybook details.

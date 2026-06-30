@@ -1,5 +1,5 @@
 # Skill: Responsive UI Checklist
-> Last updated: 2026-06-28
+> Last updated: 2026-06-30
 
 ## Use when
 
@@ -8,6 +8,7 @@
 ## Read first
 
 - [../../08-ui-and-ux.md](../../08-ui-and-ux.md)
+- [../../12-ux-recording-architecture.md](../../12-ux-recording-architecture.md)
 - Relevant stories.
 
 ## Steps

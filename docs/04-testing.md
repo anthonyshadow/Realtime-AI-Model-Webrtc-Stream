@@ -1,5 +1,5 @@
 # Testing
-> Last updated: 2026-06-28
+> Last updated: 2026-06-30
 
 Use this for the test stack and default checks. More detail lives in [testing/](testing/).
 
@@ -13,6 +13,8 @@ Use this for the test stack and default checks. More detail lives in [testing/](
 - Playwright for global E2E and Storybook a11y smoke tests.
 
 Default tests must not call live Decart, request a real camera, open real WebRTC sessions, or reach external network services.
+
+For the regression contract around Local camera network guards, model/API release after recording, recording dock behavior, playback/download/discard, and manual browser QA, use [12-ux-recording-architecture.md](12-ux-recording-architecture.md#testing-contract).
 
 ## Commands
 
