@@ -39,6 +39,7 @@ export type UseSessionRecordingReturn = {
   objectUrl: string | null;
   mimeType: string | null;
   filename: string | null;
+  recordingSessionMode: SessionModeId | null;
   startedAt: Date | null;
   elapsedSeconds: number;
   elapsedLabel: string;
@@ -71,6 +72,7 @@ export function useSessionRecording(
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | null>(null);
   const [filename, setFilename] = useState<string | null>(null);
+  const [recordingSessionMode, setRecordingSessionMode] = useState<SessionModeId | null>(null);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [durationSeconds, setDurationSeconds] = useState(0);
@@ -174,6 +176,7 @@ export function useSessionRecording(
     recordingStartedAtRef.current = null;
     recordingSourceStreamRef.current = null;
     recordingMimeTypeRef.current = null;
+    setRecordingSessionMode(null);
     setStartedAt(null);
     setElapsedSeconds(0);
     setDurationSeconds(0);
@@ -301,6 +304,7 @@ export function useSessionRecording(
       recordingSessionModeRef.current = sessionMode;
       recordingMimeTypeRef.current = recorder.mimeType || selectedMimeType;
       setMimeType(recorder.mimeType || selectedMimeType);
+      setRecordingSessionMode(sessionMode);
       setStartedAt(startedAtDate);
       setRecordingState("recording");
       return true;
@@ -310,6 +314,7 @@ export function useSessionRecording(
       recordingStartedAtRef.current = null;
       recordingSourceStreamRef.current = null;
       recordingMimeTypeRef.current = null;
+      setRecordingSessionMode(null);
       setStartedAt(null);
       setElapsedSeconds(0);
       setDurationSeconds(0);
@@ -411,6 +416,7 @@ export function useSessionRecording(
       objectUrl,
       mimeType,
       filename,
+      recordingSessionMode,
       startedAt,
       elapsedSeconds,
       elapsedLabel: formatRecordingDuration(elapsedSeconds),
@@ -430,6 +436,7 @@ export function useSessionRecording(
       elapsedSeconds,
       error,
       filename,
+      recordingSessionMode,
       isRecording,
       isSupported,
       mimeType,

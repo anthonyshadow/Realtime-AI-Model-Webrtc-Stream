@@ -175,6 +175,26 @@ describe("FloatingRecordingDock", () => {
     expect(props.onDeleteRecording).toHaveBeenCalledTimes(1);
   });
 
+  it("shows a model-release completion message when provided", () => {
+    renderFloatingRecordingDock({
+      completionMessage: "Recording saved. Model usage has stopped; local camera is still on.",
+      durationLabel: "00:18",
+      filename: "session-lucy-2-1-2026-06-30-16-45.webm",
+      objectUrl: "blob:http://localhost/model-clip",
+      sizeLabel: "9.1 MB",
+      state: "recorded",
+    });
+
+    expect(screen.getByText("Clip captured")).toBeInTheDocument();
+    expect(
+      screen.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/model-clip",
+    );
+  });
+
   it("uses a safe-area aware mobile-friendly fixed layout", () => {
     renderFloatingRecordingDock();
 

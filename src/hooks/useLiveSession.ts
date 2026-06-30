@@ -153,6 +153,56 @@ export function useLiveSession(): UseLiveSessionReturn {
     setStatus("disconnected");
   }, [stopLowerSessions]);
 
+  const releaseModelSessionToLocalPreview = useCallback(async () => {
+    if (!isModelBackedSessionMode(activeSessionMode)) {
+      return false;
+    }
+
+    const requestId = startRequestIdRef.current + 1;
+    startRequestIdRef.current = requestId;
+    const isCurrent = () => startRequestIdRef.current === requestId;
+
+    setSessionError(null);
+    stopDecartModelSession();
+
+    if (hasLiveVideoTrack(localStream)) {
+      setActiveSessionMode("local");
+      setStatus("connected");
+      return true;
+    }
+
+    setActiveSessionMode(null);
+    setStatus("requesting-camera");
+
+    try {
+      const stream = await startLocalCamera({ isCurrent });
+
+      if (!stream || !isCurrent()) {
+        return false;
+      }
+
+      setActiveSessionMode("local");
+      setStatus("connected");
+      return true;
+    } catch (releaseError) {
+      if (!isCurrent()) {
+        return false;
+      }
+
+      stopMediaSession();
+      setSessionError(toUserMessage(releaseError));
+      setActiveSessionMode(null);
+      setStatus("error");
+      return false;
+    }
+  }, [
+    activeSessionMode,
+    localStream,
+    startLocalCamera,
+    stopDecartModelSession,
+    stopMediaSession,
+  ]);
+
   const apply = useCallback(
     async (input: ApplyRealtimeStateInput) => {
       setSessionError(null);
@@ -227,6 +277,7 @@ export function useLiveSession(): UseLiveSessionReturn {
       isApplying,
       start,
       stop,
+      releaseModelSessionToLocalPreview,
       apply,
       resetRealtimeState,
     }),
@@ -244,6 +295,7 @@ export function useLiveSession(): UseLiveSessionReturn {
       recordableStreamComposition.videoSource,
       recordableStream,
       resetRealtimeState,
+      releaseModelSessionToLocalPreview,
       start,
       status,
       stop,
@@ -255,4 +307,8 @@ function isLocalStartInput(
   input: StartRealtimeSessionInput,
 ): input is Extract<StartRealtimeSessionInput, { sessionMode: LocalSessionModeId }> {
   return isLocalSessionMode(input.sessionMode);
+}
+
+function hasLiveVideoTrack(stream: MediaStream | null) {
+  return stream?.getVideoTracks().some((track) => track.readyState === "live") ?? false;
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AutoHidingControlPanel } from "./components/ControlPanel/AutoHidingControlPanel";
 import { FloatingRecordingDock } from "./components/RecordingDock/FloatingRecordingDock";
 import { VideoStage } from "./components/VideoStage/VideoStage";
@@ -13,6 +13,7 @@ import {
 } from "./constants/sessionModes";
 import { useLiveSession } from "./hooks/useLiveSession";
 import { useObjectUrl } from "./hooks/useObjectUrl";
+import { useRecordingCompletionFlow } from "./hooks/useRecordingCompletionFlow";
 import { useSessionRecording } from "./hooks/useSessionRecording";
 import { useSessionTimer } from "./hooks/useSessionTimer";
 import type { RecordableStreamSource } from "./lib/streamComposition";
@@ -25,6 +26,9 @@ type ControlPanelDraft = {
   enhance: boolean;
 };
 
+const MODEL_RECORDING_RELEASE_MESSAGE =
+  "Recording saved. Model usage has stopped; local camera is still on.";
+
 export function App() {
   const realtime = useLiveSession();
   const timer = useSessionTimer(realtime.isRunning);
@@ -36,6 +40,7 @@ export function App() {
   const recording = useSessionRecording(realtime.recordableStream, {
     sessionMode: realtime.activeSessionMode ?? sessionMode,
   });
+  const [recordingCompletionMessage, setRecordingCompletionMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [lastAppliedDraftKey, setLastAppliedDraftKey] = useState<string | null>(null);
   const imagePreviewUrl = useObjectUrl(draft.image);
@@ -86,6 +91,7 @@ export function App() {
     const resetDraftKey = createDraftKey(resetDraft);
 
     setFormError(null);
+    setRecordingCompletionMessage(null);
     setDraft(resetDraft);
     setLastAppliedDraftKey(null);
 
@@ -98,6 +104,7 @@ export function App() {
 
   const handleStart = () => {
     setFormError(null);
+    setRecordingCompletionMessage(null);
     const draftAtSubmit = draft;
     const draftKeyAtSubmit = draftKey;
     const startInput = createStartSessionInput(draftAtSubmit);
@@ -111,6 +118,8 @@ export function App() {
 
   const handleStop = () => {
     setLastAppliedDraftKey(null);
+    setRecordingCompletionMessage(null);
+    recordingCompletionFlow.clearPendingCompletionFlow();
     if (recording.isRecording) {
       recording.stopRecording();
     }
@@ -119,6 +128,7 @@ export function App() {
 
   const handleApply = () => {
     setFormError(null);
+    setRecordingCompletionMessage(null);
     const draftAtSubmit = draft;
     const draftKeyAtSubmit = draftKey;
     const applyInput = createApplyInput(draftAtSubmit);
@@ -132,6 +142,30 @@ export function App() {
         setLastAppliedDraftKey(draftKeyAtSubmit);
       }
     });
+  };
+
+  const handleModelRecordingReleased = useCallback(() => {
+    setFormError(null);
+    setDraft(createControlPanelDraft(DEFAULT_SESSION_MODE));
+    setLastAppliedDraftKey(null);
+    setRecordingCompletionMessage(MODEL_RECORDING_RELEASE_MESSAGE);
+  }, []);
+
+  const recordingCompletionFlow = useRecordingCompletionFlow({
+    recordingSessionMode: recording.recordingSessionMode,
+    recordingState: recording.state,
+    releaseModelSessionToLocalPreview: realtime.releaseModelSessionToLocalPreview,
+    onModelSessionReleased: handleModelRecordingReleased,
+  });
+
+  const handleStartRecording = () => {
+    setRecordingCompletionMessage(null);
+    recording.startRecording();
+  };
+
+  const handleDeleteRecording = () => {
+    setRecordingCompletionMessage(null);
+    recording.deleteRecording();
   };
 
   return (
@@ -167,6 +201,7 @@ export function App() {
       />
       <FloatingRecordingDock
         canRecord={recording.canRecord}
+        completionMessage={recordingCompletionMessage}
         durationLabel={recording.durationLabel}
         error={recording.error}
         filename={recording.filename}
@@ -178,8 +213,8 @@ export function App() {
         sizeLabel={recording.sizeLabel}
         standbyMessage={recordingStandbyMessage}
         state={recording.state}
-        onDeleteRecording={recording.deleteRecording}
-        onStartRecording={recording.startRecording}
+        onDeleteRecording={handleDeleteRecording}
+        onStartRecording={handleStartRecording}
         onStopRecording={recording.stopRecording}
       />
     </main>

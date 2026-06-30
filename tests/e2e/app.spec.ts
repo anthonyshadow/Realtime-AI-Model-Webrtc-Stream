@@ -288,6 +288,67 @@ test("records, previews, downloads, deletes, and replaces local clips safely", a
     ]);
 });
 
+test("stopping a model recording releases API usage and keeps local preview playback", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: /Lucy 2.1/i }).click();
+  await page.getByLabel(/Transformation prompt/i).fill("Make the scene cinematic");
+  await page.getByRole("button", { name: "Start Lucy session" }).click();
+
+  await expect(page.getByRole("button", { name: "Record" })).toBeEnabled();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(1);
+  expect(realtimeTokenRequests.get(page)).toEqual([{ model: "lucy-2.1" }]);
+
+  await page.getByRole("button", { name: "Record" }).click();
+  await page.getByRole("button", { name: "Stop recording" }).click();
+
+  await expect(
+    page.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+  ).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.disconnects))
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
+    .toBe(1);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_MEDIA_REQUESTS__.length))
+    .toBe(1);
+  await expect(
+    page.getByText("Local camera is on. Recording is available when the stream is ready."),
+  ).toBeVisible();
+  await expect(page.getByLabel(/Transformation prompt/i)).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() => Boolean((document.querySelector("video") as HTMLVideoElement | null)?.srcObject)),
+    )
+    .toBe(true);
+
+  await expect(page.getByLabel("Recording playback")).toHaveAttribute(
+    "src",
+    "blob:http://localhost/e2e-object-url-1",
+  );
+  await expect(page.getByRole("link", { name: "Download clip" })).toHaveAttribute(
+    "href",
+    "blob:http://localhost/e2e-object-url-1",
+  );
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_OBJECT_URL_EVENTS__.revoked))
+    .toEqual([]);
+
+  await page.getByRole("button", { name: "Delete recording" }).click();
+
+  await expect(page.getByLabel("Recording playback")).toHaveCount(0);
+  await expect
+    .poll(() => page.evaluate(() => (window as any).__E2E_OBJECT_URL_EVENTS__.revoked))
+    .toEqual(["blob:http://localhost/e2e-object-url-1"]);
+  await expect(page.getByRole("button", { name: "Record" })).toBeEnabled();
+});
+
 test("restarting a session and recording again revokes the previous clip URL", async ({ page }) => {
   await page.goto("/");
 

@@ -264,4 +264,100 @@ describe("useLiveSession", () => {
     expect(result.current.recordableStream).toBeNull();
     expect(result.current.recordableStreamSource).toBe("none");
   });
+
+  it("releases a model session back to the existing local preview without a duplicate camera request", async () => {
+    const localStream = createMockMediaStream({ audio: true });
+    const outputStream = createMockMediaStream({ audio: true });
+    const localTracks = localStream.getTracks() as MockMediaStreamTrack[];
+    decartMocks.connectRealtimeModel.mockImplementationOnce(async ({ onConnectionChange, onRemoteStream }) => {
+      onRemoteStream(outputStream);
+      onConnectionChange("connected");
+      return decartMocks.realtimeClient;
+    });
+    mockGetUserMedia.mockResolvedValueOnce(localStream);
+    const { result } = renderHook(() => useLiveSession());
+
+    await act(async () => {
+      await result.current.start({
+        sessionMode: "lucy-2.1",
+        modelMode: "lucy-2.1",
+        prompt: "Make the scene cinematic",
+        image: null,
+        enhance: true,
+      });
+    });
+
+    let didRelease = false;
+
+    await act(async () => {
+      didRelease = await result.current.releaseModelSessionToLocalPreview();
+    });
+
+    expect(didRelease).toBe(true);
+    expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalledTimes(1);
+    expect(mockGetUserMedia).toHaveBeenCalledTimes(1);
+    for (const track of localTracks) {
+      expect(track.stop).not.toHaveBeenCalled();
+    }
+    expect(result.current.status).toBe("connected");
+    expect(result.current.activeSessionMode).toBe("local");
+    expect(result.current.localStream).toBe(localStream);
+    expect(result.current.modelOutputStream).toBeNull();
+    expect(result.current.displayStream).toBe(localStream);
+    expect(result.current.recordableStream).not.toBeNull();
+    expect(result.current.recordableStream?.getVideoTracks()).toEqual(localStream.getVideoTracks());
+    expect(result.current.recordableStream?.getAudioTracks()).toEqual(localStream.getAudioTracks());
+    expect(result.current.recordableStreamSource).toBe("local");
+    expect(result.current.recordableAudioSource).toBe("local");
+  });
+
+  it("requests a fresh local preview only when the model input stream is no longer live", async () => {
+    const endedModelInputStream = createMockMediaStream({ audio: true });
+    const replacementLocalStream = createMockMediaStream({ audio: true });
+    const endedTracks = endedModelInputStream.getTracks() as MockMediaStreamTrack[];
+    const replacementTracks = replacementLocalStream.getTracks() as MockMediaStreamTrack[];
+    decartMocks.connectRealtimeModel.mockImplementationOnce(async ({ onConnectionChange, onRemoteStream }) => {
+      onRemoteStream(createMockMediaStream());
+      onConnectionChange("connected");
+      return decartMocks.realtimeClient;
+    });
+    mockGetUserMedia
+      .mockResolvedValueOnce(endedModelInputStream)
+      .mockResolvedValueOnce(replacementLocalStream);
+    const { result } = renderHook(() => useLiveSession());
+
+    await act(async () => {
+      await result.current.start({
+        sessionMode: "lucy-vton-3",
+        modelMode: "lucy-vton-3",
+        prompt: "Substitute the current top with denim",
+        image: null,
+        enhance: true,
+      });
+    });
+
+    for (const track of endedTracks) {
+      track.stop();
+    }
+
+    await act(async () => {
+      await result.current.releaseModelSessionToLocalPreview();
+    });
+
+    expect(mockGetUserMedia).toHaveBeenCalledTimes(2);
+    expect(mockGetUserMedia).toHaveBeenLastCalledWith({
+      video: {
+        facingMode: "user",
+      },
+      audio: true,
+    });
+    expect(result.current.activeSessionMode).toBe("local");
+    expect(result.current.displayStream).toBe(replacementLocalStream);
+    expect(result.current.recordableStream?.getVideoTracks()).toEqual(
+      replacementLocalStream.getVideoTracks(),
+    );
+    for (const track of replacementTracks) {
+      expect(track.stop).not.toHaveBeenCalled();
+    }
+  });
 });

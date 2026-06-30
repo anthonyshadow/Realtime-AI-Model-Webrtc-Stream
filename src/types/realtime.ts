@@ -46,6 +46,7 @@ export type UseLiveSessionReturn = {
   isApplying: boolean;
   start: (initialState: StartRealtimeSessionInput) => Promise<boolean>;
   stop: () => void;
+  releaseModelSessionToLocalPreview: () => Promise<boolean>;
   apply: (input: ApplyRealtimeStateInput) => Promise<boolean>;
   resetRealtimeState: () => Promise<boolean>;
 };

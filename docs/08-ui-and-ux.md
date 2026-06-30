@@ -28,6 +28,12 @@ While running:
 - prompt and image can be updated with Apply for model-backed sessions
 - panel may auto-hide so video remains primary
 
+After stopping a recording in a model-backed session:
+
+- finalize the recording and keep playback/download/delete available
+- end model usage and return the live display to local camera preview
+- show concise dock copy that the model session ended and local camera is still on
+
 After stop:
 
 - disconnect realtime client
@@ -72,7 +78,7 @@ The dock:
 - uses `useAutoHideOverlay` for mouse, touch, keyboard, focus, inactivity, and forced visibility behavior
 - stays visible while recording or while a critical recording error is present
 - keeps Record and Stop recording visually separate from the main session Start/Stop action
-- shows timer, ready/waiting/error copy, REC state, and the latest captured clip review/download/delete controls
+- shows timer, ready/waiting/error copy, REC state, model-ended saved copy, and the latest captured clip review/download/delete controls
 - stays bottom-center on desktop and safe-area aware near the bottom edge on mobile
 
 ## Overlay Behavior

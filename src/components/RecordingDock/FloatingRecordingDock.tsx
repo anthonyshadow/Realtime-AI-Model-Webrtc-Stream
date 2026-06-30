@@ -8,6 +8,7 @@ const RECORDING_DOCK_IDLE_MS = 3000;
 
 export type FloatingRecordingDockProps = {
   canRecord: boolean;
+  completionMessage?: string | null;
   durationLabel: string;
   error: string | null;
   filename: string | null;
@@ -26,6 +27,7 @@ export type FloatingRecordingDockProps = {
 
 export function FloatingRecordingDock({
   canRecord,
+  completionMessage,
   durationLabel,
   error,
   filename,
@@ -61,6 +63,7 @@ export function FloatingRecordingDock({
   const canStartRecording =
     hasRecordableStream && isSupported && canRecord && !isRecording;
   const status = getRecordingStatus({
+    completionMessage,
     durationLabel,
     error,
     filename,
@@ -144,6 +147,7 @@ export function FloatingRecordingDock({
 
 type RecordingStatusInput = Pick<
   FloatingRecordingDockProps,
+  | "completionMessage"
   | "durationLabel"
   | "error"
   | "filename"
@@ -155,6 +159,7 @@ type RecordingStatusInput = Pick<
 >;
 
 function getRecordingStatus({
+  completionMessage,
   durationLabel,
   error,
   filename,
@@ -188,9 +193,9 @@ function getRecordingStatus({
     return {
       badgeLabel: "Saved",
       title: "Clip captured",
-      message: filename
+      message: completionMessage ?? (filename
         ? `${filename} - ${clipDetails}`
-        : "Review the latest recording when you are ready.",
+        : "Review the latest recording when you are ready."),
       tone: "recorded" as const,
     };
   }

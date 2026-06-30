@@ -46,7 +46,8 @@ The model-backed modes are independent. Combined Lucy plus VTON mode is not impl
 9. Apply sends prompt, image, and enhance through the realtime update path that preserves the intended control panel state.
 10. The live-session layer composes `recordableStream`: local sessions record local webcam plus mic, while model-backed sessions record model output video with model output audio or local mic fallback.
 11. The recording hook consumes the selected `recordableStream` and the recording dock exposes record/stop-recording, playback, download, and delete controls without owning Decart or stopping source tracks.
-12. Stop disconnects Decart when present and stops local media tracks.
+12. Stopping a recording in a model-backed session finalizes the clip, disconnects the model session to stop usage, and returns the live display to local camera preview.
+13. Stop session disconnects Decart when present and stops local media tracks.
 
 ## Non-Goals
 

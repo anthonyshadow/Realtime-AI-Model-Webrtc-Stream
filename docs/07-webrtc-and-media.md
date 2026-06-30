@@ -9,6 +9,7 @@ Use this for camera, media stream, video attachment, and realtime lifecycle beha
 - `src/hooks/useMediaSession.ts`
 - `src/hooks/useDecartModelSession.ts`
 - `src/hooks/useDecartRealtimeSession.ts`
+- `src/hooks/useRecordingCompletionFlow.ts`
 - `src/hooks/useSessionRecording.ts`
 - `src/lib/media.ts`
 - `src/lib/recording.ts`
@@ -32,6 +33,7 @@ Use this for camera, media stream, video attachment, and realtime lifecycle beha
 - `modelOutputStream`: the Decart output stream, or `null` for local camera mode.
 - `recordableStream`: the stream a recording layer can consume. Local sessions expose local webcam video plus local microphone audio. Model-backed sessions expose model output video only after output exists, using model output audio when present and local microphone audio when the output has no audio.
 - `recordableStreamSource` and `recordableAudioSource`: metadata that explains whether recording is unavailable, local, or model-output based.
+- `releaseModelSessionToLocalPreview()`: disconnects an active model-backed session after recording completes, keeps or restores local camera preview, and leaves the recording artifact untouched.
 
 ## Session Start Behavior
 
@@ -49,6 +51,8 @@ The branch is enforced in `useLiveSession().start()`: local input returns throug
 `useSessionRecording(stream, { sessionMode })` consumes a `MediaStream | null` and records with browser-native `MediaRecorder` when available. It is independent from Decart and does not request media, fetch tokens, connect realtime sessions, or stop source tracks.
 
 `App.tsx` passes `useLiveSession().recordableStream` and the selected/active session mode to the recording hook. `FloatingRecordingDock` renders the model-agnostic record, stop-recording, timer, availability, and error states outside the control panel as a bottom-center transport. Model-backed sessions keep recording disabled with "Waiting for model output before recording." until the Decart output stream has video. After a clip is captured, the dock's `RecordingPlaybackPanel` uses the hook-owned object URL for local playback and download, and calls the hook's delete/reset path to revoke the URL.
+
+`useRecordingCompletionFlow()` is the App-level orchestration layer for stop-recording completion. It lets `useSessionRecording` finalize the `MediaRecorder` first. When the stopped recording reaches `recorded` or `error` from a model-backed session, it calls `useLiveSession().releaseModelSessionToLocalPreview()` so API/token usage ends while the local camera remains available for preview and future local recording.
 
 `src/lib/streamComposition.ts` owns recordable stream selection:
 
@@ -84,6 +88,10 @@ Object URLs are in-memory only. `useSessionRecording` revokes the previous objec
 
 Playback uses the recorded object URL in `src/components/RecordingDock/RecordingPlaybackPanel.tsx`. Download is a local anchor download using the generated filename. Delete/reset clears the recording artifact and does not stop the active live session or source stream.
 
+When recording stops in Local camera mode, only the `MediaRecorder` is stopped. The local camera and microphone stream remains live until the user presses Stop session.
+
+When recording stops in a model-backed mode, the recording is finalized first, then the Decart realtime client is disconnected. If the existing local input stream still has a live video track, the app reuses it and switches the active session mode to `local`. If that stream is missing or no longer live, the app requests a fresh local camera stream through `useMediaSession().startLocalCamera()` and avoids creating a duplicate camera request when the existing stream is still healthy. The recorded object URL survives this model release and is revoked only by delete/reset, a new recording, or unmount.
+
 ## Camera Flow
 
 `getCameraStream(model)` requests the browser camera with the selected model's `fps`, `width`, and `height`, plus `facingMode: "user"`. Its default direct helper behavior uses `audio: false`.
@@ -113,6 +121,8 @@ Stop must:
 - set status to `disconnected`
 
 If the user stops a live session while recording, `App.tsx` asks the recording hook to stop the `MediaRecorder` first, then stops the live session. The recorded clip can remain available after the live stream is gone.
+
+Stopping recording is different from Stop session. In a model-backed session, Stop recording ends the model/API session after the recording artifact is finalized, but it keeps local camera preview running. Stop session still stops both model and local media ownership and returns to `disconnected`.
 
 Unmount and page unload disconnect Decart and stop media tracks. `useSessionRecording` separately stops any active recorder and revokes its object URL on unmount.
 

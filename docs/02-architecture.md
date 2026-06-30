@@ -23,6 +23,7 @@ Decart realtime WebRTC
 Browser React app
   -> displays transformed stream full-screen
   -> records transformed stream output when available
+  -> stop recording: finalize clip, release model session, keep local preview
 ```
 
 ## Session Modes And Branching
@@ -87,6 +88,7 @@ tests/
 - `src/hooks/useMediaSession.ts`: camera and microphone acquisition, model camera acquisition, media status, permission/device errors, local input stream ownership, track stopping, and media cleanup.
 - `src/hooks/useDecartModelSession.ts`: Decart realtime model resolution, token/client/connect path, model output stream, realtime apply/reset, Decart errors, and Decart client cleanup.
 - `src/hooks/useDecartRealtimeSession.ts`: compatibility re-export for `useLiveSession`.
+- `src/hooks/useRecordingCompletionFlow.ts`: App-level stop-recording orchestration that waits for recording finalization before releasing model-backed sessions to local preview.
 - `src/hooks/useSessionRecording.ts`: model-agnostic `MediaRecorder` lifecycle, recording state, chunk collection, Blob/object URL ownership, elapsed time, filename, size, reset/delete, and URL cleanup.
 - `src/hooks/useAutoHideOverlay.ts`: reusable overlay visibility lifecycle for mouse, touch, keyboard, focus, inactivity timers, forced visibility, and cleanup.
 - `src/hooks/useSessionTimer.ts`: elapsed time and display label.

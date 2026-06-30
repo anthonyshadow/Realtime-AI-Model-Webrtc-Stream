@@ -47,6 +47,13 @@ const recordedDock = {
   state: "recorded",
 } satisfies FloatingRecordingDockProps;
 
+const modelReleasedDock = {
+  ...recordedDock,
+  completionMessage: "Recording saved. Model usage has stopped; local camera is still on.",
+  filename: "session-lucy-2-1-2026-06-30-16-45.webm",
+  objectUrl: "blob:http://localhost/session-model-preview",
+} satisfies FloatingRecordingDockProps;
+
 const panelArgs = {
   activeSessionMode: "local",
   canChangeSessionMode: false,
@@ -133,6 +140,19 @@ export const Recorded: Story = {
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
     await expect(canvas.getByRole("link", { name: "Download clip" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Delete recording" })).toBeVisible();
+  },
+};
+
+export const ModelReleased: Story = {
+  args: modelReleasedDock,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Clip captured")).toBeVisible();
+    await expect(
+      canvas.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+    ).toBeVisible();
+    await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
   },
 };
 

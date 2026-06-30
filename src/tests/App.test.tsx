@@ -178,7 +178,7 @@ describe("App", () => {
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
 
-  it("stops recording without stopping the live session", async () => {
+  it("stops local recording without stopping the live camera session", async () => {
     const user = userEvent.setup();
     const stream = createMockMediaStream({ audio: true });
     const tracks = stream.getTracks() as MockMediaStreamTrack[];
@@ -202,6 +202,7 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getByText("Clip captured")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
+    expect((document.querySelector("video") as HTMLVideoElement | null)?.srcObject).toBe(stream);
     for (const track of tracks) {
       expect(track.stop).not.toHaveBeenCalled();
     }
@@ -224,6 +225,7 @@ describe("App", () => {
       FakeMediaRecorder.instances[0].emitData(new Blob(["clip"], { type: "video/webm" }));
     });
     await user.click(screen.getByRole("button", { name: "Stop recording" }));
+    expect(FakeMediaRecorder.instances[0].stop).toHaveBeenCalledTimes(1);
     act(() => {
       FakeMediaRecorder.instances[0].emitStop();
     });
@@ -426,6 +428,82 @@ describe("App", () => {
     expect(decartMocks.fetchRealtimeToken).toHaveBeenCalledWith("lucy-2.1");
     expect(decartMocks.connectRealtimeModel).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Stop recording" })).toBeEnabled();
+  });
+
+  it("stops a model recording, releases the API session, and keeps local preview plus playback", async () => {
+    const user = userEvent.setup();
+    vi.mocked(URL.createObjectURL).mockReturnValueOnce("blob:http://localhost/model-clip");
+    const localStream = createMockMediaStream({ audio: true });
+    const outputStream = createMockMediaStream();
+    const localTracks = localStream.getTracks() as MockMediaStreamTrack[];
+    mockGetUserMedia.mockResolvedValueOnce(localStream);
+    decartMocks.connectRealtimeModel.mockImplementationOnce(async ({ onConnectionChange, onRemoteStream }) => {
+      onRemoteStream(outputStream);
+      onConnectionChange("connected");
+      return decartMocks.realtimeClient;
+    });
+    render(<App />);
+
+    await selectLucyMode(user);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Record" })).toBeEnabled());
+    await waitFor(() =>
+      expect((document.querySelector("video") as HTMLVideoElement | null)?.srcObject).toBe(
+        outputStream,
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: "Record" }));
+    act(() => {
+      FakeMediaRecorder.instances[0].emitData(new Blob(["model clip"], { type: "video/webm" }));
+    });
+    await user.click(screen.getByRole("button", { name: "Stop recording" }));
+    act(() => {
+      FakeMediaRecorder.instances[0].emitStop();
+    });
+
+    await waitFor(() => expect(screen.getByText("Clip captured")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText("Recording saved. Model usage has stopped; local camera is still on."),
+      ).toBeInTheDocument(),
+    );
+    expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalledTimes(1);
+    expect(mockGetUserMedia).toHaveBeenCalledTimes(1);
+    expect((document.querySelector("video") as HTMLVideoElement | null)?.srcObject).toBe(
+      localStream,
+    );
+    expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Local camera is on. Recording is available when the stream is ready."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
+      "src",
+      "blob:http://localhost/model-clip",
+    );
+    expect(screen.getByRole("link", { name: "Download clip" })).toHaveAttribute(
+      "href",
+      "blob:http://localhost/model-clip",
+    );
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:http://localhost/model-clip");
+    for (const track of localTracks) {
+      expect(track.stop).not.toHaveBeenCalled();
+    }
+
+    await user.click(screen.getByRole("button", { name: "Delete recording" }));
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:http://localhost/model-clip");
+    expect(screen.queryByLabelText("Recording playback")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Stop session" }));
+
+    for (const track of localTracks) {
+      expect(track.stop).toHaveBeenCalledTimes(1);
+    }
+    expect(decartMocks.realtimeClient.disconnect).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
   });
 
   it("keeps model recording disabled until model output is available", async () => {
