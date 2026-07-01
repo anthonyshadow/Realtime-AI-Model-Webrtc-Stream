@@ -12,13 +12,16 @@ import {
   studioPanelWidths,
 } from "../../constants/design";
 import type { AutoHideOverlayRootProps } from "../../hooks/useAutoHideOverlay";
+import { getStudioErrorDescriptor } from "../../lib/errors";
 import type { RealtimeStatus } from "../../types/realtime";
 import { cx } from "../StudioUI/classNames";
 import {
+  ErrorBanner,
   PrimaryButton,
   SecondaryButton,
   StatusPill,
 } from "../StudioUI";
+import { getErrorActions, getErrorTip } from "./errorRecovery";
 import { ModelControlsSection } from "./ModelControlsSection";
 
 type SessionSetupPanelProps = {
@@ -34,6 +37,7 @@ type SessionSetupPanelProps = {
   onEnhancePromptChange: (value: boolean) => void;
   onImageChange: (file: File | null) => void;
   onImageError: (message: string | null) => void;
+  onBackToLocalCamera: () => void;
   onPromptChange: (value: string) => void;
   onReset: () => void;
   onSessionModeChange: (value: SessionModeId) => void;
@@ -53,6 +57,7 @@ export function SessionSetupPanel({
   onEnhancePromptChange,
   onImageChange,
   onImageError,
+  onBackToLocalCamera,
   onPromptChange,
   onReset,
   onSessionModeChange,
@@ -69,6 +74,7 @@ export function SessionSetupPanel({
     ? "translate-y-0 opacity-100"
     : "pointer-events-none translate-y-3 opacity-0";
   const { ref: overlayRef, ...overlayEventProps } = overlayProps ?? {};
+  const errorDescriptor = getStudioErrorDescriptor(error, "session");
 
   return (
     <aside
@@ -143,7 +149,24 @@ export function SessionSetupPanel({
           </div>
         </SetupStep>
 
-        {error ? <SetupErrorMessage error={error} /> : null}
+        {errorDescriptor ? (
+          <ErrorBanner
+            actions={getErrorActions({
+              descriptor: errorDescriptor,
+              imageFile,
+              includeTryAgain: false,
+              isModelMode: modelConfig !== null,
+              onBackToLocalCamera,
+              onImageChange,
+              onReset,
+              onStart,
+            })}
+            message={errorDescriptor.message}
+            title={errorDescriptor.title}
+          >
+            {getErrorTip(errorDescriptor)}
+          </ErrorBanner>
+        ) : null}
       </div>
 
       <div className="sticky bottom-0 -mx-3 mt-4 border-t border-white/10 bg-neutral-950/95 px-3 pb-[max(env(safe-area-inset-bottom),0rem)] pt-3 shadow-[0_-18px_30px_rgb(0_0_0/0.34)] sm:-mx-4 sm:px-4 sm:pb-0">
@@ -270,18 +293,6 @@ function SetupCheckItem({ label, tone = "default", value }: SetupCheckItemProps)
   );
 }
 
-function SetupErrorMessage({ error }: { error: string }) {
-  return (
-    <div
-      className="rounded-lg border border-red-300/30 bg-red-500/15 px-3 py-3 text-sm text-red-50"
-      role="alert"
-    >
-      <p className="font-semibold">Could not start session</p>
-      <p className="mt-1 leading-5 text-red-50/85">{error}</p>
-    </div>
-  );
-}
-
 function getStatusLabel(status: RealtimeStatus, error: string | null) {
   if (error || status === "error") {
     return "Error";
@@ -299,7 +310,9 @@ function getPermissionLabel(error: string | null) {
     return "Not requested";
   }
 
-  return error.toLowerCase().includes("permission") ? "Denied" : "Ready to retry";
+  return getStudioErrorDescriptor(error)?.kind === "camera-permission"
+    ? "Blocked"
+    : "Ready to retry";
 }
 
 function getStartHelperText(sessionMode: SessionModeId, hasError: boolean) {

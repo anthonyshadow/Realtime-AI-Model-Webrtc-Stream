@@ -17,6 +17,7 @@ function renderControlPanel(overrides: Partial<Parameters<typeof ControlPanel>[0
     isVisible: true,
     sessionMode: "local" as const,
     onApply: vi.fn(),
+    onBackToLocalCamera: vi.fn(),
     onEnhancePromptChange: vi.fn(),
     onImageChange: vi.fn(),
     onImageError: vi.fn(),
@@ -277,25 +278,101 @@ describe("ControlPanel", () => {
   });
 
   it("shows useful API or validation errors", () => {
-    renderControlPanel({ error: "Could not create realtime session token." });
+    const props = renderControlPanel({
+      error: "Could not create realtime session token.",
+      prompt: "Make the scene cinematic",
+      sessionMode: "lucy-2.1",
+      status: "error",
+    });
 
     expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(screen.getByText("Could not start session")).toBeInTheDocument();
-    expect(screen.getByText("Could not create realtime session token.")).toBeInTheDocument();
+    expect(screen.getByText("Model session blocked")).toBeInTheDocument();
+    expect(
+      screen.getByText("Could not create a model session. Check your Decart API key on the local server."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Ready to retry")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Back to local camera" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Reset session" })).toBeEnabled();
+
+    screen.getByRole("button", { name: "Try again" }).click();
+    screen.getByRole("button", { name: "Back to local camera" }).click();
+    screen.getByRole("button", { name: "Reset session" }).click();
+
+    expect(props.onStart).toHaveBeenCalledTimes(1);
+    expect(props.onBackToLocalCamera).toHaveBeenCalledTimes(1);
+    expect(props.onReset).toHaveBeenCalledTimes(1);
   });
 
-  it("shows permission denied setup errors before a session starts", () => {
-    renderControlPanel({
+  it("shows permission denied setup errors before a session starts", async () => {
+    const user = userEvent.setup();
+    const props = renderControlPanel({
       error: "Camera permission was denied. Allow camera access and try again.",
       status: "error",
     });
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Camera permission was denied. Allow camera access and try again.",
+      "Camera access was blocked. Allow camera access in your browser settings, then try again.",
     );
-    expect(screen.getByText("Denied")).toBeInTheDocument();
+    expect(screen.getByText("Blocked")).toBeInTheDocument();
+    expect(screen.getByText(/browser site settings/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    await user.click(screen.getByRole("button", { name: "Reset session" }));
+
+    expect(props.onStart).toHaveBeenCalledTimes(1);
+    expect(props.onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    {
+      error: "No camera was found.",
+      message: "No camera was found. Connect a camera or choose an available camera, then try again.",
+      title: "Camera unavailable",
+    },
+    {
+      error: "No microphone was found.",
+      message: "No microphone was found. Connect a microphone or allow microphone access, then try again.",
+      title: "Microphone unavailable",
+    },
+    {
+      error: "Network connection interrupted.",
+      message: "Network connection was interrupted. Check your connection, then try again.",
+      prompt: "Make the scene cinematic",
+      sessionMode: "lucy-2.1" as const,
+      title: "Connection interrupted",
+    },
+  ])("renders recoverable $title copy", ({ error, message, prompt, sessionMode, title }) => {
+    renderControlPanel({
+      error,
+      prompt: prompt ?? "",
+      sessionMode: sessionMode ?? "local",
+      status: "error",
+    });
+
+    expect(screen.getByText(title)).toBeInTheDocument();
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Reset session" })).toBeEnabled();
+  });
+
+  it("offers remove file for upload validation errors when a file is selected", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    const props = renderControlPanel({
+      error: "This file could not be used. Choose a supported image file.",
+      imageFile: file,
+      imagePreviewUrl: "blob:http://localhost/portrait",
+      sessionMode: "lucy-2.1",
+      status: "error",
+    });
+
+    expect(screen.getByText("File not supported")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove file" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Remove file" }));
+
+    expect(props.onImageChange).toHaveBeenCalledWith(null);
   });
 });

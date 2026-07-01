@@ -565,9 +565,10 @@ describe("App", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Recording failed. Try starting a new recording. (encoder failed)"),
+        screen.getByText("Recording failed. Try again or restart the session."),
       ).toBeInTheDocument(),
     );
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
   });
 
@@ -957,10 +958,12 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
     expect(
-      await screen.findByText("Camera permission was denied. Allow camera access and try again."),
+      await screen.findByText(
+        "Camera access was blocked. Allow camera access in your browser settings, then try again.",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Could not start session")).toBeInTheDocument();
-    expect(screen.getByText("Denied")).toBeInTheDocument();
+    expect(screen.getByText("Camera blocked")).toBeInTheDocument();
+    expect(screen.getByText("Blocked")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
@@ -982,12 +985,13 @@ describe("App", () => {
 
     expect(
       await screen.findByText(
-        "Could not create realtime session token. Check DECART_API_KEY on the local server.",
+        "Could not create a model session. Check your Decart API key on the local server.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText("Could not start session")).toBeInTheDocument();
+    expect(screen.getByText("Model session blocked")).toBeInTheDocument();
     expect(screen.getByText("Ready to retry")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Back to local camera" })).toBeEnabled();
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
@@ -1008,9 +1012,11 @@ describe("App", () => {
 
     expect(
       await screen.findByText(
-        "Could not connect to Lucy 2.1. Check API access, model availability, and network.",
+        "Could not connect to the selected model. Check API access, model availability, and network connection.",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByText("Model connection failed")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to local camera" })).toBeEnabled();
     expect(track.stop).toHaveBeenCalledTimes(1);
   });
 });

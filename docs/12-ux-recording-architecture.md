@@ -8,10 +8,12 @@ Use this as the maintainer contract for the redesigned control panel, bottom rec
 - `src/App.tsx` composes control-panel draft state, live-session state, recording state, and completion messages.
 - `src/components/ControlPanel/` owns setup, model controls, session actions, status, and errors.
 - `src/components/RecordingDock/` owns the bottom recording transport and review playback UI.
+- `src/components/StudioUI/ErrorBanner.tsx` owns the shared actionable error surface.
 - `src/hooks/useAutoHideOverlay.ts` owns shared overlay visibility behavior, including multi-root live overlays.
 - `src/hooks/useLiveSession.ts` owns local camera, model/API lifecycle, display stream, recordable stream, and model release back to local preview.
 - `src/hooks/useRecordingCompletionFlow.ts` coordinates post-recording model release after the recorder finalizes.
 - `src/hooks/useSessionRecording.ts` owns `MediaRecorder`, recording state, Blob/object URL, filename, duration, size, and object URL cleanup.
+- `src/lib/errors.ts` owns user-facing error classification and copy for camera, Decart, network, recording, and upload failures.
 - `src/lib/streamComposition.ts` owns recordable stream selection for local and model-backed sessions.
 
 UI components must stay presentational. They receive state and callbacks through props and must not request media, fetch tokens, import Decart, stop source tracks, or decide API lifecycle.
@@ -51,6 +53,27 @@ Section organization should stay progressive:
 - `ControlPanel` distinguishes no recorder, compact recorder transport, collapsed recorded controls, and expanded review sheet layouts. Live drawers must reserve enough safe-area-aware bottom space for compact recorder surfaces, and the app hides the drawer while an expanded review sheet is active instead of relying on z-index overlap.
 
 Future features should follow the same hierarchy. Add new model options to the model section or advanced disclosure. Add new session-wide actions to the session actions area only when they affect the live session itself. Add new recording or clip-management features to the recording dock or a dock-connected review surface, not to the control panel.
+
+## Error Recovery Contract
+
+Error copy is centralized in `src/lib/errors.ts`. Hooks and integrations may keep
+technical logging or raw thrown messages for diagnostics, but user-visible
+surfaces should render the normalized descriptor title and message.
+
+Recoverable UI errors use `ErrorBanner` and contextual actions:
+
+- camera permission: explain browser settings and keep Try again/Reset reachable
+- camera or microphone unavailable: explain device/browser permission recovery
+- Decart token/session errors: show model-session copy, Back to local camera, and Reset session
+- Lucy or VTON connection failures: show model connection copy and preserve the existing Stop/Reset paths
+- network interruption: keep overlays visible and offer retry/reset or local fallback when in a model mode
+- upload validation: show supported-file copy and Remove file when a selected file exists
+- recording failure: show the actionable recorder banner and Try again without deleting any saved clip state
+
+Do not expose secrets, stack traces, raw SDK errors, or `DECART_API_KEY` values in
+the UI. Keep live-session error banners pinned by the overlay force-visible
+contract so a user can recover even when controls would otherwise auto-hide.
+Avoid repeating the same error sentence in nearby status text and the banner.
 
 ## Recording Dock Contract
 

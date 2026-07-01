@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { UNSUPPORTED_IMAGE_MESSAGE } from "../../../lib/imageValidation";
+import { UPLOAD_VALIDATION_MESSAGE } from "../../../lib/imageValidation";
 import { ImageUpload } from "../ImageUpload";
 
 function renderImageUpload(overrides: Partial<Parameters<typeof ImageUpload>[0]> = {}) {
@@ -43,7 +43,7 @@ describe("ImageUpload", () => {
     await user.upload(screen.getByLabelText("Reference portrait"), file);
 
     expect(props.onChange).toHaveBeenCalledWith(null);
-    expect(props.onError).toHaveBeenCalledWith(UNSUPPORTED_IMAGE_MESSAGE);
+    expect(props.onError).toHaveBeenCalledWith(UPLOAD_VALIDATION_MESSAGE);
   });
 
   it("shows selected file state and clears it", async () => {

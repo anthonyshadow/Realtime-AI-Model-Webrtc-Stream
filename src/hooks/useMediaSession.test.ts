@@ -53,7 +53,7 @@ describe("useMediaSession", () => {
     expect(result.current.localStream).toBeNull();
     expect(result.current.mediaStatus).toBe("error");
     expect(result.current.mediaError).toBe(
-      "Camera permission was denied. Allow camera access and try again.",
+      "Camera access was blocked. Allow camera access in your browser settings, then try again.",
     );
   });
 

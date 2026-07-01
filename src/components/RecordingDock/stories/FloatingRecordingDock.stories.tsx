@@ -17,6 +17,7 @@ const standbyDock = {
   isSupported: true,
   objectUrl: null,
   onDiscardRecording: fn(),
+  onResetRecording: fn(),
   onStartRecording: fn(),
   onStopRecording: fn(),
   sizeLabel: "0 B",
@@ -40,7 +41,7 @@ const recordingDock = {
 
 const errorDock = {
   ...readyDock,
-  error: "Recording failed. Try starting a new recording.",
+  error: "Recording failed. Try again or restart the session.",
   state: "error",
 } satisfies FloatingRecordingDockProps;
 
@@ -80,6 +81,7 @@ const panelArgs = {
   isApplying: false,
   isVisible: true,
   onApply: fn(),
+  onBackToLocalCamera: fn(),
   onEnhancePromptChange: fn(),
   onImageChange: fn(),
   onImageError: fn(),
@@ -166,8 +168,9 @@ export const ErrorState: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole("alert")).toHaveTextContent(
-      "Recording failed. Try starting a new recording.",
+      "Recording failed. Try again or restart the session.",
     );
+    await expect(canvas.getByRole("button", { name: "Try again" })).toBeVisible();
   },
 };
 

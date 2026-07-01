@@ -482,8 +482,9 @@ export const ApiFailure: Story = {
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
     await canvas.findByText(
-      "Could not create realtime session token. Check DECART_API_KEY on the local server.",
+      "Could not create a model session. Check your Decart API key on the local server.",
     );
+    await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
   },
 };
 
@@ -500,8 +501,9 @@ export const ConnectionFailure: Story = {
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
     await canvas.findByText(
-      "Could not connect to Lucy 2.1. Check API access, model availability, and network.",
+      "Could not connect to the selected model. Check API access, model availability, and network connection.",
     );
+    await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
   },
 };
 
@@ -517,6 +519,8 @@ export const PermissionDenied: Story = {
     await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
     await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
     await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
-    await canvas.findByText("Camera permission was denied. Allow camera access and try again.");
+    await canvas.findByText(
+      "Camera access was blocked. Allow camera access in your browser settings, then try again.",
+    );
   },
 };

@@ -255,7 +255,7 @@ describe("useSessionRecording", () => {
 
     expect(result.current.state).toBe("error");
     expect(result.current.error).toBe(
-      "Recording failed. Try starting a new recording. (encoder failed)",
+      "Recording failed. Try again or restart the session.",
     );
     expect(result.current.blob).toBeNull();
     expect(result.current.objectUrl).toBeNull();
@@ -277,7 +277,7 @@ describe("useSessionRecording", () => {
     expect(didStart).toBe(false);
     expect(result.current.state).toBe("error");
     expect(result.current.error).toBe(
-      "Could not start recording. Check browser recording support and try again.",
+      "Recording failed. Try again or restart the session.",
     );
     expect(FakeMediaRecorder.instances[0].stop).not.toHaveBeenCalled();
   });

@@ -4,6 +4,8 @@ export { Card, Surface } from "./Surface";
 export type { SurfacePadding, SurfaceProps, SurfaceVariant } from "./Surface";
 export { FileUploadControl } from "./FileUploadControl";
 export type { FileUploadControlProps } from "./FileUploadControl";
+export { ErrorBanner } from "./ErrorBanner";
+export type { ErrorBannerAction, ErrorBannerProps } from "./ErrorBanner";
 export { MetricCard } from "./MetricCard";
 export type { MetricCardProps, MetricCardTone } from "./MetricCard";
 export { SectionHeader } from "./SectionHeader";

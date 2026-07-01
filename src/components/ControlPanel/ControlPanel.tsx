@@ -10,8 +10,11 @@ import {
   type SessionModeId,
 } from "../../constants/sessionModes";
 import type { AutoHideOverlayRootProps } from "../../hooks/useAutoHideOverlay";
+import { getStudioErrorDescriptor } from "../../lib/errors";
 import type { RealtimeStatus } from "../../types/realtime";
+import { ErrorBanner } from "../StudioUI";
 import { cx } from "../StudioUI/classNames";
+import { getErrorActions, getErrorTip } from "./errorRecovery";
 import { ModelControlsSection } from "./ModelControlsSection";
 import { SessionActionsSection } from "./SessionActionsSection";
 import { SessionSetupPanel } from "./SessionSetupPanel";
@@ -40,6 +43,7 @@ export type ControlPanelProps = {
   onPromptChange: (value: string) => void;
   onImageChange: (file: File | null) => void;
   onImageError: (message: string | null) => void;
+  onBackToLocalCamera: () => void;
   onReset: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -68,6 +72,7 @@ export function ControlPanel({
   onPromptChange,
   onImageChange,
   onImageError,
+  onBackToLocalCamera,
   onReset,
   onStart,
   onStop,
@@ -95,6 +100,7 @@ export function ControlPanel({
         ? "bottom-[calc(env(safe-area-inset-bottom)+10rem)] max-h-[calc(100dvh-env(safe-area-inset-bottom)-10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+6.75rem)] sm:max-h-[calc(100dvh-env(safe-area-inset-bottom)-7.75rem)]"
         : "bottom-3 max-h-[calc(100dvh-1.5rem)] sm:bottom-4 sm:max-h-[calc(100dvh-2rem)]";
   const { ref: overlayRef, ...overlayEventProps } = overlayProps ?? {};
+  const errorDescriptor = getStudioErrorDescriptor(error, "session");
 
   if (shouldRenderSetupPanel) {
     return (
@@ -111,6 +117,7 @@ export function ControlPanel({
         onEnhancePromptChange={onEnhancePromptChange}
         onImageChange={onImageChange}
         onImageError={onImageError}
+        onBackToLocalCamera={onBackToLocalCamera}
         onPromptChange={onPromptChange}
         onReset={onReset}
         onSessionModeChange={onSessionModeChange}
@@ -149,6 +156,23 @@ export function ControlPanel({
       </div>
 
       <div className="mt-3 space-y-3">
+        {errorDescriptor ? (
+          <ErrorBanner
+            actions={getErrorActions({
+              descriptor: errorDescriptor,
+              imageFile,
+              isModelMode: modelConfig !== null,
+              onBackToLocalCamera,
+              onImageChange,
+              onReset,
+              onStart,
+            })}
+            message={errorDescriptor.message}
+            title={errorDescriptor.title}
+          >
+            {getErrorTip(errorDescriptor)}
+          </ErrorBanner>
+        ) : null}
         <SessionSetupSection
           activeSessionMode={activeSessionMode}
           canChangeSessionMode={canChangeSessionMode}

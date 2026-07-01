@@ -48,14 +48,16 @@ export function SessionSetupSection({
         selectedSessionMode={sessionMode}
         status={status}
       />
-      <StatusMessage
-        activeSessionMode={activeSessionMode}
-        error={error}
-        hasPendingChanges={hasPendingChanges}
-        isApplying={isApplying}
-        selectedSessionMode={sessionMode}
-        status={status}
-      />
+      {!error ? (
+        <StatusMessage
+          activeSessionMode={activeSessionMode}
+          error={error}
+          hasPendingChanges={hasPendingChanges}
+          isApplying={isApplying}
+          selectedSessionMode={sessionMode}
+          status={status}
+        />
+      ) : null}
     </ControlPanelSection>
   );
 }

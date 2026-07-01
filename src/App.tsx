@@ -132,6 +132,20 @@ export function App() {
     });
   };
 
+  const handleBackToLocalCamera = () => {
+    setFormError(null);
+    setRecordingCompletionMessage(null);
+    setLastAppliedDraftKey(null);
+    recordingCompletionFlow.clearPendingCompletionFlow();
+
+    if (recording.isRecording) {
+      recording.stopRecording();
+    }
+
+    realtime.stop();
+    setDraft(createControlPanelDraft(DEFAULT_SESSION_MODE));
+  };
+
   const handleStart = () => {
     setFormError(null);
     setRecordingCompletionMessage(null);
@@ -233,7 +247,11 @@ export function App() {
         canChangeSessionMode={canChangeSessionMode}
         enhancePrompt={draft.enhance}
         hasPendingChanges={hasPendingChanges}
-        isVisible={isRecordingReviewExpanded ? false : liveOverlay.isVisible}
+        isVisible={
+          isRecordingReviewExpanded && !shouldForceLiveOverlaysVisible
+            ? false
+            : liveOverlay.isVisible
+        }
         isApplying={realtime.isApplying}
         sessionMode={sessionMode}
         overlayProps={liveOverlay.getRootProps("live-control-drawer")}
@@ -250,6 +268,7 @@ export function App() {
         onPromptChange={handlePromptChange}
         onImageChange={handleImageChange}
         onImageError={setFormError}
+        onBackToLocalCamera={handleBackToLocalCamera}
         onReset={handleReset}
         onStart={handleStart}
         onStop={handleStop}
@@ -273,6 +292,7 @@ export function App() {
         state={recording.state}
         onDiscardConfirmingChange={setIsDiscardConfirming}
         onDiscardRecording={handleDiscardRecording}
+        onResetRecording={recording.resetRecording}
         onReviewExpandedChange={setIsRecordingReviewExpanded}
         onStartRecording={handleStartRecording}
         onStopRecording={recording.stopRecording}

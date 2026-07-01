@@ -1,24 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { toUserMessage } from "./errors";
+import { getStudioErrorDescriptor, getStudioErrorKind, toUserMessage } from "./errors";
 
-describe("toUserMessage", () => {
-  it("maps camera permission errors", () => {
-    expect(toUserMessage({ name: "NotAllowedError" })).toBe(
-      "Camera permission was denied. Allow camera access and try again.",
+describe("studio error copy", () => {
+  it("normalizes camera permission errors", () => {
+    expect(toUserMessage(new DOMException("Denied", "NotAllowedError"))).toBe(
+      "Camera access was blocked. Allow camera access in your browser settings, then try again.",
+    );
+    expect(getStudioErrorKind("Camera permission was denied.")).toBe("camera-permission");
+  });
+
+  it("normalizes camera and microphone unavailable errors", () => {
+    expect(toUserMessage(new DOMException("Not found", "NotFoundError"))).toBe(
+      "No camera was found. Connect a camera or choose an available camera, then try again.",
+    );
+    expect(getStudioErrorDescriptor("No camera was found.")?.message).toBe(
+      "No camera was found. Connect a camera or choose an available camera, then try again.",
+    );
+    expect(getStudioErrorDescriptor("No microphone was found.")?.message).toBe(
+      "No microphone was found. Connect a microphone or allow microphone access, then try again.",
     );
   });
 
-  it("maps missing camera errors", () => {
-    expect(toUserMessage({ name: "NotFoundError" })).toBe("No camera was found on this device.");
-  });
-
-  it("preserves normal Error messages", () => {
-    expect(toUserMessage(new Error("Could not create realtime session token."))).toBe(
-      "Could not create realtime session token.",
+  it("normalizes model token and connection failures", () => {
+    expect(
+      getStudioErrorDescriptor("Could not create realtime session token. Check DECART_API_KEY.")?.message,
+    ).toBe("Could not create a model session. Check your Decart API key on the local server.");
+    expect(getStudioErrorDescriptor("Could not connect to Lucy 2.1.")?.message).toBe(
+      "Could not connect to the selected model. Check API access, model availability, and network connection.",
+    );
+    expect(getStudioErrorDescriptor("Mock Decart connection failed.")?.message).toBe(
+      "Could not connect to the selected model. Check API access, model availability, and network connection.",
     );
   });
 
-  it("falls back for unknown values", () => {
-    expect(toUserMessage(null)).toBe("Something went wrong. Please try again.");
+  it("normalizes network, recording, and upload failures", () => {
+    expect(getStudioErrorKind("Network connection interrupted.")).toBe("network");
+    expect(getStudioErrorDescriptor("Recorder runtime error", "recording")?.message).toBe(
+      "Recording failed. Try again or restart the session.",
+    );
+    expect(getStudioErrorDescriptor("Unsupported file type.", "upload")?.message).toBe(
+      "This file could not be used. Choose a supported image file.",
+    );
   });
 });

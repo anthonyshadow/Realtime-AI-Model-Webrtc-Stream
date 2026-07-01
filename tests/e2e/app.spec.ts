@@ -423,8 +423,9 @@ test("shows a useful API failure message", async ({ page }) => {
   await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(
-    page.getByText("Could not create realtime session token. Check DECART_API_KEY on the local server."),
+    page.getByText("Could not create a model session. Check your Decart API key on the local server."),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to local camera" })).toBeVisible();
   expect(realtimeTokenRequests.get(page)).toEqual([{ model: "lucy-2.1" }]);
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
@@ -442,7 +443,7 @@ test("shows a useful camera permission denied message", async ({ page }) => {
   await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(
-    page.getByText("Camera permission was denied. Allow camera access and try again."),
+    page.getByText("Camera access was blocked. Allow camera access in your browser settings, then try again."),
   ).toBeVisible();
   expect(realtimeTokenRequests.get(page)).toEqual([]);
   await expect
@@ -461,8 +462,9 @@ test("shows a useful Decart connection failure message", async ({ page }) => {
   await page.getByRole("button", { name: "Start Lucy session" }).click();
 
   await expect(
-    page.getByText("Could not connect to Lucy 2.1. Check API access, model availability, and network."),
+    page.getByText("Could not connect to the selected model. Check API access, model availability, and network connection."),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to local camera" })).toBeVisible();
   expect(realtimeTokenRequests.get(page)).toEqual([{ model: "lucy-2.1" }]);
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))

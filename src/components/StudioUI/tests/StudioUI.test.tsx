@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   Card,
   DangerButton,
+  ErrorBanner,
   FileUploadControl,
   MetricCard,
   PrimaryButton,
@@ -44,6 +45,10 @@ describe("StudioUI primitives", () => {
         />
         <StatusPill label="Connected" role="status" tone="success" value="Live" />
         <MetricCard isNumeric label="Time" value="00:06" />
+        <ErrorBanner
+          message="Recording failed. Try again or restart the session."
+          title="Recording failed"
+        />
         <Card>Nested detail</Card>
       </Surface>,
     );
@@ -52,6 +57,9 @@ describe("StudioUI primitives", () => {
     expect(screen.getByRole("heading", { name: "Choose a session" })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Connected");
     expect(screen.getByText("00:06")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Recording failed. Try again or restart the session.",
+    );
     expect(screen.getByText("Nested detail")).toBeInTheDocument();
   });
 

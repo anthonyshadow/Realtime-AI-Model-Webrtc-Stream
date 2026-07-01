@@ -20,6 +20,7 @@ function renderAutoHidingControlPanel(
     isApplying: false,
     sessionMode: "local" as const,
     onApply: vi.fn(),
+    onBackToLocalCamera: vi.fn(),
     onEnhancePromptChange: vi.fn(),
     onImageChange: vi.fn(),
     onImageError: vi.fn(),

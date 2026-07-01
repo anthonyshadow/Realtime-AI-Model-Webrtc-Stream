@@ -1,5 +1,5 @@
 import { SUPPORTED_IMAGE_FORMAT_LABEL, SUPPORTED_IMAGE_TYPES } from "../../constants/app";
-import { UNSUPPORTED_IMAGE_MESSAGE, isSupportedImageType } from "../../lib/imageValidation";
+import { UPLOAD_VALIDATION_MESSAGE, isSupportedImageType } from "../../lib/imageValidation";
 import { FileUploadControl } from "../StudioUI";
 
 type ImageUploadProps = {
@@ -37,7 +37,7 @@ export function ImageUpload({
       label={label}
       previewUrl={previewUrl}
       validateFile={(selectedFile) =>
-        isSupportedImageType(selectedFile) ? null : UNSUPPORTED_IMAGE_MESSAGE
+        isSupportedImageType(selectedFile) ? null : UPLOAD_VALIDATION_MESSAGE
       }
       onChange={onChange}
       onError={onError}

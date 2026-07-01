@@ -19,6 +19,7 @@ function renderFloatingRecordingDock(
     isSupported: true,
     objectUrl: null,
     onDiscardRecording: vi.fn(),
+    onResetRecording: vi.fn(),
     onStartRecording: vi.fn(),
     onStopRecording: vi.fn(),
     sizeLabel: "0 B",
@@ -141,9 +142,9 @@ describe("FloatingRecordingDock", () => {
     expect(screen.getByRole("button", { name: "Record" })).toBeDisabled();
   });
 
-  it("renders errors as critical dock state", () => {
-    renderFloatingRecordingDock({
-      error: "Recording failed. Try starting a new recording.",
+  it("renders errors as critical dock state with a retry action", () => {
+    const props = renderFloatingRecordingDock({
+      error: "Recording failed. Try again or restart the session.",
       state: "error",
     });
 
@@ -153,8 +154,11 @@ describe("FloatingRecordingDock", () => {
 
     expect(dock).toHaveClass("opacity-100");
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Recording failed. Try starting a new recording.",
+      "Recording failed. Try again or restart the session.",
     );
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(props.onResetRecording).toHaveBeenCalledTimes(1);
   });
 
   it("renders unsupported recording as a disabled accessible action", () => {

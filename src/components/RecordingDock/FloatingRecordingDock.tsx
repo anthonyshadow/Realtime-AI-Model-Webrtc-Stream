@@ -5,10 +5,12 @@ import {
   studioPanelWidths,
 } from "../../constants/design";
 import type { SessionRecordingState } from "../../hooks/useSessionRecording";
+import { getStudioErrorDescriptor } from "../../lib/errors";
 import {
   useAutoHideOverlay,
   type AutoHideOverlayRootProps,
 } from "../../hooks/useAutoHideOverlay";
+import { ErrorBanner } from "../StudioUI";
 import { cx } from "../StudioUI/classNames";
 import { RecordingDockButton } from "./RecordingDockButton";
 import { RecordingPlaybackPanel } from "./RecordingPlaybackPanel";
@@ -34,6 +36,7 @@ export type FloatingRecordingDockProps = {
   state: SessionRecordingState;
   onDiscardConfirmingChange?: (isConfirming: boolean) => void;
   onDiscardRecording: () => void;
+  onResetRecording: () => void;
   onReviewExpandedChange?: (isExpanded: boolean) => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
@@ -57,6 +60,7 @@ export function FloatingRecordingDock({
   state,
   onDiscardConfirmingChange,
   onDiscardRecording,
+  onResetRecording,
   onReviewExpandedChange,
   onStartRecording,
   onStopRecording,
@@ -123,7 +127,6 @@ export function FloatingRecordingDock({
   const status = getRecordingStatus({
     completionMessage,
     durationLabel,
-    error,
     filename,
     hasRecordableStream,
     isSupported,
@@ -149,6 +152,19 @@ export function FloatingRecordingDock({
   const timerToneClassName = isRecording || isStopping
     ? "border-red-200/35 bg-red-500/15 text-red-50"
     : "border-white/10 bg-black/25 text-white";
+  const recordingErrorDescriptor = hasRecordingError
+    ? getRecordingErrorDescriptor({ error, isSupported })
+    : null;
+  const recordingErrorActions =
+    hasRecordingError && isSupported
+      ? [
+          {
+            label: "Try again",
+            onClick: onResetRecording,
+            variant: "primary" as const,
+          },
+        ]
+      : [];
 
   return (
     <div
@@ -194,7 +210,7 @@ export function FloatingRecordingDock({
             </p>
             <p
               className="mt-0.5 line-clamp-2 text-xs leading-5 text-neutral-300 sm:line-clamp-1"
-              role={status.tone === "error" ? "alert" : undefined}
+              role={status.tone === "error" && !hasRecordingError ? "alert" : undefined}
             >
               {status.message}
             </p>
@@ -233,6 +249,16 @@ export function FloatingRecordingDock({
             onExpand={() => setIsReviewExpanded(true)}
           />
         ) : null}
+
+        {recordingErrorDescriptor ? (
+          <div className="mt-2.5 border-t border-white/10 px-1 pt-2.5">
+            <ErrorBanner
+              actions={recordingErrorActions}
+              message={recordingErrorDescriptor.message}
+              title={recordingErrorDescriptor.title}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -242,7 +268,6 @@ type RecordingStatusInput = Pick<
   FloatingRecordingDockProps,
   | "completionMessage"
   | "durationLabel"
-  | "error"
   | "filename"
   | "hasRecordableStream"
   | "isSupported"
@@ -254,7 +279,6 @@ type RecordingStatusInput = Pick<
 function getRecordingStatus({
   completionMessage,
   durationLabel,
-  error,
   filename,
   hasRecordableStream,
   isSupported,
@@ -300,7 +324,7 @@ function getRecordingStatus({
       return {
         badgeLabel: "Blocked",
         title: "Unavailable",
-        message: error ?? "Recording is not supported in this browser.",
+        message: "Use a browser with recording support.",
         tone: "error" as const,
       };
     }
@@ -308,7 +332,7 @@ function getRecordingStatus({
     return {
       badgeLabel: "Error",
       title: "Recorder error",
-      message: error ?? "Recording failed. Try starting a new recording.",
+      message: "Use the recovery action below.",
       tone: "error" as const,
     };
   }
@@ -326,7 +350,7 @@ function getRecordingStatus({
     return {
       badgeLabel: "Blocked",
       title: "Unavailable",
-      message: error ?? "Recording is not supported in this browser.",
+      message: "Use a browser with recording support.",
       tone: "error" as const,
     };
   }
@@ -337,4 +361,19 @@ function getRecordingStatus({
     message: "Record this session when you are ready.",
     tone: "ready" as const,
   };
+}
+
+function getRecordingErrorDescriptor({
+  error,
+  isSupported,
+}: Pick<FloatingRecordingDockProps, "error" | "isSupported">) {
+  if (!isSupported) {
+    return {
+      kind: "recording" as const,
+      title: "Recording unavailable",
+      message: "Recording is not supported in this browser.",
+    };
+  }
+
+  return getStudioErrorDescriptor(error ?? "Recording failed.", "recording");
 }

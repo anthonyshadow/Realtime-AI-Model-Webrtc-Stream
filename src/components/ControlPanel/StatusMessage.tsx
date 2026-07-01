@@ -2,6 +2,7 @@ import {
   isModelBackedSessionMode,
   type SessionModeId,
 } from "../../constants/sessionModes";
+import { getStudioErrorDescriptor } from "../../lib/errors";
 import type { RealtimeStatus } from "../../types/realtime";
 
 type StatusMessageProps = {
@@ -57,8 +58,10 @@ function getStatusMessage({
   status,
 }: StatusMessageProps) {
   if (error) {
+    const descriptor = getStudioErrorDescriptor(error);
+
     return {
-      body: error,
+      body: descriptor?.message ?? "Something went wrong. Try again.",
       label: "Needs attention",
       tone: "error" as const,
     };

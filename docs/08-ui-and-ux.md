@@ -92,6 +92,23 @@ The actions and feedback areas include:
 
 Components should stay presentational and receive state/callbacks through props.
 
+## Error Recovery
+
+User-facing errors are normalized through `src/lib/errors.ts` and shown with
+the shared `ErrorBanner` primitive. Keep raw camera, Decart, network, upload,
+and recorder details in logs and tests, not directly in the UI unless the detail
+is useful to the user.
+
+Error surfaces should:
+
+- use short titles and specific recovery copy
+- stay visible inside setup panels or live overlays until dismissed or resolved
+- provide contextual actions such as Try again, Back to local camera, Reset
+  session, or Remove file
+- keep camera permission guidance focused on browser settings
+- avoid duplicating the same error message in adjacent status text and banners
+- never leave the user on a blank stream or hidden recovery path
+
 ## Recording Dock
 
 Recording controls live outside the control panel in a bottom-center floating dock.

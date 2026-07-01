@@ -28,6 +28,7 @@ const baseArgs = {
   prompt: "",
   status: "idle",
   onApply: fn(),
+  onBackToLocalCamera: fn(),
   onEnhancePromptChange: fn(),
   onImageChange: fn(),
   onImageError: fn(),
@@ -268,16 +269,47 @@ export const ApplyingChanges: Story = {
 
 export const PermissionDeniedError: Story = {
   args: {
-    error: "Camera permission was denied. Allow camera access and try again.",
+    error: "Camera access was blocked. Allow camera access in your browser settings, then try again.",
     status: "error",
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole("alert")).toBeVisible();
-    await expect(canvas.getByText("Could not start session")).toBeVisible();
-    await expect(canvas.getByText("Denied")).toBeVisible();
+    await expect(canvas.getByText("Camera blocked")).toBeVisible();
+    await expect(canvas.getByText("Blocked")).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Try again" })).toBeEnabled();
+  },
+};
+
+export const CameraUnavailableError: Story = {
+  args: {
+    error: "No camera was found.",
+    status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Camera unavailable")).toBeVisible();
+    await expect(
+      canvas.getByText("No camera was found. Connect a camera or choose an available camera, then try again."),
+    ).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Reset session" })).toBeVisible();
+  },
+};
+
+export const MicrophoneUnavailableError: Story = {
+  args: {
+    error: "No microphone was found.",
+    status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Microphone unavailable")).toBeVisible();
+    await expect(
+      canvas.getByText("No microphone was found. Connect a microphone or allow microphone access, then try again."),
+    ).toBeVisible();
   },
 };
 
@@ -292,7 +324,9 @@ export const ApiFailureError: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole("alert")).toBeVisible();
+    await expect(canvas.getByText("Model session blocked")).toBeVisible();
     await expect(canvas.getByText("Ready to retry")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Try again" })).toBeEnabled();
   },
 };
@@ -309,7 +343,7 @@ export const ErrorState: Story = {
 
     await expect(canvas.getByRole("alert")).toBeVisible();
     await expect(
-      canvas.getByText("Could not create realtime session token. Check DECART_API_KEY on the local server."),
+      canvas.getByText("Could not create a model session. Check your Decart API key on the local server."),
     ).toBeVisible();
     await expect(canvas.getByRole("heading", { name: "Lucy 2.1" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Try again" })).toBeEnabled();
@@ -318,15 +352,102 @@ export const ErrorState: Story = {
 
 export const PermissionDeniedNoStream: Story = {
   args: {
-    error: "Camera permission was denied. Allow camera access and try again.",
+    error: "Camera access was blocked. Allow camera access in your browser settings, then try again.",
     status: "error",
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(
-      canvas.getByText("Camera permission was denied. Allow camera access and try again."),
+      canvas.getByText("Camera access was blocked. Allow camera access in your browser settings, then try again."),
     ).toBeVisible();
+  },
+};
+
+export const LiveLucyConnectionFailure: Story = {
+  args: {
+    activeSessionMode: "lucy-2.1",
+    canChangeSessionMode: true,
+    elapsedLabel: "00:31",
+    enhancePrompt: lucyConfig.enhanceDefault,
+    error: "Could not connect to Lucy 2.1. Check API access, model availability, and network.",
+    prompt: "Make the person look like a clean realtime studio avatar.",
+    sessionMode: "lucy-2.1",
+    status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Model connection failed")).toBeVisible();
+    await expect(
+      canvas.getByText("Could not connect to the selected model. Check API access, model availability, and network connection."),
+    ).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Reset session" })).toBeVisible();
+  },
+};
+
+export const LiveVtonConnectionFailure: Story = {
+  args: {
+    activeSessionMode: "lucy-vton-3",
+    canChangeSessionMode: true,
+    elapsedLabel: "00:44",
+    enhancePrompt: vtonConfig.enhanceDefault,
+    error: "Could not connect to VTON 3. Check API access, model availability, and network.",
+    imageFile: createMockImageFile("cobalt-rain-jacket.png", "image/png"),
+    imagePreviewUrl: garmentPreviewUrl,
+    prompt: "Substitute the current top with a cobalt rain jacket.",
+    sessionMode: "lucy-vton-3",
+    status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Model connection failed")).toBeVisible();
+    await expect(canvas.getByRole("heading", { name: "Lucy VTON 3" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Reset session" })).toBeVisible();
+  },
+};
+
+export const NetworkInterruptionError: Story = {
+  args: {
+    activeSessionMode: "lucy-2.1",
+    canChangeSessionMode: true,
+    elapsedLabel: "00:52",
+    enhancePrompt: lucyConfig.enhanceDefault,
+    error: "Network connection interrupted.",
+    prompt: "Make the person look like a clean realtime studio avatar.",
+    sessionMode: "lucy-2.1",
+    status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("Connection interrupted")).toBeVisible();
+    await expect(
+      canvas.getByText("Network connection was interrupted. Check your connection, then try again."),
+    ).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Try again" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
+  },
+};
+
+export const UploadValidationError: Story = {
+  args: {
+    enhancePrompt: lucyConfig.enhanceDefault,
+    error: "This file could not be used. Choose a supported image file.",
+    imageFile: createMockImageFile("unsupported.gif", "image/gif"),
+    imagePreviewUrl: portraitPreviewUrl,
+    prompt: "Make the person look like a clean realtime studio avatar.",
+    sessionMode: "lucy-2.1",
+    status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText("File not supported")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Remove file" })).toBeVisible();
   },
 };
 

@@ -58,9 +58,9 @@ const UNSUPPORTED_RECORDING_ERROR =
 const NO_STREAM_RECORDING_ERROR =
   "Start a live session before recording.";
 const RECORDER_START_ERROR =
-  "Could not start recording. Check browser recording support and try again.";
+  "Recording failed. Try again or restart the session.";
 const RECORDER_RUNTIME_ERROR =
-  "Recording failed. Try starting a new recording.";
+  "Recording failed. Try again or restart the session.";
 
 export function useSessionRecording(
   stream: MediaStream | null,
@@ -452,11 +452,6 @@ export function useSessionRecording(
 }
 
 function getRecorderErrorMessage(event: Event) {
-  const error = (event as Event & { error?: Error }).error;
-
-  if (!error?.message) {
-    return RECORDER_RUNTIME_ERROR;
-  }
-
-  return `${RECORDER_RUNTIME_ERROR} (${error.message})`;
+  void event;
+  return RECORDER_RUNTIME_ERROR;
 }
