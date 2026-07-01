@@ -48,6 +48,8 @@ While running:
 - mobile controls use a safe-area-aware bottom sheet lane above the recorder transport
 - controls reveal on mouse movement, touch, keyboard interaction, and focus, then auto-hide after inactivity
 - Escape may dismiss live overlays when no focus, hover, upload, or error state needs to keep them open
+- the live drawer reserves a larger safe-area-aware lane for the recorder transport on phones and desktop, uses a taller lane for collapsed saved-clip controls, and hides while an expanded captured-clip review sheet is active
+- recorder transport uses a compact phone layout with status/time on the first row and the action on the second row, so the drawer and recorder do not overlap at 320px+
 
 After stopping a recording in a model-backed session:
 
@@ -114,6 +116,7 @@ The dock:
 - keeps the overlay visible while discard confirmation is active
 - stays bottom-center on desktop and safe-area aware near the bottom edge on mobile
 - turns saved-clip review into a mobile bottom sheet that can scroll within the viewport
+- keeps review metadata in a compact three-cell row and constrains mobile playback height so Download, Keep, Discard, and Record again remain reachable
 - reserves a bottom lane on phone, tablet, and laptop widths so the control panel and dock do not collide
 
 ## Overlay Behavior
@@ -130,3 +133,10 @@ Overlay controls should:
 - stay visible for setup, connecting, stopped, and error recovery states
 - support multiple roots so the control drawer and recording dock behave as one live overlay cluster
 - respect reduced-motion preferences by avoiding transform-heavy overlay transitions
+
+## Responsive QA
+
+Storybook defines named QA viewports for 320, 360, 390, 430, 768, 1024,
+1280, 1440, and 1600px+ widths. App shell stories should use these viewport
+names for setup, live, recording, review, discard confirmation, and error
+states, and include a horizontal-overflow assertion for high-risk states.

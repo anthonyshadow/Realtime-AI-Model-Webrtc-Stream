@@ -41,7 +41,7 @@ test("loads, accepts a VTON prompt and garment image, starts, applies, and stops
   await page.getByRole("button", { name: "Start VTON session" }).click();
 
   await expect(page.getByRole("button", { name: "Stop session" })).toBeVisible();
-  await expect(page.getByText("Live")).toBeVisible();
+  await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => (window as any).__E2E_DECART_EVENTS__.connects))
     .toBe(1);
@@ -83,7 +83,7 @@ test("starts and stops local camera without token or Decart connect", async ({ p
   await page.getByRole("button", { name: "Start local camera" }).click();
 
   await expect(page.getByRole("button", { name: "Stop session" })).toBeVisible();
-  await expect(page.getByText("Live")).toBeVisible();
+  await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
   expect(realtimeTokenRequests.get(page)).toEqual([]);
   expect(decartNetworkRequests.get(page)).toEqual([]);
   await expect
@@ -160,6 +160,7 @@ test("applies Lucy prompt, image, and enhance changes atomically", async ({ page
     });
 
   await page.getByLabel(/Transformation prompt/i).fill("Make the scene neon");
+  await page.getByText("Options").click();
   await page.getByRole("checkbox", { name: /Enhance prompt/i }).click();
   await page.getByRole("button", { name: "Apply" }).click();
 
@@ -265,7 +266,8 @@ test("records, reviews, downloads, discards, and replaces local clips safely", a
   );
 
   await page.getByRole("button", { name: "Discard" }).click();
-  await expect(page.getByText("Discard this take? This removes the local clip only.")).toBeVisible();
+  await expect(page.getByText("Discard this clip?")).toBeVisible();
+  await expect(page.getByText("This cannot be undone.")).toBeVisible();
   await page.getByRole("button", { name: "Discard clip" }).click();
 
   await expect(page.getByLabel("Recording playback")).toHaveCount(0);
@@ -331,7 +333,7 @@ test("stopping a model recording releases API usage and keeps local preview play
     .poll(() => page.evaluate(() => (window as any).__E2E_MEDIA_REQUESTS__.length))
     .toBe(1);
   await expect(
-    page.getByText("Local camera is on. Recording is available when the stream is ready."),
+    page.getByText("Live preview is ready."),
   ).toBeVisible();
   await expect(page.getByLabel(/Transformation prompt/i)).toHaveCount(0);
   await expect
@@ -378,6 +380,7 @@ test("restarting a session and recording again revokes the previous clip URL", a
     "blob:http://localhost/e2e-object-url-1",
   );
 
+  await page.getByRole("button", { name: "Keep" }).click();
   await page.getByRole("button", { name: "Stop session" }).click();
   await page.getByRole("button", { name: "Start local camera" }).click();
   await expect(page.getByRole("button", { name: "Record again" })).toBeEnabled();

@@ -1,4 +1,6 @@
 import type { RealtimeStatus } from "../../types/realtime";
+import { studioClassNames } from "../../constants/design";
+import { cx } from "../StudioUI/classNames";
 
 type SessionControlsProps = {
   canApplyChanges: boolean;
@@ -46,18 +48,23 @@ export function SessionControls({
   const applyClassName = canApply
     ? "bg-white text-neutral-950 hover:bg-neutral-200"
     : "border border-white/15 text-white hover:border-white/30";
+  const buttonClassName = cx(
+    "min-h-11 rounded-md px-3 py-2.5 text-center text-sm font-semibold leading-tight transition",
+    studioClassNames.focusRing,
+    studioClassNames.disabled,
+  );
 
   return (
     <div className="grid grid-cols-2 gap-2">
       <button
-        className={`col-span-2 rounded-md px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${startStopClassName}`}
+        className={cx("col-span-2", buttonClassName, startStopClassName)}
         type="button"
         onClick={isRunning || isConnecting ? onStop : onStart}
       >
         {startStopLabel}
       </button>
       <button
-        className={`rounded-md px-3 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${applyClassName}`}
+        className={cx(buttonClassName, applyClassName)}
         type="button"
         disabled={!canApply || isApplying}
         onClick={onApply}
@@ -65,7 +72,7 @@ export function SessionControls({
         {isApplying ? "Applying" : "Apply"}
       </button>
       <button
-        className="rounded-md border border-white/15 px-3 py-2.5 text-sm font-semibold text-white transition hover:border-white/30 disabled:cursor-not-allowed disabled:opacity-50"
+        className={cx(buttonClassName, "border border-white/15 text-white hover:border-white/30")}
         type="button"
         disabled={isApplying}
         onClick={onReset}

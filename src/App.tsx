@@ -47,6 +47,7 @@ export function App() {
   const [formError, setFormError] = useState<string | null>(null);
   const [lastAppliedDraftKey, setLastAppliedDraftKey] = useState<string | null>(null);
   const [isDiscardConfirming, setIsDiscardConfirming] = useState(false);
+  const [isRecordingReviewExpanded, setIsRecordingReviewExpanded] = useState(false);
   const imagePreviewUrl = useObjectUrl(draft.image);
   const canChangeSessionMode =
     !realtime.isRunning && !realtime.isConnecting && !recording.isRecording;
@@ -64,6 +65,13 @@ export function App() {
     recording.isRecording || recording.state === "stopping" || recording.state === "error";
   const shouldRenderRecordingDock =
     realtime.isRunning || hasCriticalRecordingState || hasRecordingArtifact;
+  const recordingDockLayout = isRecordingReviewExpanded && hasRecordingArtifact
+    ? "review"
+    : hasRecordingArtifact
+      ? "recorded"
+    : shouldRenderRecordingDock
+      ? "transport"
+      : "none";
   const shouldAutoHideLiveOverlays =
     realtime.isRunning && AUTO_HIDE_LIVE_STATUSES.has(realtime.status);
   const shouldForceLiveOverlaysVisible =
@@ -225,7 +233,7 @@ export function App() {
         canChangeSessionMode={canChangeSessionMode}
         enhancePrompt={draft.enhance}
         hasPendingChanges={hasPendingChanges}
-        isVisible={liveOverlay.isVisible}
+        isVisible={isRecordingReviewExpanded ? false : liveOverlay.isVisible}
         isApplying={realtime.isApplying}
         sessionMode={sessionMode}
         overlayProps={liveOverlay.getRootProps("live-control-drawer")}
@@ -235,6 +243,7 @@ export function App() {
         status={realtime.status}
         elapsedLabel={timer.elapsedLabel}
         error={formError ?? realtime.error}
+        recordingDockLayout={recordingDockLayout}
         reserveRecordingDockSpace={shouldRenderRecordingDock}
         onEnhancePromptChange={handleEnhancePromptChange}
         onSessionModeChange={handleSessionModeChange}
@@ -264,6 +273,7 @@ export function App() {
         state={recording.state}
         onDiscardConfirmingChange={setIsDiscardConfirming}
         onDiscardRecording={handleDiscardRecording}
+        onReviewExpandedChange={setIsRecordingReviewExpanded}
         onStartRecording={handleStartRecording}
         onStopRecording={recording.stopRecording}
       />

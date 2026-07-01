@@ -42,7 +42,7 @@ export function VideoStage({
           eyebrow={placeholderEyebrow}
         />
       ) : null}
-      <div className="absolute left-5 top-5">
+      <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 sm:left-5 sm:top-[calc(env(safe-area-inset-top)+1.25rem)]">
         <StatusBadge status={status} />
       </div>
     </section>

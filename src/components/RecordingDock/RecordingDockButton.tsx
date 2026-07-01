@@ -28,7 +28,7 @@ export function RecordingDockButton({
 
   return (
     <button
-      className={`min-h-11 w-full rounded-full px-4 py-2.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${buttonClassName}`}
+      className={`min-h-11 w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold leading-tight transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${buttonClassName}`}
       type="button"
       disabled={isRecording ? isStopping : !canStartRecording}
       onClick={isRecording ? onStopRecording : onStartRecording}

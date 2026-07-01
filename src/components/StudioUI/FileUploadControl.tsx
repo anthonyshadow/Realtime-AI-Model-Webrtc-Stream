@@ -86,7 +86,7 @@ export function FileUploadControl({
         <label className="block text-sm font-medium text-neutral-100" htmlFor={inputId}>
           {label}
         </label>
-        <p id={helperId} className="mt-1 text-xs leading-5 text-neutral-400">
+        <p id={helperId} className="mt-1 line-clamp-2 text-xs leading-5 text-neutral-400">
           {helperText}
         </p>
       </div>
@@ -123,7 +123,7 @@ export function FileUploadControl({
           </span>
         </button>
         <SecondaryButton
-          className="w-full sm:w-auto"
+          className="w-full min-w-0 sm:w-auto"
           disabled={disabled || !file}
           onClick={handleClear}
         >

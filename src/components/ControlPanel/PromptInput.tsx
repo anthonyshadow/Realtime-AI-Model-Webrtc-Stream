@@ -11,7 +11,7 @@ export function PromptInput({ helperText, label, placeholder, value, onChange }:
     <label className="block">
       <span className="text-sm font-medium text-neutral-100">{label}</span>
       <textarea
-        className="mt-1.5 min-h-24 max-h-48 w-full resize-y rounded-md border border-white/10 bg-black/35 px-3 py-2 text-sm leading-5 text-white outline-none transition focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
+        className="mt-1.5 min-h-24 max-h-48 w-full max-w-full resize-y rounded-md border border-white/10 bg-black/35 px-3 py-2 text-sm leading-5 text-white outline-none transition focus:border-cyan-300/60 focus:ring-2 focus:ring-cyan-300/20"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}

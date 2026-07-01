@@ -16,9 +16,16 @@ export const studioRadii = {
 
 export const studioPanelWidths = {
   controlDrawer: "min(24rem, calc(100vw - 1.5rem))",
-  setupPanel: "min(32rem, calc(100vw - 2rem))",
+  setupPanel: "min(34rem, calc(100vw - 1.5rem))",
   recorderBar: "min(34rem, calc(100vw - 1.5rem))",
   reviewSheet: "min(42rem, calc(100vw - 1rem))",
+} as const;
+
+export const studioOverlayLanes = {
+  recorderTransportMobile: "10rem",
+  recorderTransportDesktop: "6.75rem",
+  recordingReviewMobile: "min(58dvh, 28rem)",
+  recordingReviewDesktop: "min(48dvh, 24rem)",
 } as const;
 
 export const studioOverlayZIndex = {
@@ -45,7 +52,7 @@ export const studioBreakpoints = {
 export const studioClassNames = {
   disabled: "disabled:cursor-not-allowed disabled:opacity-50",
   focusRing:
-    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200",
+    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-200",
   motion: "transition duration-200 ease-out motion-reduce:transition-none",
   overlayMotion:
     "transition duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none",
@@ -58,6 +65,7 @@ export const studioDesignTokens = {
   breakpoints: studioBreakpoints,
   classNames: studioClassNames,
   overlayZIndex: studioOverlayZIndex,
+  overlayLanes: studioOverlayLanes,
   panelWidths: studioPanelWidths,
   radii: studioRadii,
   spacing: studioSpacing,

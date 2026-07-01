@@ -34,7 +34,7 @@ export function Button({
     <button
       {...buttonProps}
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2.5 text-sm font-semibold",
+        "inline-flex min-w-0 items-center justify-center gap-2 rounded-md px-3.5 py-2.5 text-center text-sm font-semibold leading-tight",
         studioClassNames.touchTarget,
         studioClassNames.motion,
         studioClassNames.focusRing,
@@ -46,7 +46,7 @@ export function Button({
       type={type}
     >
       {leadingIcon ? <span aria-hidden="true">{leadingIcon}</span> : null}
-      <span className="min-w-0 truncate">{children}</span>
+      <span className="min-w-0">{children}</span>
       {trailingIcon ? <span aria-hidden="true">{trailingIcon}</span> : null}
     </button>
   );

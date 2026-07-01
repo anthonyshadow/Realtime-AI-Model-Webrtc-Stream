@@ -29,6 +29,13 @@ type StorybookDecartEvents = {
   }>;
 };
 
+function expectNoHorizontalOverflow(canvasElement: HTMLElement) {
+  const storyDocument = canvasElement.ownerDocument;
+  const viewport = storyDocument.documentElement;
+
+  expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.clientWidth + 1);
+}
+
 export const Idle: Story = {};
 
 export const DesktopLocalIdle: Story = {
@@ -62,8 +69,9 @@ export const DesktopLocalLive: Story = {
     await expect(canvas.getByText("Live")).toBeVisible();
     await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
       "sm:top-4",
-      "sm:bottom-4",
+      "sm:bottom-[calc(env(safe-area-inset-bottom)+6.75rem)]",
     );
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
@@ -79,8 +87,9 @@ export const DesktopLucyLive: Story = {
     await expect(canvas.getByText("Live")).toBeVisible();
     await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
       "sm:top-4",
-      "sm:bottom-4",
+      "sm:bottom-[calc(env(safe-area-inset-bottom)+6.75rem)]",
     );
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
@@ -96,8 +105,9 @@ export const DesktopVtonLive: Story = {
     await expect(canvas.getByText("Live")).toBeVisible();
     await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
       "sm:top-4",
-      "sm:bottom-4",
+      "sm:bottom-[calc(env(safe-area-inset-bottom)+6.75rem)]",
     );
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
@@ -143,6 +153,7 @@ export const MobileLocalLive: Story = {
 
     await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
     await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
@@ -161,6 +172,7 @@ export const MobileModelLive: Story = {
 
     await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
     await expect(canvas.getByText("Synced. Edit prompt or image to queue an update.")).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
@@ -179,6 +191,7 @@ export const MobileRecordingActive: Story = {
 
     await expect(canvas.getByRole("button", { name: "Stop recording" })).toBeVisible();
     await expect(canvas.getByText("REC")).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 
@@ -197,9 +210,179 @@ export const MobileReview: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Stop recording" }));
 
     await expect(await canvas.findByRole("region", { name: "Recording review" })).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
+      "pointer-events-none",
+      "opacity-0",
+    );
     await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Mobile320Idle: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile320",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("heading", { name: "Start camera to begin" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start local camera" })).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Mobile360LucySetup: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile360",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
+
+    await expect(canvas.getByRole("heading", { name: "Lucy 2.1" })).toBeVisible();
+    await expect(canvas.getByLabelText(/Transformation prompt/i)).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Mobile390VtonSetup: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile390",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /VTON/i }));
+
+    await expect(canvas.getByRole("heading", { name: "Lucy VTON 3" })).toBeVisible();
+    await expect(canvas.getByLabelText("Garment image")).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Mobile430DiscardConfirmation: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "mobile430",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Stop recording" }));
+    await canvas.findByRole("region", { name: "Recording review" });
+    await userEvent.click(canvas.getByRole("button", { name: "Discard" }));
+
+    await expect(canvas.getByText("Discard this clip?")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Discard clip" })).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Tablet768LucyLive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "tablet768",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Desktop1024RecordingActive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "desktop1024",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+
+    await expect(canvas.getByRole("button", { name: "Stop recording" })).toBeVisible();
+    await expect(canvas.getByText("REC")).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Desktop1280VtonLive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "desktop1280",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /VTON/i }));
+    await userEvent.type(canvas.getByLabelText(/Garment prompt/i), "Substitute the top with a cobalt rain jacket.");
+    await userEvent.click(canvas.getByRole("button", { name: "Start VTON session" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Desktop1440Review: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "desktop1440",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+    await canvas.findByRole("button", { name: "Record" });
+    await userEvent.click(canvas.getByRole("button", { name: "Record" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Stop recording" }));
+
+    await expect(await canvas.findByRole("region", { name: "Recording review" })).toBeVisible();
+    await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
+  },
+};
+
+export const Large1600LocalLive: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: "large1600",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByText("Live")).toBeVisible();
+    expectNoHorizontalOverflow(canvasElement);
   },
 };
 

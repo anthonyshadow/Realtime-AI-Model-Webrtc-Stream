@@ -108,7 +108,7 @@ export function RecordingPlaybackPanel({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
         <MetricCard isNumeric label="Time" value={durationLabel} />
         <MetricCard label="Size" value={sizeLabel} />
         <MetricCard label="Source" value="Local file" />
@@ -124,7 +124,7 @@ export function RecordingPlaybackPanel({
           <video
             aria-label="Recording playback"
             aria-describedby={playbackDescriptionId}
-            className="aspect-video max-h-[min(44dvh,22rem)] w-full bg-black object-contain"
+            className="aspect-video max-h-[min(34dvh,18rem)] w-full bg-black object-contain sm:max-h-[min(44dvh,22rem)]"
             controls
             playsInline
             preload="metadata"
@@ -148,10 +148,12 @@ export function RecordingPlaybackPanel({
               This cannot be undone.
             </p>
           </div>
-          <SecondaryButton onClick={() => setIsConfirmingDiscard(false)}>
+          <SecondaryButton className="w-full sm:w-auto" onClick={() => setIsConfirmingDiscard(false)}>
             Keep
           </SecondaryButton>
-          <DangerButton onClick={onDiscardRecording}>Discard clip</DangerButton>
+          <DangerButton className="w-full sm:w-auto" onClick={onDiscardRecording}>
+            Discard clip
+          </DangerButton>
         </div>
       ) : (
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">

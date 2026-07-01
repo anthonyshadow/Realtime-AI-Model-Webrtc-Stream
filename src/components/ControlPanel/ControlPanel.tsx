@@ -33,6 +33,7 @@ export type ControlPanelProps = {
   status: RealtimeStatus;
   elapsedLabel: string;
   error: string | null;
+  recordingDockLayout?: "none" | "recorded" | "transport" | "review";
   reserveRecordingDockSpace?: boolean;
   onEnhancePromptChange: (value: boolean) => void;
   onSessionModeChange: (value: SessionModeId) => void;
@@ -60,6 +61,7 @@ export function ControlPanel({
   status,
   elapsedLabel,
   error,
+  recordingDockLayout,
   reserveRecordingDockSpace = false,
   onEnhancePromptChange,
   onSessionModeChange,
@@ -82,9 +84,16 @@ export function ControlPanel({
   const visibilityClassName = isVisible
     ? "translate-x-0 translate-y-0 opacity-100"
     : "pointer-events-none translate-y-4 opacity-0 sm:-translate-x-5 sm:translate-y-0";
-  const layoutClassName = reserveRecordingDockSpace
-    ? "bottom-[calc(env(safe-area-inset-bottom)+7.25rem)] max-h-[calc(100vh-env(safe-area-inset-bottom)-8rem)] sm:bottom-4 sm:max-h-[calc(100vh-2rem)]"
-    : "bottom-3 max-h-[calc(100vh-1.5rem)] sm:bottom-4 sm:max-h-[calc(100vh-2rem)]";
+  const resolvedRecordingDockLayout =
+    recordingDockLayout ?? (reserveRecordingDockSpace ? "transport" : "none");
+  const layoutClassName =
+    resolvedRecordingDockLayout === "review"
+      ? "bottom-[calc(env(safe-area-inset-bottom)+min(58dvh,28rem))] max-h-[calc(100dvh-env(safe-area-inset-bottom)-min(58dvh,28rem)-0.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+min(48dvh,24rem))] sm:max-h-[calc(100dvh-env(safe-area-inset-bottom)-min(48dvh,24rem)-1rem)]"
+      : resolvedRecordingDockLayout === "recorded"
+        ? "bottom-[calc(env(safe-area-inset-bottom)+17rem)] max-h-[calc(100dvh-env(safe-area-inset-bottom)-17.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+9rem)] sm:max-h-[calc(100dvh-env(safe-area-inset-bottom)-10rem)]"
+      : resolvedRecordingDockLayout === "transport"
+        ? "bottom-[calc(env(safe-area-inset-bottom)+10rem)] max-h-[calc(100dvh-env(safe-area-inset-bottom)-10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+6.75rem)] sm:max-h-[calc(100dvh-env(safe-area-inset-bottom)-7.75rem)]"
+        : "bottom-3 max-h-[calc(100dvh-1.5rem)] sm:bottom-4 sm:max-h-[calc(100dvh-2rem)]";
   const { ref: overlayRef, ...overlayEventProps } = overlayProps ?? {};
 
   if (shouldRenderSetupPanel) {
@@ -116,7 +125,7 @@ export function ControlPanel({
       aria-label="Live studio controls"
       className={cx(
         "fixed left-3 right-3 overflow-y-auto overscroll-contain rounded-xl border border-white/15 bg-neutral-950/74 p-3 text-white shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl",
-        "w-[calc(100vw-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:w-[min(24rem,calc(100vw-2rem))]",
+        "scroll-p-3 w-[calc(100vw-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:w-[min(24rem,calc(100vw-2rem))]",
         studioClassNames.overlayMotion,
         layoutClassName,
         visibilityClassName,

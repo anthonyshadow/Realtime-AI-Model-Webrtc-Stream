@@ -241,6 +241,29 @@ describe("FloatingRecordingDock", () => {
     );
   });
 
+  it("reports whether the recorded review sheet is expanded", () => {
+    const onReviewExpandedChange = vi.fn();
+
+    renderFloatingRecordingDock({
+      durationLabel: "01:14",
+      filename: "session-local-2026-06-30-16-45.webm",
+      objectUrl: "blob:http://localhost/clip",
+      onReviewExpandedChange,
+      sizeLabel: "8.4 MB",
+      state: "recorded",
+    });
+
+    expect(onReviewExpandedChange).toHaveBeenLastCalledWith(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+
+    expect(onReviewExpandedChange).toHaveBeenLastCalledWith(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review clip" }));
+
+    expect(onReviewExpandedChange).toHaveBeenLastCalledWith(true);
+  });
+
   it("shows a model-release completion message when provided", () => {
     renderFloatingRecordingDock({
       completionMessage: "Recording ready. Model session ended to save usage. Local camera remains on.",

@@ -75,8 +75,8 @@ export function SessionSetupPanel({
       {...overlayEventProps}
       aria-label="Live studio controls"
       className={cx(
-        "fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 overflow-y-auto overscroll-contain rounded-xl border border-white/15 bg-neutral-950/82 p-3 text-white shadow-[0_22px_70px_rgb(0_0_0/0.42)] backdrop-blur-xl sm:bottom-auto sm:left-5 sm:right-auto sm:top-1/2 sm:-translate-y-1/2 sm:p-4",
-        "max-h-[calc(100vh-env(safe-area-inset-bottom)-1.5rem)]",
+        "fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 right-3 w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-white/15 bg-neutral-950/82 p-3 text-white shadow-[0_22px_70px_rgb(0_0_0/0.42)] backdrop-blur-xl sm:bottom-auto sm:left-5 sm:right-auto sm:top-1/2 sm:w-[min(34rem,calc(100vw-2rem))] sm:-translate-y-1/2 sm:p-4",
+        "max-h-[calc(100dvh-env(safe-area-inset-bottom)-1.5rem)] scroll-p-3 sm:max-h-[min(42rem,calc(100dvh-2rem))] sm:scroll-p-4",
         studioClassNames.overlayMotion,
         visibilityClassName,
       )}
@@ -91,7 +91,7 @@ export function SessionSetupPanel({
           <p className="text-[10px] font-semibold uppercase text-cyan-100/70">
             Setup
           </p>
-          <h2 className="mt-0.5 text-xl font-semibold text-white">
+          <h2 className="mt-0.5 text-lg font-semibold text-white sm:text-xl">
             Choose a session
           </h2>
           <p className="mt-1 max-w-[24rem] text-sm leading-6 text-neutral-300">
@@ -146,7 +146,7 @@ export function SessionSetupPanel({
         {error ? <SetupErrorMessage error={error} /> : null}
       </div>
 
-      <div className="sticky bottom-0 -mx-3 mt-4 border-t border-white/10 bg-neutral-950/95 px-3 pt-3 shadow-[0_-18px_30px_rgb(0_0_0/0.34)] sm:-mx-4 sm:px-4">
+      <div className="sticky bottom-0 -mx-3 mt-4 border-t border-white/10 bg-neutral-950/95 px-3 pb-[max(env(safe-area-inset-bottom),0rem)] pt-3 shadow-[0_-18px_30px_rgb(0_0_0/0.34)] sm:-mx-4 sm:px-4 sm:pb-0">
         <PrimaryButton
           className="w-full"
           disabled={!canStart}
@@ -160,7 +160,9 @@ export function SessionSetupPanel({
               ? getStartHelperText(sessionMode, Boolean(error))
               : "Add a prompt or image to start."}
           </p>
-          <SecondaryButton onClick={onReset}>Reset</SecondaryButton>
+          <SecondaryButton className="w-full sm:w-auto" onClick={onReset}>
+            Reset
+          </SecondaryButton>
         </div>
       </div>
     </aside>
@@ -216,9 +218,9 @@ function SetupSessionModeCards({ value, onChange }: SetupSessionModeCardsProps) 
               type="button"
               onClick={() => onChange(sessionMode)}
             >
-              <span className="flex items-start justify-between gap-3">
+              <span className="flex min-w-0 items-start justify-between gap-3">
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold">
+                  <span className="block truncate text-sm font-semibold">
                     {config.label}
                   </span>
                   <span

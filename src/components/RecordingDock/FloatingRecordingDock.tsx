@@ -34,6 +34,7 @@ export type FloatingRecordingDockProps = {
   state: SessionRecordingState;
   onDiscardConfirmingChange?: (isConfirming: boolean) => void;
   onDiscardRecording: () => void;
+  onReviewExpandedChange?: (isExpanded: boolean) => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
@@ -56,6 +57,7 @@ export function FloatingRecordingDock({
   state,
   onDiscardConfirmingChange,
   onDiscardRecording,
+  onReviewExpandedChange,
   onStartRecording,
   onStopRecording,
 }: FloatingRecordingDockProps) {
@@ -95,6 +97,14 @@ export function FloatingRecordingDock({
       setIsReviewExpanded(true);
     }
   }, [filename, hasRecordedClip, objectUrl]);
+
+  useEffect(() => {
+    onReviewExpandedChange?.(hasRecordedClip && isReviewExpanded);
+  }, [hasRecordedClip, isReviewExpanded, onReviewExpandedChange]);
+
+  useEffect(() => {
+    return () => onReviewExpandedChange?.(false);
+  }, [onReviewExpandedChange]);
 
   useEffect(() => {
     if (hasRecordingArtifact) {
@@ -150,6 +160,7 @@ export function FloatingRecordingDock({
         dockPositionClassName,
         dockWidthClassName,
         dockScrollClassName,
+        hasRecordedClip && "scroll-p-3",
         visibilityClassName,
       )}
       role="region"
@@ -168,7 +179,7 @@ export function FloatingRecordingDock({
             "grid items-center gap-2",
             hasRecordedClip
               ? "grid-cols-[minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_auto_auto]"
-              : "grid-cols-[minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_auto_auto]",
+              : "grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_auto_auto]",
           )}
         >
           <div className="min-w-0 px-2 py-1.5">
@@ -190,13 +201,13 @@ export function FloatingRecordingDock({
           </div>
 
           <div
-            className={`flex min-h-11 items-center justify-between rounded-full border px-3 py-2 text-left sm:block sm:text-right ${timerToneClassName}`}
+            className={`flex min-h-11 min-w-[5.75rem] items-center justify-between rounded-full border px-3 py-2 text-left sm:block sm:text-right ${timerToneClassName}`}
           >
             <p className="text-[10px] font-medium uppercase text-neutral-400">Time</p>
             <p className="tabular-nums text-sm font-semibold">{durationLabel}</p>
           </div>
 
-          <div className="min-w-0">
+          <div className={cx("min-w-0", !hasRecordedClip && "col-span-2 sm:col-span-1")}>
             <RecordingDockButton
               canStartRecording={canStartRecording}
               hasRecordedClip={hasRecordedClip}

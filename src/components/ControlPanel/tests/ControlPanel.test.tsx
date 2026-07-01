@@ -42,7 +42,7 @@ describe("ControlPanel", () => {
     const panel = screen.getByRole("complementary", { name: "Live studio controls" });
 
     expect(panel).toHaveClass(
-      "max-h-[calc(100vh-env(safe-area-inset-bottom)-1.5rem)]",
+      "max-h-[calc(100dvh-env(safe-area-inset-bottom)-1.5rem)]",
       "overflow-y-auto",
     );
     expect(screen.getByRole("heading", { name: "Choose a session" })).toBeInTheDocument();
@@ -71,12 +71,29 @@ describe("ControlPanel", () => {
     const panel = screen.getByRole("complementary", { name: "Live studio controls" });
 
     expect(panel).toHaveClass(
-      "bottom-[calc(env(safe-area-inset-bottom)+7.25rem)]",
-      "max-h-[calc(100vh-env(safe-area-inset-bottom)-8rem)]",
+      "bottom-[calc(env(safe-area-inset-bottom)+10rem)]",
+      "max-h-[calc(100dvh-env(safe-area-inset-bottom)-10.75rem)]",
       "sm:top-4",
-      "sm:bottom-4",
+      "sm:bottom-[calc(env(safe-area-inset-bottom)+6.75rem)]",
       "sm:w-[min(24rem,calc(100vw-2rem))]",
       "motion-reduce:transition-none",
+    );
+  });
+
+  it("reserves a taller lane when the recording review sheet is active", () => {
+    renderControlPanel({
+      activeSessionMode: "local",
+      canChangeSessionMode: false,
+      recordingDockLayout: "review",
+      status: "connected",
+    });
+
+    const panel = screen.getByRole("complementary", { name: "Live studio controls" });
+
+    expect(panel).toHaveClass(
+      "bottom-[calc(env(safe-area-inset-bottom)+min(58dvh,28rem))]",
+      "max-h-[calc(100dvh-env(safe-area-inset-bottom)-min(58dvh,28rem)-0.75rem)]",
+      "sm:bottom-[calc(env(safe-area-inset-bottom)+min(48dvh,24rem))]",
     );
   });
 

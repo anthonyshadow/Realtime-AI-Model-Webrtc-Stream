@@ -48,6 +48,7 @@ Section organization should stay progressive:
 - `AdvancedOptionsSection` holds optional model controls such as Enhance prompt. Keep it collapsed or visually secondary by default unless a feature is core to starting the session.
 - `SessionActionsSection` keeps session-level actions sticky inside the scrollable panel on short viewports. Apply is enabled only for connected/generating model sessions with unapplied changes, and full Apply continues sending prompt, image, and Enhance together.
 - `StatusMessage`, `StatusSummary`, and errors should be clear enough to recover, but not visually louder than the primary session action unless action is blocked.
+- `ControlPanel` distinguishes no recorder, compact recorder transport, collapsed recorded controls, and expanded review sheet layouts. Live drawers must reserve enough safe-area-aware bottom space for compact recorder surfaces, and the app hides the drawer while an expanded review sheet is active instead of relying on z-index overlap.
 
 Future features should follow the same hierarchy. Add new model options to the model section or advanced disclosure. Add new session-wide actions to the session actions area only when they affect the live session itself. Add new recording or clip-management features to the recording dock or a dock-connected review surface, not to the control panel.
 
@@ -91,6 +92,7 @@ Mobile behavior:
 
 - bottom safe-area aware
 - leaves a separate safe-area-aware sheet lane for live controls above the recorder
+- keeps the compact recorder transport short on phones by pairing status with time and placing the primary recording action on its own row
 - thumb-friendly Record, Stop recording, Download, Discard, Keep, Review clip, and Record again controls
 - constrained width with scrollable review content when needed
 - saved review uses a bottom-sheet shape with compact metadata and a video preview constrained to the viewport
@@ -265,6 +267,9 @@ E2E coverage should protect:
 - Stop session still stops local tracks and disconnects model sessions
 
 Storybook coverage should include desktop and mobile local idle/live, model setup/live, recording active, recorded review expanded/collapsed, error states, and recording unsupported. Stories must mock camera, recorder, object URLs, and Decart behavior.
+Use the shared Storybook viewport names for 320, 360, 390, 430, 768, 1024,
+1280, 1440, and 1600px+ responsive QA, and assert no horizontal overflow in
+high-risk app shell stories.
 
 Manual browser QA checklist:
 
