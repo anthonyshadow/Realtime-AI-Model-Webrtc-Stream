@@ -31,7 +31,7 @@ export function VideoStage({
     <section className="fixed inset-0 bg-neutral-950">
       <video
         ref={videoRef}
-        className={`h-full w-full ${displayStream ? "object-cover" : "object-contain"}`}
+        className={`h-full w-full object-contain`}
         autoPlay
         muted
         playsInline
