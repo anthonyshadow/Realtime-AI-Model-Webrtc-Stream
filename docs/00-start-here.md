@@ -1,5 +1,5 @@
 # Start Here
-> Last updated: 2026-06-30
+> Last updated: 2026-07-01
 
 Best first file for humans and agents. Read this, then open only the task-specific docs you need.
 
@@ -29,7 +29,8 @@ Best first file for humans and agents. Read this, then open only the task-specif
 - [11-documentation-maintenance.md](11-documentation-maintenance.md): where docs, skills, tests, and stories go.
 - [12-ux-recording-architecture.md](12-ux-recording-architecture.md): control panel, recording dock, recording lifecycle, API release, stream strategy, cleanup, and QA guardrails.
 - [context/screens.md](context/screens.md): remembered redesigned screen breakdown and visual reference for upcoming UI work.
-- [ui-ux-stream-first-redesign-plan.md](ui-ux-stream-first-redesign-plan.md): audit and phased implementation plan for the stream-first UI redesign.
+
+Historical archives and completed implementation plans are not part of the default read path. Open them only when investigating history or archiving old plans.
 
 ## Agent Context
 

@@ -1,5 +1,5 @@
 # Agent Workflows
-> Last updated: 2026-06-28
+> Last updated: 2026-07-01
 
 Use this to work efficiently without reading the whole repository.
 
@@ -22,6 +22,8 @@ Skills are execution checklists, not architecture docs. Read the skill's `Read f
 ## Avoid Token Waste
 
 - Prefer canonical docs over archived docs.
+- Avoid archived docs and completed implementation plans unless the task directly touches history or archival cleanup.
+- Use [project-cleanup-and-documentation-audit.md](project-cleanup-and-documentation-audit.md) only for cleanup, refactor, or documentation audit work.
 - Do not read every file for a narrow task.
 - Use source search to verify claims.
 - Preserve existing boundaries unless the task requires a boundary change.

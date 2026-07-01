@@ -1,5 +1,5 @@
 # Agent Read Order
-> Last updated: 2026-06-30
+> Last updated: 2026-07-01
 
 Use this to choose the minimum useful context for a task.
 
@@ -8,6 +8,8 @@ Use this to choose the minimum useful context for a task.
 1. [../00-start-here.md](../00-start-here.md)
 2. [always-read.md](always-read.md)
 3. Relevant source files
+
+Avoid archived docs and completed implementation plans unless the task directly touches history or archival cleanup.
 
 ## UI Or Control Panel
 
@@ -50,3 +52,12 @@ Use this to choose the minimum useful context for a task.
 1. [../11-documentation-maintenance.md](../11-documentation-maintenance.md)
 2. [../skills/maintenance/documentation-maintenance.md](../skills/maintenance/documentation-maintenance.md)
 3. Existing canonical doc for the topic
+4. [../project-cleanup-and-documentation-audit.md](../project-cleanup-and-documentation-audit.md) for documentation cleanup or audit work only
+
+## Cleanup Or Refactor
+
+1. [../project-cleanup-and-documentation-audit.md](../project-cleanup-and-documentation-audit.md)
+2. [../skills/maintenance/repo-audit.md](../skills/maintenance/repo-audit.md) for broad repo audits
+3. [repo-audit-checklist.md](repo-audit-checklist.md) for checklist-driven audits
+4. Closest canonical docs for affected source areas
+5. Relevant source, tests, and stories
