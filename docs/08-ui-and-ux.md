@@ -9,6 +9,16 @@ For the detailed maintainer contract covering control-panel boundaries, recordin
 
 The app opens directly into the working video experience, not a marketing page.
 
+## Stream-First Design Foundation
+
+Shared stream-first UI primitives live in `src/components/StudioUI/`.
+Use `StatusPill`, `MetricCard`, `SectionHeader`, `Surface`/`Card`, the
+studio buttons, and `FileUploadControl` for new setup panels, drawers, recorder
+sheets, and error surfaces before adding one-off Tailwind treatments.
+
+Design tokens for spacing, radii, panel widths, overlay z-indexes, transition
+durations, and responsive breakpoints live in `src/constants/design.ts`.
+
 Before start:
 
 - dark full-screen video placeholder

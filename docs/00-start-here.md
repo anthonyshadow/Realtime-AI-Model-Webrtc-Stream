@@ -28,6 +28,8 @@ Best first file for humans and agents. Read this, then open only the task-specif
 - [10-deployment-and-env.md](10-deployment-and-env.md): local env, preview mode, and deployment limits.
 - [11-documentation-maintenance.md](11-documentation-maintenance.md): where docs, skills, tests, and stories go.
 - [12-ux-recording-architecture.md](12-ux-recording-architecture.md): control panel, recording dock, recording lifecycle, API release, stream strategy, cleanup, and QA guardrails.
+- [context/screens.md](context/screens.md): remembered redesigned screen breakdown and visual reference for upcoming UI work.
+- [ui-ux-stream-first-redesign-plan.md](ui-ux-stream-first-redesign-plan.md): audit and phased implementation plan for the stream-first UI redesign.
 
 ## Agent Context
 
