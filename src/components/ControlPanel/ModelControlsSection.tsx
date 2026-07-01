@@ -27,11 +27,13 @@ export function ModelControlsSection({
   onImageError,
   onPromptChange,
 }: ModelControlsSectionProps) {
+  const controlCopy = getModelControlCopy(modelConfig);
+
   return (
     <ControlPanelSection
-      description={modelConfig.description}
-      eyebrow={modelConfig.eyebrow}
-      title="Model controls"
+      description={controlCopy.description}
+      eyebrow={controlCopy.eyebrow}
+      title={modelConfig.label}
     >
       <PromptControlsSection
         helperText={modelConfig.promptHelperText}
@@ -57,4 +59,18 @@ export function ModelControlsSection({
       />
     </ControlPanelSection>
   );
+}
+
+function getModelControlCopy(modelConfig: ModelModeConfig) {
+  if (modelConfig.id === "lucy-vton-3") {
+    return {
+      eyebrow: "Garment try-on",
+      description: "Update the garment prompt or image, then apply when ready.",
+    };
+  }
+
+  return {
+    eyebrow: "Character/style transformation",
+    description: "Update the transformation prompt or reference portrait, then apply when ready.",
+  };
 }

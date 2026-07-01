@@ -1,13 +1,20 @@
 import { getModelConfig } from "../../constants/models";
 import {
+  studioClassNames,
+  studioOverlayZIndex,
+  studioPanelWidths,
+} from "../../constants/design";
+import {
   getSessionModeConfig,
   isModelBackedSessionMode,
   type SessionModeId,
 } from "../../constants/sessionModes";
 import type { AutoHideOverlayRootProps } from "../../hooks/useAutoHideOverlay";
 import type { RealtimeStatus } from "../../types/realtime";
+import { cx } from "../StudioUI/classNames";
 import { ModelControlsSection } from "./ModelControlsSection";
 import { SessionActionsSection } from "./SessionActionsSection";
+import { SessionSetupPanel } from "./SessionSetupPanel";
 import { SessionSetupSection } from "./SessionSetupSection";
 import { TimerDisplay } from "./TimerDisplay";
 
@@ -68,20 +75,57 @@ export function ControlPanel({
   const modelConfig = isModelBackedSessionMode(sessionMode)
     ? getModelConfig(sessionMode)
     : null;
+  const shouldRenderSetupPanel =
+    activeSessionMode === null &&
+    canChangeSessionMode &&
+    (status === "idle" || status === "disconnected" || status === "error");
   const visibilityClassName = isVisible
-    ? "translate-y-0 opacity-100"
-    : "pointer-events-none translate-y-3 opacity-0";
+    ? "translate-x-0 translate-y-0 opacity-100"
+    : "pointer-events-none translate-y-4 opacity-0 sm:-translate-x-5 sm:translate-y-0";
   const layoutClassName = reserveRecordingDockSpace
-    ? "bottom-[calc(env(safe-area-inset-bottom)+10rem)] max-h-[calc(100vh-env(safe-area-inset-bottom)-10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+8.75rem)] sm:max-h-[calc(100vh-env(safe-area-inset-bottom)-9.75rem)] xl:bottom-4 xl:max-h-[calc(100vh-2rem)]"
+    ? "bottom-[calc(env(safe-area-inset-bottom)+7.25rem)] max-h-[calc(100vh-env(safe-area-inset-bottom)-8rem)] sm:bottom-4 sm:max-h-[calc(100vh-2rem)]"
     : "bottom-3 max-h-[calc(100vh-1.5rem)] sm:bottom-4 sm:max-h-[calc(100vh-2rem)]";
   const { ref: overlayRef, ...overlayEventProps } = overlayProps ?? {};
+
+  if (shouldRenderSetupPanel) {
+    return (
+      <SessionSetupPanel
+        enhancePrompt={enhancePrompt}
+        error={error}
+        imageFile={imageFile}
+        imagePreviewUrl={imagePreviewUrl}
+        isVisible={isVisible}
+        overlayProps={overlayProps}
+        prompt={prompt}
+        sessionMode={sessionMode}
+        status={status}
+        onEnhancePromptChange={onEnhancePromptChange}
+        onImageChange={onImageChange}
+        onImageError={onImageError}
+        onPromptChange={onPromptChange}
+        onReset={onReset}
+        onSessionModeChange={onSessionModeChange}
+        onStart={onStart}
+      />
+    );
+  }
 
   return (
     <aside
       {...overlayEventProps}
       aria-label="Live studio controls"
-      className={`fixed left-3 right-3 z-10 overflow-y-auto overscroll-contain rounded-lg border border-white/15 bg-neutral-950/72 p-3 shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl transition duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:left-4 sm:right-auto sm:w-[23rem] ${layoutClassName} ${visibilityClassName}`}
+      className={cx(
+        "fixed left-3 right-3 overflow-y-auto overscroll-contain rounded-xl border border-white/15 bg-neutral-950/74 p-3 text-white shadow-[0_18px_60px_rgb(0_0_0/0.36)] backdrop-blur-xl",
+        "w-[calc(100vw-1.5rem)] sm:left-4 sm:right-auto sm:top-4 sm:w-[min(24rem,calc(100vw-2rem))]",
+        studioClassNames.overlayMotion,
+        layoutClassName,
+        visibilityClassName,
+      )}
       ref={overlayRef}
+      style={{
+        maxWidth: studioPanelWidths.controlDrawer,
+        zIndex: studioOverlayZIndex.controlDrawer,
+      }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">

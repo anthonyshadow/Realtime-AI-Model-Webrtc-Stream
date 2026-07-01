@@ -66,7 +66,7 @@ function getStatusMessage({
 
   if (isApplying) {
     return {
-      body: "Sending the current prompt, image, and options to the model.",
+      body: "Sending prompt, image, and options to the model.",
       label: "Applying changes",
       tone: "active" as const,
     };
@@ -108,7 +108,7 @@ function getStatusMessage({
 
   if (hasPendingChanges) {
     return {
-      body: "Apply the pending changes when you want to update the model output.",
+      body: "Apply updates the live model output.",
       label: "Pending changes",
       tone: "active" as const,
     };
@@ -117,29 +117,29 @@ function getStatusMessage({
   if (status === "connected" || status === "generating") {
     if (isModelBackedSessionMode(runningMode)) {
       return {
-        body: "Model controls are synced. Adjust prompt or image when you want a new look.",
-        label: "Model on",
+        body: "Synced. Edit prompt or image to queue an update.",
+        label: "Model ready",
         tone: "default" as const,
       };
     }
 
     return {
-      body: "Local camera is on. Recording is available when the stream is ready.",
-      label: "Camera on",
+      body: "Live preview is ready.",
+      label: "Camera ready",
       tone: "default" as const,
     };
   }
 
   if (isModelBackedSessionMode(selectedSessionMode)) {
     return {
-      body: "Add a prompt, image, or both, then start the model session.",
+      body: "Add a prompt, image, or both.",
       label: "Next step",
       tone: "default" as const,
     };
   }
 
   return {
-    body: "Start the local camera to preview without Decart or model usage.",
+    body: "Start the local camera to preview.",
     label: "Next step",
     tone: "default" as const,
   };

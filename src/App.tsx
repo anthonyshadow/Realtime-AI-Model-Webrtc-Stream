@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AutoHidingControlPanel } from "./components/ControlPanel/AutoHidingControlPanel";
+import { ControlPanel } from "./components/ControlPanel/ControlPanel";
 import { FloatingRecordingDock } from "./components/RecordingDock/FloatingRecordingDock";
 import { VideoStage } from "./components/VideoStage/VideoStage";
 import {
@@ -12,6 +12,7 @@ import {
   type SessionModeId,
 } from "./constants/sessionModes";
 import { useLiveSession } from "./hooks/useLiveSession";
+import { useAutoHideOverlay } from "./hooks/useAutoHideOverlay";
 import { useObjectUrl } from "./hooks/useObjectUrl";
 import { useRecordingCompletionFlow } from "./hooks/useRecordingCompletionFlow";
 import { useSessionRecording } from "./hooks/useSessionRecording";
@@ -28,6 +29,8 @@ type ControlPanelDraft = {
 
 const MODEL_RECORDING_RELEASE_MESSAGE =
   "Recording ready. Model session ended to save usage. Local camera remains on.";
+const LIVE_OVERLAY_IDLE_MS = 3000;
+const AUTO_HIDE_LIVE_STATUSES = new Set(["connected", "generating", "reconnecting"]);
 
 export function App() {
   const realtime = useLiveSession();
@@ -43,6 +46,7 @@ export function App() {
   const [recordingCompletionMessage, setRecordingCompletionMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [lastAppliedDraftKey, setLastAppliedDraftKey] = useState<string | null>(null);
+  const [isDiscardConfirming, setIsDiscardConfirming] = useState(false);
   const imagePreviewUrl = useObjectUrl(draft.image);
   const canChangeSessionMode =
     !realtime.isRunning && !realtime.isConnecting && !recording.isRecording;
@@ -60,6 +64,18 @@ export function App() {
     recording.isRecording || recording.state === "stopping" || recording.state === "error";
   const shouldRenderRecordingDock =
     realtime.isRunning || hasCriticalRecordingState || hasRecordingArtifact;
+  const shouldAutoHideLiveOverlays =
+    realtime.isRunning && AUTO_HIDE_LIVE_STATUSES.has(realtime.status);
+  const shouldForceLiveOverlaysVisible =
+    realtime.status === "error" ||
+    isDiscardConfirming ||
+    Boolean(formError ?? realtime.error) ||
+    recording.state === "error";
+  const liveOverlay = useAutoHideOverlay<HTMLElement>({
+    enabled: shouldAutoHideLiveOverlays,
+    forceVisible: shouldForceLiveOverlaysVisible,
+    hideDelayMs: LIVE_OVERLAY_IDLE_MS,
+  });
   const recordingStandbyMessage = getRecordingStandbyMessage({
     activeSessionMode: realtime.activeSessionMode,
     hasRecordableStream,
@@ -191,6 +207,7 @@ export function App() {
   };
 
   const handleDiscardRecording = () => {
+    setIsDiscardConfirming(false);
     setRecordingCompletionMessage(null);
     recording.deleteRecording();
   };
@@ -203,13 +220,15 @@ export function App() {
         placeholderEyebrow={activeSessionConfig.videoEyebrow}
         status={realtime.status}
       />
-      <AutoHidingControlPanel
+      <ControlPanel
         activeSessionMode={realtime.activeSessionMode}
         canChangeSessionMode={canChangeSessionMode}
         enhancePrompt={draft.enhance}
         hasPendingChanges={hasPendingChanges}
+        isVisible={liveOverlay.isVisible}
         isApplying={realtime.isApplying}
         sessionMode={sessionMode}
+        overlayProps={liveOverlay.getRootProps("live-control-drawer")}
         prompt={draft.prompt}
         imageFile={draft.image}
         imagePreviewUrl={imagePreviewUrl}
@@ -234,13 +253,16 @@ export function App() {
         error={recording.error}
         filename={recording.filename}
         hasRecordableStream={hasRecordableStream}
+        isVisible={liveOverlay.isVisible}
         isRecording={recording.isRecording}
         isSessionActive={realtime.isRunning}
         isSupported={recording.isSupported}
         objectUrl={recording.objectUrl}
+        overlayProps={liveOverlay.getRootProps("recording-dock")}
         sizeLabel={recording.sizeLabel}
         standbyMessage={recordingStandbyMessage}
         state={recording.state}
+        onDiscardConfirmingChange={setIsDiscardConfirming}
         onDiscardRecording={handleDiscardRecording}
         onStartRecording={handleStartRecording}
         onStopRecording={recording.stopRecording}

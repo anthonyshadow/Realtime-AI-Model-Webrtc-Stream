@@ -30,6 +30,31 @@ function TestOverlay() {
   );
 }
 
+function TestMultiRootOverlay() {
+  const { getRootProps, isVisible } = useAutoHideOverlay<HTMLDivElement>({
+    hideDelayMs: 1000,
+  });
+
+  return (
+    <>
+      <div
+        data-testid="panel-root"
+        data-visible={isVisible ? "true" : "false"}
+        {...getRootProps("panel")}
+      >
+        <button type="button">Panel control</button>
+      </div>
+      <div
+        data-testid="dock-root"
+        data-visible={isVisible ? "true" : "false"}
+        {...getRootProps("dock")}
+      >
+        <button type="button">Dock control</button>
+      </div>
+    </>
+  );
+}
+
 describe("useAutoHideOverlay", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -50,6 +75,20 @@ describe("useAutoHideOverlay", () => {
     expect(result.current.isVisible).toBe(false);
 
     dispatchWindowEvent(new MouseEvent("mousemove"));
+
+    expect(result.current.isVisible).toBe(true);
+  });
+
+  it("shows the overlay on touch interaction", () => {
+    const { result } = renderHook(() =>
+      useAutoHideOverlay({ hideDelayMs: 1000 }),
+    );
+
+    advanceTimersByTime(1000);
+
+    expect(result.current.isVisible).toBe(false);
+
+    dispatchWindowEvent(new TouchEvent("touchstart"));
 
     expect(result.current.isVisible).toBe(true);
   });
@@ -107,6 +146,34 @@ describe("useAutoHideOverlay", () => {
     expect(clearTimeoutSpy).toHaveBeenCalled();
   });
 
+  it("dismisses the overlay with Escape when nothing is interacting", () => {
+    const { result } = renderHook(() =>
+      useAutoHideOverlay({ hideDelayMs: 1000 }),
+    );
+
+    expect(result.current.isVisible).toBe(true);
+
+    dispatchWindowEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+
+    expect(result.current.isVisible).toBe(false);
+  });
+
+  it("stays visible while the window is inactive for a file picker", () => {
+    const { result } = renderHook(() =>
+      useAutoHideOverlay({ hideDelayMs: 1000 }),
+    );
+
+    dispatchWindowEvent(new Event("blur"));
+    advanceTimersByTime(5000);
+
+    expect(result.current.isVisible).toBe(true);
+
+    dispatchWindowEvent(new Event("focus"));
+    advanceTimersByTime(1000);
+
+    expect(result.current.isVisible).toBe(false);
+  });
+
   it("keeps the overlay visible while controls have keyboard focus", () => {
     render(<TestOverlay />);
 
@@ -150,5 +217,30 @@ describe("useAutoHideOverlay", () => {
     advanceTimersByTime(1000);
 
     expect(overlay).toHaveAttribute("data-visible", "false");
+  });
+
+  it("keeps shared overlays visible while pointer moves between roots", () => {
+    render(<TestMultiRootOverlay />);
+    const panelRoot = screen.getByTestId("panel-root");
+    const dockRoot = screen.getByTestId("dock-root");
+
+    advanceTimersByTime(1000);
+
+    expect(panelRoot).toHaveAttribute("data-visible", "false");
+    expect(dockRoot).toHaveAttribute("data-visible", "false");
+
+    fireEvent.pointerEnter(panelRoot);
+    fireEvent.pointerLeave(panelRoot);
+    fireEvent.pointerEnter(dockRoot);
+    advanceTimersByTime(5000);
+
+    expect(panelRoot).toHaveAttribute("data-visible", "true");
+    expect(dockRoot).toHaveAttribute("data-visible", "true");
+
+    fireEvent.pointerLeave(dockRoot);
+    advanceTimersByTime(1000);
+
+    expect(panelRoot).toHaveAttribute("data-visible", "false");
+    expect(dockRoot).toHaveAttribute("data-visible", "false");
   });
 });

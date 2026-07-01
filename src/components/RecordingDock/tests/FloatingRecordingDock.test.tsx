@@ -184,8 +184,9 @@ describe("FloatingRecordingDock", () => {
 
     expect(screen.getByText("Clip captured")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Recording dock" })).toHaveClass(
-      "w-[min(calc(100vw-1rem),42rem)]",
-      "max-h-[calc(100vh-env(safe-area-inset-bottom)-1rem)]",
+      "w-full",
+      "sm:w-[min(calc(100vw-2rem),42rem)]",
+      "max-h-[calc(100dvh-env(safe-area-inset-bottom)-0.5rem)]",
       "overflow-y-auto",
       "motion-reduce:transition-none",
     );
@@ -196,12 +197,13 @@ describe("FloatingRecordingDock", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Discard" }));
 
-    expect(screen.getByText("Discard this take? This removes the local clip only.")).toBeInTheDocument();
+    expect(screen.getByText("Discard this clip?")).toBeInTheDocument();
+    expect(screen.getByText("This cannot be undone.")).toBeInTheDocument();
     expect(props.onDiscardRecording).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Keep" }));
 
-    expect(screen.queryByText("Discard this take? This removes the local clip only.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Discard this clip?")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Discard" }));
     fireEvent.click(screen.getByRole("button", { name: "Discard clip" }));
@@ -218,7 +220,7 @@ describe("FloatingRecordingDock", () => {
       state: "recorded",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Collapse" }));
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
 
     expect(screen.queryByLabelText("Recording playback")).not.toBeInTheDocument();
     expect(
@@ -228,10 +230,10 @@ describe("FloatingRecordingDock", () => {
       "href",
       "blob:http://localhost/clip",
     );
-    expect(screen.getByRole("button", { name: "Review" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Review clip" })).toBeVisible();
     expect(props.onDiscardRecording).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Review" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review clip" }));
 
     expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
       "src",
@@ -257,6 +259,54 @@ describe("FloatingRecordingDock", () => {
       "src",
       "blob:http://localhost/model-clip",
     );
+  });
+
+  it("stays visible while discard confirmation is active", () => {
+    const onDiscardConfirmingChange = vi.fn();
+
+    renderFloatingRecordingDock({
+      durationLabel: "01:14",
+      filename: "session-local-2026-06-30-16-45.webm",
+      objectUrl: "blob:http://localhost/clip",
+      onDiscardConfirmingChange,
+      sizeLabel: "8.4 MB",
+      state: "recorded",
+    });
+    const dock = screen.getByRole("region", { name: "Recording dock" });
+
+    advanceTimersByTime(3000);
+
+    expect(dock).toHaveClass("opacity-0");
+
+    dispatchWindowEvent(new Event("touchstart"));
+    expect(dock).toHaveClass("opacity-100");
+
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    advanceTimersByTime(10_000);
+
+    expect(dock).toHaveClass("opacity-100");
+    expect(onDiscardConfirmingChange).toHaveBeenLastCalledWith(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
+    advanceTimersByTime(3000);
+
+    expect(dock).toHaveClass("opacity-0");
+    expect(onDiscardConfirmingChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it("starts a new take from Record again without discarding the current clip first", () => {
+    const props = renderFloatingRecordingDock({
+      durationLabel: "01:14",
+      filename: "session-local-2026-06-30-16-45.webm",
+      objectUrl: "blob:http://localhost/clip",
+      sizeLabel: "8.4 MB",
+      state: "recorded",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Record again" }));
+
+    expect(props.onStartRecording).toHaveBeenCalledTimes(1);
+    expect(props.onDiscardRecording).not.toHaveBeenCalled();
   });
 
   it("uses a safe-area aware mobile-friendly fixed layout", () => {

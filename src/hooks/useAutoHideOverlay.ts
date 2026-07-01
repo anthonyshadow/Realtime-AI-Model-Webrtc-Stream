@@ -31,6 +31,8 @@ export type UseAutoHideOverlayOptions = {
   initialVisible?: boolean;
 };
 
+const DEFAULT_ROOT_ID = "overlay-root";
+
 export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
   enabled = true,
   eventTarget,
@@ -40,9 +42,10 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
 }: UseAutoHideOverlayOptions = {}) {
   const [isVisibleState, setIsVisibleState] = useState(initialVisible);
   const hideTimerRef = useRef<number | null>(null);
-  const overlayElementRef = useRef<TElement | null>(null);
+  const overlayElementsRef = useRef(new Map<string, TElement>());
   const hasFocusWithinRef = useRef(false);
-  const hasPointerWithinRef = useRef(false);
+  const pointerRootIdsRef = useRef(new Set<string>());
+  const isWindowInactiveRef = useRef(false);
   const enabledRef = useRef(enabled);
   const forceVisibleRef = useRef(forceVisible);
   const hideDelayMsRef = useRef(hideDelayMs);
@@ -67,7 +70,8 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
       enabledRef.current &&
       !forceVisibleRef.current &&
       !hasFocusWithinRef.current &&
-      !hasPointerWithinRef.current
+      pointerRootIdsRef.current.size === 0 &&
+      !isWindowInactiveRef.current
     );
   }, []);
 
@@ -100,8 +104,14 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
     }
   }, [canHide, clearHideTimer]);
 
-  const setOverlayElement = useCallback((element: TElement | null) => {
-    overlayElementRef.current = element;
+  const setOverlayElement = useCallback((rootId: string, element: TElement | null) => {
+    if (element) {
+      overlayElementsRef.current.set(rootId, element);
+      return;
+    }
+
+    overlayElementsRef.current.delete(rootId);
+    pointerRootIdsRef.current.delete(rootId);
   }, []);
 
   const handleFocusCapture = useCallback<FocusEventHandler<TElement>>(() => {
@@ -112,10 +122,12 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
 
   const handleBlurCapture = useCallback<FocusEventHandler<TElement>>(
     (event) => {
-      const root = overlayElementRef.current;
       const nextFocusedElement = event.relatedTarget;
 
-      if (root && nextFocusedElement instanceof Node && root.contains(nextFocusedElement)) {
+      if (
+        nextFocusedElement instanceof Node &&
+        isNodeInsideOverlayRoot(overlayElementsRef.current, nextFocusedElement)
+      ) {
         return;
       }
 
@@ -125,26 +137,57 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
     [scheduleHide],
   );
 
-  const handlePointerEnter = useCallback<PointerEventHandler<TElement>>(() => {
-    hasPointerWithinRef.current = true;
+  const createRootProps = useCallback(
+    (rootId = DEFAULT_ROOT_ID): AutoHideOverlayRootProps<TElement> => ({
+      ref: (element) => setOverlayElement(rootId, element),
+      onBlurCapture: handleBlurCapture,
+      onFocusCapture: handleFocusCapture,
+      onPointerDownCapture: () => {
+        setIsVisibleState(true);
+        scheduleHide();
+      },
+      onPointerEnter: () => {
+        pointerRootIdsRef.current.add(rootId);
+        setIsVisibleState(true);
+        clearHideTimer();
+      },
+      onPointerLeave: () => {
+        pointerRootIdsRef.current.delete(rootId);
+        scheduleHide();
+      },
+      onTouchStartCapture: () => {
+        setIsVisibleState(true);
+        scheduleHide();
+      },
+    }),
+    [
+      clearHideTimer,
+      handleBlurCapture,
+      handleFocusCapture,
+      scheduleHide,
+      setOverlayElement,
+    ],
+  );
+
+  const handleActivity = useCallback((event: Event) => {
+    if (event instanceof KeyboardEvent && event.key === "Escape") {
+      hideOverlay();
+      return;
+    }
+
+    showOverlay();
+  }, [hideOverlay, showOverlay]);
+
+  const handleWindowBlur = useCallback(() => {
+    isWindowInactiveRef.current = true;
     setIsVisibleState(true);
     clearHideTimer();
   }, [clearHideTimer]);
 
-  const handlePointerLeave = useCallback<PointerEventHandler<TElement>>(() => {
-    hasPointerWithinRef.current = false;
-    scheduleHide();
-  }, [scheduleHide]);
-
-  const handlePointerDownCapture = useCallback<PointerEventHandler<TElement>>(() => {
-    setIsVisibleState(true);
-    scheduleHide();
-  }, [scheduleHide]);
-
-  const handleTouchStartCapture = useCallback<TouchEventHandler<TElement>>(() => {
-    setIsVisibleState(true);
-    scheduleHide();
-  }, [scheduleHide]);
+  const handleWindowFocus = useCallback(() => {
+    isWindowInactiveRef.current = false;
+    showOverlay();
+  }, [showOverlay]);
 
   useEffect(() => {
     const activityTarget =
@@ -160,45 +203,56 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
 
     showOverlay();
 
-    activityTarget.addEventListener("mousemove", showOverlay);
-    activityTarget.addEventListener("touchstart", showOverlay, { passive: true });
-    activityTarget.addEventListener("keydown", showOverlay);
+    activityTarget.addEventListener("mousemove", handleActivity);
+    activityTarget.addEventListener("touchstart", handleActivity, { passive: true });
+    activityTarget.addEventListener("keydown", handleActivity);
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
-      activityTarget.removeEventListener("mousemove", showOverlay);
-      activityTarget.removeEventListener("touchstart", showOverlay);
-      activityTarget.removeEventListener("keydown", showOverlay);
+      activityTarget.removeEventListener("mousemove", handleActivity);
+      activityTarget.removeEventListener("touchstart", handleActivity);
+      activityTarget.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("focus", handleWindowFocus);
       clearHideTimer();
     };
-  }, [clearHideTimer, enabled, eventTarget, forceVisible, showOverlay]);
+  }, [
+    clearHideTimer,
+    enabled,
+    eventTarget,
+    forceVisible,
+    handleActivity,
+    handleWindowBlur,
+    handleWindowFocus,
+    showOverlay,
+  ]);
 
   const rootProps = useMemo<AutoHideOverlayRootProps<TElement>>(
-    () => ({
-      ref: setOverlayElement,
-      onBlurCapture: handleBlurCapture,
-      onFocusCapture: handleFocusCapture,
-      onPointerDownCapture: handlePointerDownCapture,
-      onPointerEnter: handlePointerEnter,
-      onPointerLeave: handlePointerLeave,
-      onTouchStartCapture: handleTouchStartCapture,
-    }),
-    [
-      handleBlurCapture,
-      handleFocusCapture,
-      handlePointerDownCapture,
-      handlePointerEnter,
-      handlePointerLeave,
-      handleTouchStartCapture,
-      setOverlayElement,
-    ],
+    () => createRootProps(DEFAULT_ROOT_ID),
+    [createRootProps],
   );
 
   return {
+    getRootProps: createRootProps,
     hide: hideOverlay,
     isVisible: !enabled || forceVisible ? true : isVisibleState,
     rootProps,
     show: showOverlay,
   };
+}
+
+function isNodeInsideOverlayRoot(
+  overlayElements: Map<string, HTMLElement>,
+  node: Node,
+) {
+  for (const element of overlayElements.values()) {
+    if (element.contains(node)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function getDefaultEventTarget() {

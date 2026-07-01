@@ -41,22 +41,24 @@ describe("ControlPanel", () => {
 
     const panel = screen.getByRole("complementary", { name: "Live studio controls" });
 
-    expect(panel).toHaveClass("max-h-[calc(100vh-1.5rem)]", "overflow-y-auto");
-    expect(screen.getByText("Start or stop the local camera preview.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Choose the session" })).toBeInTheDocument();
+    expect(panel).toHaveClass(
+      "max-h-[calc(100vh-env(safe-area-inset-bottom)-1.5rem)]",
+      "overflow-y-auto",
+    );
+    expect(screen.getByRole("heading", { name: "Choose a session" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Choose session" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Confirm setup" })).toBeInTheDocument();
     expect(screen.getAllByText("Local camera").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText("Pick local preview or a Decart model before starting. Mode switches unlock after stopping."),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Session")).toBeInTheDocument();
-    expect(screen.getByText("Mode")).toBeInTheDocument();
-    expect(screen.getByText("Start the local camera to preview without Decart or model usage.")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Model controls" })).not.toBeInTheDocument();
+    expect(screen.getByText("Browser camera")).toBeInTheDocument();
+    expect(screen.getByText("Browser microphone")).toBeInTheDocument();
+    expect(screen.getByText("Not requested")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Lucy 2.1" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Reference portrait/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
     expect(screen.queryByText("Options")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Record" })).not.toBeInTheDocument();
   });
 
@@ -69,8 +71,11 @@ describe("ControlPanel", () => {
     const panel = screen.getByRole("complementary", { name: "Live studio controls" });
 
     expect(panel).toHaveClass(
-      "bottom-[calc(env(safe-area-inset-bottom)+10rem)]",
-      "max-h-[calc(100vh-env(safe-area-inset-bottom)-10.75rem)]",
+      "bottom-[calc(env(safe-area-inset-bottom)+7.25rem)]",
+      "max-h-[calc(100vh-env(safe-area-inset-bottom)-8rem)]",
+      "sm:top-4",
+      "sm:bottom-4",
+      "sm:w-[min(24rem,calc(100vw-2rem))]",
       "motion-reduce:transition-none",
     );
   });
@@ -79,9 +84,10 @@ describe("ControlPanel", () => {
     renderControlPanel({ sessionMode: "lucy-2.1" });
 
     expect(screen.getAllByText("Lucy 2.1").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Model controls" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Lucy 2.1" })).toBeInTheDocument();
+    expect(screen.getByText("Character/style transformation")).toBeInTheDocument();
     expect(
-      screen.getByText("Transform the live camera with a prompt, a character reference, or both."),
+      screen.getByText("Update the transformation prompt or reference portrait, then apply when ready."),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
     expect(screen.getByLabelText(/Transformation prompt/i)).toHaveAttribute(
@@ -90,7 +96,44 @@ describe("ControlPanel", () => {
     );
     expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     expect(screen.getByLabelText("Reference portrait")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
+    expect(screen.getByText("Add a prompt or image to start.")).toBeInTheDocument();
+  });
+
+  it("enables model setup once a prompt is present", () => {
+    renderControlPanel({
+      prompt: "Make the scene cinematic",
+      sessionMode: "lucy-2.1",
+    });
+
     expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
+  });
+
+  it("renders VTON setup before a session starts", () => {
+    renderControlPanel({
+      prompt: "Substitute the top with a denim jacket",
+      sessionMode: "lucy-vton-3",
+    });
+
+    expect(screen.getAllByText("Lucy VTON 3").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Lucy VTON 3" })).toBeInTheDocument();
+    expect(screen.getByText("Garment try-on")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Garment prompt/i)).toHaveValue(
+      "Substitute the top with a denim jacket",
+    );
+    expect(screen.getByLabelText("Garment image")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start VTON session" })).toBeEnabled();
+  });
+
+  it("passes setup mode card selections upward", async () => {
+    const user = userEvent.setup();
+    const props = renderControlPanel({ sessionMode: "lucy-2.1" });
+
+    await user.click(screen.getByRole("button", { name: /Lucy VTON 3/i }));
+    await user.click(screen.getByRole("button", { name: /Local camera/i }));
+
+    expect(props.onSessionModeChange).toHaveBeenCalledWith("lucy-vton-3");
+    expect(props.onSessionModeChange).toHaveBeenCalledWith("local");
   });
 
   it("keeps advanced model controls collapsed until opened", async () => {
@@ -138,6 +181,20 @@ describe("ControlPanel", () => {
     expect(props.onStop).toHaveBeenCalledTimes(1);
     expect(props.onApply).toHaveBeenCalledTimes(1);
     expect(props.onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps Apply disabled for synced live model controls", () => {
+    renderControlPanel({
+      activeSessionMode: "lucy-2.1",
+      canChangeSessionMode: false,
+      hasPendingChanges: false,
+      prompt: "Make the scene cinematic",
+      sessionMode: "lucy-2.1",
+      status: "connected",
+    });
+
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+    expect(screen.getByText("Synced. Edit prompt or image to queue an update.")).toBeInTheDocument();
   });
 
   it("passes the local start action upward", async () => {
@@ -206,7 +263,22 @@ describe("ControlPanel", () => {
     renderControlPanel({ error: "Could not create realtime session token." });
 
     expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(screen.getByText("Needs attention")).toBeInTheDocument();
+    expect(screen.getByText("Could not start session")).toBeInTheDocument();
     expect(screen.getByText("Could not create realtime session token.")).toBeInTheDocument();
+    expect(screen.getByText("Ready to retry")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+  });
+
+  it("shows permission denied setup errors before a session starts", () => {
+    renderControlPanel({
+      error: "Camera permission was denied. Allow camera access and try again.",
+      status: "error",
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Camera permission was denied. Allow camera access and try again.",
+    );
+    expect(screen.getByText("Denied")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 });

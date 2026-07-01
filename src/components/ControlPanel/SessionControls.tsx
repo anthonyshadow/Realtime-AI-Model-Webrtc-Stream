@@ -37,13 +37,13 @@ export function SessionControls({
 }: SessionControlsProps) {
   const isRunning = RUNNING_STATUSES.has(status);
   const isConnecting = CONNECTING_STATUSES.has(status);
-  const canApply = canApplyChanges && APPLY_STATUSES.has(status);
+  const canApply = canApplyChanges && hasPendingChanges && APPLY_STATUSES.has(status);
   const startStopLabel = isRunning || isConnecting ? "Stop session" : startLabel;
   const startStopClassName =
     isRunning || isConnecting
       ? "border border-red-300/35 bg-red-500/15 text-red-50 hover:border-red-200/60"
       : "bg-cyan-300 text-neutral-950 hover:bg-cyan-200";
-  const applyClassName = hasPendingChanges
+  const applyClassName = canApply
     ? "bg-white text-neutral-950 hover:bg-neutral-200"
     : "border border-white/15 text-white hover:border-white/30";
 

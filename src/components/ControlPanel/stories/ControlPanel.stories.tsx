@@ -66,10 +66,11 @@ export const IdleLocal: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByRole("heading", { name: "Choose the session" })).toBeVisible();
+    await expect(canvas.getByRole("heading", { name: "Choose a session" })).toBeVisible();
+    await expect(canvas.getByRole("heading", { name: "Confirm setup" })).toBeVisible();
     await expect(canvas.getAllByText(localConfig.label)[0]).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Start local camera" })).toBeEnabled();
-    await expect(canvas.queryByRole("heading", { name: "Model controls" })).not.toBeInTheDocument();
+    await expect(canvas.queryByRole("heading", { name: "Lucy 2.1" })).not.toBeInTheDocument();
     await expect(canvas.queryByText("Options")).not.toBeInTheDocument();
   },
 };
@@ -85,10 +86,10 @@ export const IdleLucy: Story = {
     const options = canvas.getByText("Options");
     const disclosure = options.closest("details");
 
-    await expect(canvas.getByRole("heading", { name: "Model controls" })).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
+    await expect(canvas.getAllByRole("heading", { name: "Lucy 2.1" })[0]).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
     await expect(disclosure).not.toHaveAttribute("open");
-    await expect(canvas.getByText("Add a prompt, image, or both, then start the model session.")).toBeVisible();
+    await expect(canvas.getByText("Add a prompt or image to start.")).toBeVisible();
 
     await userEvent.click(options);
 
@@ -98,6 +99,37 @@ export const IdleLucy: Story = {
     await userEvent.click(options);
 
     await expect(disclosure).not.toHaveAttribute("open");
+  },
+};
+
+export const IdleLucyReady: Story = {
+  args: {
+    enhancePrompt: lucyConfig.enhanceDefault,
+    sessionMode: "lucy-2.1",
+    prompt: "Make the person look like a clean realtime studio avatar.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
+    await expect(canvas.getByLabelText(/Transformation prompt/i)).toHaveValue(
+      "Make the person look like a clean realtime studio avatar.",
+    );
+  },
+};
+
+export const IdleVtonReady: Story = {
+  args: {
+    enhancePrompt: vtonConfig.enhanceDefault,
+    sessionMode: "lucy-vton-3",
+    prompt: "Substitute the current top with a cobalt rain jacket.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getAllByText("Lucy VTON 3")[0]).toBeVisible();
+    await expect(canvas.getByLabelText(/Garment prompt/i)).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start VTON session" })).toBeEnabled();
   },
 };
 
@@ -133,7 +165,7 @@ export const LocalLiveSession: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Live")).toBeVisible();
-    await expect(canvas.getByText("Local camera is on. Recording is available when the stream is ready.")).toBeVisible();
+    await expect(canvas.getByText("Live preview is ready.")).toBeVisible();
     await expect(canvas.queryByRole("button", { name: "Record" })).not.toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: "Stop session" })).toBeVisible();
     await expect(canvas.queryByRole("button", { name: /Lucy 2.1/i })).not.toBeInTheDocument();
@@ -154,9 +186,31 @@ export const ModelLiveSession: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Generating")).toBeVisible();
-    await expect(canvas.getByText("Model controls are synced. Adjust prompt or image when you want a new look.")).toBeVisible();
+    await expect(canvas.getByText("Synced. Edit prompt or image to queue an update.")).toBeVisible();
     await expect(canvas.queryByRole("button", { name: "Record" })).not.toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Apply" })).toBeDisabled();
+  },
+};
+
+export const LiveLucyWithPendingChanges: Story = {
+  args: {
+    activeSessionMode: "lucy-2.1",
+    canChangeSessionMode: false,
+    elapsedLabel: "00:58",
+    enhancePrompt: lucyConfig.enhanceDefault,
+    hasPendingChanges: true,
+    prompt: "Make the person look like a clean realtime studio avatar.",
+    sessionMode: "lucy-2.1",
+    status: "connected",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getAllByRole("heading", { name: "Lucy 2.1" })[0]).toBeVisible();
+    await expect(canvas.getByText("Character/style transformation")).toBeVisible();
+    await expect(canvas.getByText("Apply updates the live model output.")).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Apply" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Stop session" })).toBeVisible();
   },
 };
 
@@ -221,20 +275,32 @@ export const PermissionDeniedError: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole("alert")).toBeVisible();
-    await expect(canvas.getByText("Needs attention")).toBeVisible();
+    await expect(canvas.getByText("Could not start session")).toBeVisible();
+    await expect(canvas.getByText("Denied")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Try again" })).toBeEnabled();
   },
 };
 
 export const ApiFailureError: Story = {
   args: {
     error: "Could not create realtime session token. Check DECART_API_KEY on the local server.",
+    prompt: "Make the scene cinematic",
+    sessionMode: "lucy-2.1",
     status: "error",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("alert")).toBeVisible();
+    await expect(canvas.getByText("Ready to retry")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Try again" })).toBeEnabled();
   },
 };
 
 export const ErrorState: Story = {
   args: {
     error: "Could not create realtime session token. Check DECART_API_KEY on the local server.",
+    prompt: "Make the scene cinematic",
     sessionMode: "lucy-2.1",
     status: "error",
   },
@@ -245,7 +311,8 @@ export const ErrorState: Story = {
     await expect(
       canvas.getByText("Could not create realtime session token. Check DECART_API_KEY on the local server."),
     ).toBeVisible();
-    await expect(canvas.getByRole("heading", { name: "Model controls" })).toBeVisible();
+    await expect(canvas.getByRole("heading", { name: "Lucy 2.1" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Try again" })).toBeEnabled();
   },
 };
 
@@ -298,6 +365,47 @@ export const CompactMobileLayout: Story = {
 
     await expect(canvas.getByRole("button", { name: "Stop session" })).toBeVisible();
     await expect(canvas.queryByRole("button", { name: "Record" })).not.toBeInTheDocument();
+  },
+};
+
+export const MobileVtonModelControls: Story = {
+  args: {
+    activeSessionMode: "lucy-vton-3",
+    canChangeSessionMode: false,
+    elapsedLabel: "01:44",
+    enhancePrompt: vtonConfig.enhanceDefault,
+    hasPendingChanges: true,
+    imageFile: createMockImageFile(
+      "cobalt-rain-jacket-with-long-retail-export-name.png",
+      "image/png",
+    ),
+    imagePreviewUrl: garmentPreviewUrl,
+    prompt: "Substitute the current top with a cobalt rain jacket.",
+    sessionMode: "lucy-vton-3",
+    status: "generating",
+  },
+  render: (args) => renderFramedControlPanel(args, "h-[760px] w-[320px] max-w-full"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getAllByRole("heading", { name: "Lucy VTON 3" })[0]).toBeVisible();
+    await expect(canvas.getByText("Garment try-on")).toBeVisible();
+    await expect(canvas.getByLabelText(/Garment prompt/i)).toBeVisible();
+    await expect(canvas.getByLabelText("Garment image")).toBeVisible();
+    await expect(canvas.getByTestId("file-upload-summary")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Apply" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Stop session" })).toBeVisible();
+  },
+};
+
+export const CameraOffMobile320: Story = {
+  render: (args) => renderFramedControlPanel(args, "h-[760px] w-[320px] max-w-full"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("heading", { name: "Choose a session" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start local camera" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: /Lucy VTON 3/i })).toBeVisible();
   },
 };
 

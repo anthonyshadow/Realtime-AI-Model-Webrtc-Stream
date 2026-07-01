@@ -117,8 +117,13 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Start camera to begin" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Choose a session" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Confirm setup" })).toBeInTheDocument();
     expect(screen.getAllByText("Local camera").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Camera and microphone").length).toBeGreaterThan(0);
+    expect(screen.getByText("Browser camera")).toBeInTheDocument();
+    expect(screen.getByText("Browser microphone")).toBeInTheDocument();
+    expect(screen.getByText("Not requested")).toBeInTheDocument();
     expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /Enhance prompt/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start local camera" })).toBeEnabled();
@@ -243,7 +248,8 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "Discard" }));
 
     expect(URL.revokeObjectURL).not.toHaveBeenCalledWith("blob:http://localhost/local-clip");
-    expect(screen.getByText("Discard this take? This removes the local clip only.")).toBeInTheDocument();
+    expect(screen.getByText("Discard this clip?")).toBeInTheDocument();
+    expect(screen.getByText("This cannot be undone.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Discard clip" }));
 
@@ -485,9 +491,7 @@ describe("App", () => {
       localStream,
     );
     expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Local camera is on. Recording is available when the stream is ready."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Live preview is ready.")).toBeInTheDocument();
     expect(screen.getByLabelText("Recording playback")).toHaveAttribute(
       "src",
       "blob:http://localhost/model-clip",
@@ -603,12 +607,29 @@ describe("App", () => {
     render(<App />);
 
     await selectLucyMode(user);
-    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
 
-    expect(
-      screen.getByText("Enter a transformation prompt or choose a reference portrait before starting."),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
+    expect(screen.getByText("Add a prompt or image to start.")).toBeInTheDocument();
     expect(mockGetUserMedia).not.toHaveBeenCalled();
+    expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
+    expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
+  });
+
+  it("switches model modes before start without keeping stale prompt or image state", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await selectLucyMode(user);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.click(screen.getByRole("button", { name: /VTON/i }));
+
+    expect(screen.queryByLabelText(/Transformation prompt/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Reference portrait")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Garment prompt/i)).toHaveValue("");
+    expect(screen.getByText("No garment")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start VTON session" })).toBeDisabled();
     expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
@@ -826,13 +847,13 @@ describe("App", () => {
     await waitFor(() => {
       expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({ image: null });
     });
-    expect(promptInput).toHaveValue("");
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
     expect(screen.queryByAltText("Reference portrait preview")).not.toBeInTheDocument();
     expect(screen.queryByText("portrait.png")).not.toBeInTheDocument();
-    await waitFor(() => expect(imageInput).toHaveValue(""));
+    await waitFor(() => expect(screen.getByLabelText("Reference portrait")).toHaveValue(""));
 
     decartMocks.realtimeClient.set.mockClear();
-    await user.type(promptInput, "After reset prompt");
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "After reset prompt");
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     await waitFor(() => {
@@ -877,12 +898,13 @@ describe("App", () => {
     });
     await flushPromises();
 
-    expect(promptInput).toHaveValue("");
-    expect(imageInput).toHaveValue("");
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("");
+    expect(screen.getByLabelText("Reference portrait")).toHaveValue("");
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(decartMocks.createBrowserDecartClient).not.toHaveBeenCalled();
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
+    expect(screen.getByText("Add a prompt or image to start.")).toBeInTheDocument();
     expect(screen.getAllByText("Idle").length).toBeGreaterThan(0);
   });
 
@@ -937,6 +959,9 @@ describe("App", () => {
     expect(
       await screen.findByText("Camera permission was denied. Allow camera access and try again."),
     ).toBeInTheDocument();
+    expect(screen.getByText("Could not start session")).toBeInTheDocument();
+    expect(screen.getByText("Denied")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(decartMocks.fetchRealtimeToken).not.toHaveBeenCalled();
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });
@@ -960,6 +985,9 @@ describe("App", () => {
         "Could not create realtime session token. Check DECART_API_KEY on the local server.",
       ),
     ).toBeInTheDocument();
+    expect(screen.getByText("Could not start session")).toBeInTheDocument();
+    expect(screen.getByText("Ready to retry")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
     expect(track.stop).toHaveBeenCalledTimes(1);
     expect(decartMocks.connectRealtimeModel).not.toHaveBeenCalled();
   });

@@ -102,10 +102,10 @@ export function FileUploadControl({
         onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)}
       />
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <button
           className={cx(
-            "flex min-w-0 flex-col items-start justify-center rounded-md border border-dashed border-white/15 bg-black/25 px-3 py-2 text-left hover:border-cyan-300/40 hover:bg-cyan-300/5",
+            "flex min-w-0 flex-col items-start justify-center overflow-hidden rounded-md border border-dashed border-white/15 bg-black/25 px-3 py-2 text-left hover:border-cyan-300/40 hover:bg-cyan-300/5",
             studioClassNames.touchTarget,
             studioClassNames.motion,
             studioClassNames.focusRing,
@@ -123,7 +123,7 @@ export function FileUploadControl({
           </span>
         </button>
         <SecondaryButton
-          className="sm:w-auto"
+          className="w-full sm:w-auto"
           disabled={disabled || !file}
           onClick={handleClear}
         >
@@ -132,7 +132,7 @@ export function FileUploadControl({
       </div>
 
       <div
-        className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 rounded-md border border-white/10 bg-black/25 p-2"
+        className="grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 overflow-hidden rounded-md border border-white/10 bg-black/25 p-2"
         data-testid="file-upload-summary"
       >
         {previewUrl ? (
@@ -147,8 +147,8 @@ export function FileUploadControl({
           </div>
         )}
 
-        <div className="min-w-0">
-          <p className="truncate text-xs text-neutral-300">
+        <div className="min-w-0 overflow-hidden">
+          <p className="truncate text-xs text-neutral-300" title={file?.name}>
             {file ? file.name : `${actionText}: ${formatLabel}`}
           </p>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-neutral-400">

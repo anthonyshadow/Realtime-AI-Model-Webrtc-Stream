@@ -44,7 +44,13 @@ describe("SessionControls", () => {
     expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
   });
 
-  it("enables apply for connected sessions", async () => {
+  it("keeps apply disabled for connected sessions without pending changes", () => {
+    renderControls({ hasPendingChanges: false, status: "connected" });
+
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+  });
+
+  it("enables apply for connected sessions with pending changes", async () => {
     const user = userEvent.setup();
     const props = renderControls({ hasPendingChanges: true, status: "connected" });
 

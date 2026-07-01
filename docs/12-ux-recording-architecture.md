@@ -1,5 +1,5 @@
 # UX And Recording Architecture
-> Last updated: 2026-06-30
+> Last updated: 2026-07-01
 
 Use this as the maintainer contract for the redesigned control panel, bottom recording dock, recording completion flow, and API usage guardrails.
 
@@ -8,7 +8,7 @@ Use this as the maintainer contract for the redesigned control panel, bottom rec
 - `src/App.tsx` composes control-panel draft state, live-session state, recording state, and completion messages.
 - `src/components/ControlPanel/` owns setup, model controls, session actions, status, and errors.
 - `src/components/RecordingDock/` owns the bottom recording transport and review playback UI.
-- `src/hooks/useAutoHideOverlay.ts` owns shared overlay visibility behavior.
+- `src/hooks/useAutoHideOverlay.ts` owns shared overlay visibility behavior, including multi-root live overlays.
 - `src/hooks/useLiveSession.ts` owns local camera, model/API lifecycle, display stream, recordable stream, and model release back to local preview.
 - `src/hooks/useRecordingCompletionFlow.ts` coordinates post-recording model release after the recorder finalizes.
 - `src/hooks/useSessionRecording.ts` owns `MediaRecorder`, recording state, Blob/object URL, filename, duration, size, and object URL cleanup.
@@ -42,9 +42,11 @@ Section organization should stay progressive:
 
 - `SessionSetupSection` answers "what mode am I in?" and "what is the next setup step?"
 - `ModelControlsSection` appears only for model-backed modes.
+- `ModelControlsSection` uses a mode-specific title and short helper: Lucy 2.1 is for character/style transformation, and Lucy VTON 3 is for garment try-on.
 - `PromptControlsSection` and `ReferenceImageSection` remain model-specific controls and should not appear in Local camera mode.
+- Upload controls must stack within the drawer/sheet, truncate long filenames, keep preview/empty states visible, and expose a clear action without overlapping the recorder lane.
 - `AdvancedOptionsSection` holds optional model controls such as Enhance prompt. Keep it collapsed or visually secondary by default unless a feature is core to starting the session.
-- `SessionActionsSection` keeps session-level actions sticky inside the scrollable panel on short viewports.
+- `SessionActionsSection` keeps session-level actions sticky inside the scrollable panel on short viewports. Apply is enabled only for connected/generating model sessions with unapplied changes, and full Apply continues sending prompt, image, and Enhance together.
 - `StatusMessage`, `StatusSummary`, and errors should be clear enough to recover, but not visually louder than the primary session action unless action is blocked.
 
 Future features should follow the same hierarchy. Add new model options to the model section or advanced disclosure. Add new session-wide actions to the session actions area only when they affect the live session itself. Add new recording or clip-management features to the recording dock or a dock-connected review surface, not to the control panel.
@@ -62,29 +64,37 @@ The dock renders only when at least one of these is true:
 
 The dock should be hidden when the camera/session is off and there is no critical recording state or captured clip.
 
-The dock uses `useAutoHideOverlay()` with the same interaction contract as the control panel:
+The dock uses `useAutoHideOverlay()` with the same interaction contract as the control panel. In the app shell, the drawer and dock can share one live overlay controller so they reveal, hover-hold, focus-hold, and hide together:
 
 - show on mouse movement
 - show on touch start
 - show on keyboard interaction
 - show and remain visible while focus is inside
 - show and remain visible while the pointer is inside
+- stay visible while the window is inactive for browser file selection
+- dismiss with Escape only when no hover, focus, file-picker, or forced error state is active
 - hide after inactivity while the camera/session is active, including while recording or stopping
 - force visible while showing a recording error
+- force visible while discard confirmation is active, especially for touch users without hover
 
 Desktop behavior:
 
 - bottom-center floating dock
-- compact pill shape while ready or recording
-- expanded review card connected to the dock after capture
+- paired with a left slide-in control drawer while live
+- compact status/time/action transport while ready, recording, or stopping
+- expanded review sheet connected to the dock after capture
+- saved clips expose Download, Keep, Discard, and Record again without moving clip ownership out of the recorder state hook
 - visually separate from the left control panel
 - does not obscure the primary setup actions
 
 Mobile behavior:
 
 - bottom safe-area aware
-- thumb-friendly Record, Stop recording, Download, Discard, Keep, Collapse, and Review controls
+- leaves a separate safe-area-aware sheet lane for live controls above the recorder
+- thumb-friendly Record, Stop recording, Download, Discard, Keep, Review clip, and Record again controls
 - constrained width with scrollable review content when needed
+- saved review uses a bottom-sheet shape with compact metadata and a video preview constrained to the viewport
+- Keep collapses the review sheet without deleting the clip; Review clip reopens it
 - leaves enough bottom lane for browser UI and the control panel
 - can evolve into a fuller bottom sheet without moving recording back into the control panel
 
@@ -115,7 +125,10 @@ Recording actions:
 - Review playback uses the generated object URL in a local `<video controls>` element.
 - Download is a local anchor download with the generated filename and extension.
 - Discard requires confirmation and clears only the local clip artifact.
-- Collapse hides the review details without deleting the clip.
+- Keep is a UI-only action that collapses the review surface and leaves the clip artifact intact.
+- Record again uses the same `startRecording()` path as Record; the recording hook revokes/replaces the prior object URL when the new take starts.
+- `RecordingPlaybackPanel` reports discard confirmation state to `FloatingRecordingDock`, and the app shell uses that signal to pin the shared live overlay open until Keep, Discard clip, or clip cleanup resolves the state.
+- Keep hides the review details without deleting the clip.
 
 Local-only stop recording behavior:
 

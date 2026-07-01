@@ -1,6 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  studioClassNames,
+  studioOverlayZIndex,
+  studioPanelWidths,
+} from "../../constants/design";
 import type { SessionRecordingState } from "../../hooks/useSessionRecording";
-import { useAutoHideOverlay } from "../../hooks/useAutoHideOverlay";
+import {
+  useAutoHideOverlay,
+  type AutoHideOverlayRootProps,
+} from "../../hooks/useAutoHideOverlay";
+import { cx } from "../StudioUI/classNames";
 import { RecordingDockButton } from "./RecordingDockButton";
 import { RecordingPlaybackPanel } from "./RecordingPlaybackPanel";
 import { RecordingStatusBadge } from "./RecordingStatusBadge";
@@ -14,13 +23,16 @@ export type FloatingRecordingDockProps = {
   error: string | null;
   filename: string | null;
   hasRecordableStream: boolean;
+  isVisible?: boolean;
   isRecording: boolean;
   isSessionActive: boolean;
   isSupported: boolean;
   objectUrl: string | null;
+  overlayProps?: AutoHideOverlayRootProps<HTMLElement>;
   sizeLabel: string;
   standbyMessage?: string;
   state: SessionRecordingState;
+  onDiscardConfirmingChange?: (isConfirming: boolean) => void;
   onDiscardRecording: () => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
@@ -33,13 +45,16 @@ export function FloatingRecordingDock({
   error,
   filename,
   hasRecordableStream,
+  isVisible: controlledIsVisible,
   isRecording,
   isSessionActive,
   isSupported,
   objectUrl,
+  overlayProps: controlledOverlayProps,
   sizeLabel,
   standbyMessage,
   state,
+  onDiscardConfirmingChange,
   onDiscardRecording,
   onStartRecording,
   onStopRecording,
@@ -52,18 +67,42 @@ export function FloatingRecordingDock({
   const shouldRenderDock =
     isSessionActive || hasCriticalRecordingState || hasRecordingArtifact;
   const [isReviewExpanded, setIsReviewExpanded] = useState(true);
+  const [isDiscardConfirming, setIsDiscardConfirming] = useState(false);
+  const isVisibilityControlled =
+    controlledIsVisible !== undefined && controlledOverlayProps !== undefined;
+  const handleDiscardConfirmingChange = useCallback(
+    (isConfirming: boolean) => {
+      setIsDiscardConfirming(isConfirming);
+      onDiscardConfirmingChange?.(isConfirming);
+    },
+    [onDiscardConfirmingChange],
+  );
 
   const { isVisible, rootProps } = useAutoHideOverlay<HTMLDivElement>({
-    enabled: isSessionActive && !hasRecordingError,
-    forceVisible: hasRecordingError,
+    enabled:
+      !isVisibilityControlled &&
+      isSessionActive &&
+      !hasRecordingError &&
+      !isDiscardConfirming,
+    forceVisible: hasRecordingError || isDiscardConfirming,
     hideDelayMs: RECORDING_DOCK_IDLE_MS,
   });
+  const resolvedIsVisible = controlledIsVisible ?? isVisible;
+  const resolvedRootProps = controlledOverlayProps ?? rootProps;
 
   useEffect(() => {
     if (hasRecordedClip) {
       setIsReviewExpanded(true);
     }
   }, [filename, hasRecordedClip, objectUrl]);
+
+  useEffect(() => {
+    if (hasRecordingArtifact) {
+      return;
+    }
+
+    handleDiscardConfirmingChange(false);
+  }, [handleDiscardConfirmingChange, hasRecordingArtifact]);
 
   if (!shouldRenderDock) {
     return null;
@@ -82,34 +121,57 @@ export function FloatingRecordingDock({
     standbyMessage,
     state,
   });
-  const visibilityClassName = isVisible
+  const visibilityClassName = resolvedIsVisible
     ? "translate-y-0 opacity-100"
     : "pointer-events-none translate-y-4 opacity-0";
   const shellClassName = hasRecordedClip
-    ? "rounded-[1.1rem]"
-    : "rounded-full";
+    ? "rounded-t-[1.25rem] sm:rounded-[1.1rem]"
+    : "rounded-2xl sm:rounded-full";
   const dockWidthClassName = hasRecordedClip
-    ? "w-[min(calc(100vw-1rem),42rem)]"
+    ? "w-full sm:w-[min(calc(100vw-2rem),42rem)]"
     : "w-[min(calc(100vw-1.5rem),34rem)]";
   const dockScrollClassName = hasRecordedClip
-    ? "max-h-[calc(100vh-env(safe-area-inset-bottom)-1rem)] overflow-y-auto overscroll-contain"
+    ? "max-h-[calc(100dvh-env(safe-area-inset-bottom)-0.5rem)] overflow-y-auto overscroll-contain sm:max-h-[calc(100dvh-env(safe-area-inset-bottom)-2rem)]"
     : "";
+  const dockPositionClassName = hasRecordedClip
+    ? "bottom-0 sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)]"
+    : "bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)]";
   const timerToneClassName = isRecording || isStopping
     ? "border-red-200/35 bg-red-500/15 text-red-50"
     : "border-white/10 bg-black/25 text-white";
 
   return (
     <div
-      {...rootProps}
+      {...resolvedRootProps}
       aria-label="Recording dock"
-      className={`fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-20 -translate-x-1/2 transition duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${dockWidthClassName} ${dockScrollClassName} ${visibilityClassName}`}
+      className={cx(
+        "fixed left-1/2 -translate-x-1/2",
+        studioClassNames.overlayMotion,
+        dockPositionClassName,
+        dockWidthClassName,
+        dockScrollClassName,
+        visibilityClassName,
+      )}
       role="region"
+      style={{
+        maxWidth: hasRecordedClip
+          ? studioPanelWidths.reviewSheet
+          : studioPanelWidths.recorderBar,
+        zIndex: studioOverlayZIndex.recorder,
+      }}
     >
       <div
-        className={`border border-white/15 bg-neutral-950/78 p-2 text-white shadow-[0_18px_60px_rgb(0_0_0/0.38)] backdrop-blur-xl ${shellClassName}`}
+        className={`border border-white/15 bg-neutral-950/82 p-2 text-white shadow-[0_18px_60px_rgb(0_0_0/0.38)] backdrop-blur-xl ${shellClassName}`}
       >
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-          <div className="min-w-0 px-2 py-1">
+        <div
+          className={cx(
+            "grid items-center gap-2",
+            hasRecordedClip
+              ? "grid-cols-[minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_auto_auto]"
+              : "grid-cols-[minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_auto_auto]",
+          )}
+        >
+          <div className="min-w-0 px-2 py-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[10px] font-semibold uppercase text-cyan-100/70">
                 Recorder
@@ -120,7 +182,7 @@ export function FloatingRecordingDock({
               {status.title}
             </p>
             <p
-              className="mt-0.5 line-clamp-2 text-xs leading-5 text-neutral-300"
+              className="mt-0.5 line-clamp-2 text-xs leading-5 text-neutral-300 sm:line-clamp-1"
               role={status.tone === "error" ? "alert" : undefined}
             >
               {status.message}
@@ -128,13 +190,13 @@ export function FloatingRecordingDock({
           </div>
 
           <div
-            className={`rounded-full border px-3 py-2 text-right ${timerToneClassName}`}
+            className={`flex min-h-11 items-center justify-between rounded-full border px-3 py-2 text-left sm:block sm:text-right ${timerToneClassName}`}
           >
             <p className="text-[10px] font-medium uppercase text-neutral-400">Time</p>
             <p className="tabular-nums text-sm font-semibold">{durationLabel}</p>
           </div>
 
-          <div className="col-span-2 sm:col-span-1">
+          <div className="min-w-0">
             <RecordingDockButton
               canStartRecording={canStartRecording}
               hasRecordedClip={hasRecordedClip}
@@ -155,6 +217,7 @@ export function FloatingRecordingDock({
             objectUrl={objectUrl}
             sizeLabel={sizeLabel}
             onCollapse={() => setIsReviewExpanded(false)}
+            onDiscardConfirmingChange={handleDiscardConfirmingChange}
             onDiscardRecording={onDiscardRecording}
             onExpand={() => setIsReviewExpanded(true)}
           />

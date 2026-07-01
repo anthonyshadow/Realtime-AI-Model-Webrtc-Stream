@@ -192,7 +192,9 @@ export const ReviewAfterLocalRecording: Story = {
     await expect(canvas.getByRole("region", { name: "Recording review" })).toBeVisible();
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
     await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Record again" })).toBeVisible();
   },
 };
 
@@ -214,13 +216,13 @@ export const ReviewCollapsed: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await userEvent.click(canvas.getByRole("button", { name: "Collapse" }));
+    await userEvent.click(canvas.getByRole("button", { name: "Keep" }));
 
     await expect(canvas.queryByLabelText("Recording playback")).not.toBeInTheDocument();
     await expect(
       canvas.getByRole("region", { name: "Recording review collapsed" }),
     ).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Review" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Review clip" })).toBeVisible();
     await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
   },
 };
@@ -232,7 +234,7 @@ export const ReviewExpanded: Story = {
 
     await expect(canvas.getByRole("region", { name: "Recording review" })).toBeVisible();
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Collapse" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
   },
 };
 
@@ -247,11 +249,12 @@ export const MobileReviewSheet: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole("region", { name: "Recording dock" })).toHaveClass(
-      "bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]",
-      "w-[min(calc(100vw-1rem),42rem)]",
+      "bottom-0",
+      "w-full",
     );
     await expect(canvas.getByLabelText("Recording playback")).toBeVisible();
     await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
   },
 };
@@ -263,9 +266,21 @@ export const DiscardConfirmation: Story = {
 
     await userEvent.click(canvas.getByRole("button", { name: "Discard" }));
 
-    await expect(canvas.getByText("Discard this take? This removes the local clip only.")).toBeVisible();
+    await expect(canvas.getByText("Discard this clip?")).toBeVisible();
+    await expect(canvas.getByText("This cannot be undone.")).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Discard clip" })).toBeVisible();
+  },
+};
+
+export const RecordAgainAction: Story = {
+  args: recordedDock,
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Record again" }));
+
+    await expect(args.onStartRecording).toHaveBeenCalled();
   },
 };
 

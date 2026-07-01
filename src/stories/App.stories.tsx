@@ -46,8 +46,58 @@ export const DesktopModelSetup: Story = {
 
     await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
 
-    await expect(canvas.getByRole("heading", { name: "Model controls" })).toBeVisible();
-    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeVisible();
+    await expect(canvas.getByRole("heading", { name: "Lucy 2.1" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
+    await expect(canvas.getByText("Add a prompt or image to start.")).toBeVisible();
+  },
+};
+
+export const DesktopLocalLive: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Start local camera" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByText("Live")).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
+      "sm:top-4",
+      "sm:bottom-4",
+    );
+  },
+};
+
+export const DesktopLucyLive: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
+    await userEvent.type(canvas.getByLabelText(/Transformation prompt/i), "Make the scene cinematic");
+    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByText("Live")).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
+      "sm:top-4",
+      "sm:bottom-4",
+    );
+  },
+};
+
+export const DesktopVtonLive: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: /VTON/i }));
+    await userEvent.type(canvas.getByLabelText(/Garment prompt/i), "Substitute the top with a cobalt rain jacket.");
+    await userEvent.click(canvas.getByRole("button", { name: "Start VTON session" }));
+
+    await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
+    await expect(canvas.getByText("Live")).toBeVisible();
+    await expect(canvas.getByRole("complementary", { name: "Live studio controls" })).toHaveClass(
+      "sm:top-4",
+      "sm:bottom-4",
+    );
   },
 };
 
@@ -75,6 +125,8 @@ export const DesktopReview: Story = {
 
     await expect(await canvas.findByRole("region", { name: "Recording review" })).toBeVisible();
     await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Record again" })).toBeVisible();
   },
 };
 
@@ -108,7 +160,7 @@ export const MobileModelLive: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
 
     await expect(await canvas.findByRole("button", { name: "Record" })).toBeVisible();
-    await expect(canvas.getByText("Model controls are synced. Adjust prompt or image when you want a new look.")).toBeVisible();
+    await expect(canvas.getByText("Synced. Edit prompt or image to queue an update.")).toBeVisible();
   },
 };
 
@@ -145,6 +197,8 @@ export const MobileReview: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "Stop recording" }));
 
     await expect(await canvas.findByRole("region", { name: "Recording review" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Download" })).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Keep" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Discard" })).toBeVisible();
   },
 };
@@ -217,12 +271,9 @@ export const ValidationError: Story = {
     const canvas = within(canvasElement);
 
     await userEvent.click(canvas.getByRole("button", { name: /Lucy 2.1/i }));
-    await userEvent.click(canvas.getByRole("button", { name: "Start Lucy session" }));
 
-    await canvas.findByText(
-      "Enter a transformation prompt or choose a reference portrait before starting.",
-    );
-    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeEnabled();
+    await expect(canvas.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
+    await expect(canvas.getByText("Add a prompt or image to start.")).toBeVisible();
   },
 };
 

@@ -1,5 +1,5 @@
 # UI And UX
-> Last updated: 2026-06-30
+> Last updated: 2026-07-01
 
 Use this before modifying the video stage, floating control panel, or component states.
 
@@ -24,7 +24,11 @@ Before start:
 - dark full-screen video placeholder
 - Local camera selected by default
 - current selected session mode visible
-- floating control panel visible
+- camera-off setup card visible instead of the dense live control panel
+- large Local camera, Lucy 2.1, and Lucy VTON 3 session cards
+- compact setup confirmation rows for selected mode, camera, microphone, and permission
+- one primary Start/Try again action plus secondary Reset
+- model prompt and image controls shown only for model-backed setup
 
 While connecting:
 
@@ -36,9 +40,14 @@ While connecting:
 While running:
 
 - show the live display stream; model-backed sessions prefer transformed output when available
+- the live video fills the viewport without stretching
 - timer counts active session time
 - prompt and image can be updated with Apply for model-backed sessions
-- panel may auto-hide so video remains primary
+- controls share one stream-first visibility controller so the drawer and recorder reveal together
+- desktop controls use a left slide-in drawer over the stream
+- mobile controls use a safe-area-aware bottom sheet lane above the recorder transport
+- controls reveal on mouse movement, touch, keyboard interaction, and focus, then auto-hide after inactivity
+- Escape may dismiss live overlays when no focus, hover, upload, or error state needs to keep them open
 
 After stopping a recording in a model-backed session:
 
@@ -67,9 +76,11 @@ The setup section includes:
 
 The model controls section appears only for model-backed sessions and includes:
 
+- a mode-specific title and compact helper: Lucy 2.1 for character/style transformation, Lucy VTON 3 for garment try-on
 - prompt input with an empty initial value and placeholder-only guidance for model-backed sessions
-- image upload and clear action for model-backed sessions
+- image upload, truncated filename, preview/empty state, and clear action for model-backed sessions
 - options disclosure with Enhance prompt toggle off by default for model-backed sessions
+- Apply enabled only when the model session is connected/generating and there are unapplied changes
 
 The actions and feedback areas include:
 
@@ -93,10 +104,16 @@ The dock:
 - auto-hides after inactivity while the camera/session is active, including during recording
 - stays visible while a critical recording error is present
 - keeps Record and Stop recording visually separate from the main session Start/Stop action
-- shows timer, ready/waiting/error copy, REC state, model-ended review copy, and the latest captured clip review/download/discard controls
-- opens recorded clips in an expandable review surface with embedded playback and a compact collapsed state
+- uses a compact status/time/action transport while ready, recording, or stopping
+- keeps recording active visually clear with REC state, elapsed time, and an easy-to-find Stop recording action when controls are visible
+- shows timer, ready/waiting/error copy, REC state, model-ended review copy, and the latest captured clip review/download/keep/discard controls
+- opens recorded clips in an expandable review sheet with embedded playback, compact metadata, Download, Keep, Discard, and Record again actions
+- treats Keep as non-destructive collapse/keep behavior; Record again starts a new take through the existing recorder start path
 - uses a two-step discard confirmation so removing the local clip is deliberate
+- keeps discard confirmation inline inside the review sheet with "Discard this clip? This cannot be undone."
+- keeps the overlay visible while discard confirmation is active
 - stays bottom-center on desktop and safe-area aware near the bottom edge on mobile
+- turns saved-clip review into a mobile bottom sheet that can scroll within the viewport
 - reserves a bottom lane on phone, tablet, and laptop widths so the control panel and dock do not collide
 
 ## Overlay Behavior
@@ -107,7 +124,9 @@ Overlay controls should:
 
 - appear on mouse movement, touch interaction, keyboard interaction, or focus
 - hide after inactivity only while an active session is safe to auto-hide
-- remain visible while the user is focused inside or pointing inside the overlay
-- force visibility for critical states such as errors
+- remain visible while the user is focused inside or pointing inside any live overlay root
+- remain visible while the window is inactive for browser file selection
+- force visibility for critical states such as errors and discard confirmation
 - stay visible for setup, connecting, stopped, and error recovery states
+- support multiple roots so the control drawer and recording dock behave as one live overlay cluster
 - respect reduced-motion preferences by avoiding transform-heavy overlay transitions

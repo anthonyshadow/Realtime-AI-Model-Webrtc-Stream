@@ -26,11 +26,13 @@ export function SessionSetupSection({
   status,
   onSessionModeChange,
 }: SessionSetupSectionProps) {
+  const isSetupMode = canChangeSessionMode;
+
   return (
     <ControlPanelSection
-      description="Pick local preview or a Decart model before starting. Mode switches unlock after stopping."
-      eyebrow="Setup"
-      title="Choose the session"
+      description={isSetupMode ? "Pick how you want to use the camera." : undefined}
+      eyebrow={isSetupMode ? "Setup" : "Status"}
+      title={isSetupMode ? "Choose the session" : "Session status"}
     >
       {canChangeSessionMode ? (
         <SessionModeSelector

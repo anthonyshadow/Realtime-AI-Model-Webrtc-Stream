@@ -17,7 +17,6 @@ export function PromptControlsSection({
 }: PromptControlsSectionProps) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-semibold uppercase text-neutral-400">Prompt</p>
       <PromptInput
         helperText={helperText}
         label={label}

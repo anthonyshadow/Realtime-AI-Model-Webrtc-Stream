@@ -25,9 +25,6 @@ export function ReferenceImageSection({
 }: ReferenceImageSectionProps) {
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-semibold uppercase text-neutral-400">
-        Reference
-      </p>
       <ImageUpload
         actionText={actionText}
         altText={altText}

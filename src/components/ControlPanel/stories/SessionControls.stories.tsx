@@ -53,6 +53,11 @@ export const ConnectedSynced: Story = {
   args: {
     status: "connected",
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole("button", { name: "Apply" })).toBeDisabled();
+  },
 };
 
 export const ConnectedWithPendingChanges: Story = {

@@ -105,3 +105,32 @@ export const SelectedGarmentImage: Story = {
     previewUrl: garmentPreviewUrl,
   },
 };
+
+export const LongFilenameGarmentImage: Story = {
+  args: {
+    actionText: vtonConfig.imageActionText,
+    altText: vtonConfig.imageAltText,
+    emptyLabel: vtonConfig.imageEmptyLabel,
+    file: createMockImageFile(
+      "cobalt-rain-jacket-with-extra-long-retail-export-file-name.png",
+      "image/png",
+    ),
+    helperText: vtonConfig.imageHelperText,
+    label: vtonConfig.imageLabel,
+    previewUrl: garmentPreviewUrl,
+  },
+  decorators: [
+    (Story) => (
+      <div className="w-[320px] max-w-full bg-neutral-950 p-3 text-white">
+        <Story />
+      </div>
+    ),
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByLabelText("Garment image")).toBeVisible();
+    await expect(canvas.getByTestId("file-upload-summary")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Clear" })).toBeEnabled();
+  },
+};

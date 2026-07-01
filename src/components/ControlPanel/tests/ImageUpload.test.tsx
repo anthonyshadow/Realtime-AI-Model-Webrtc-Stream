@@ -63,6 +63,21 @@ describe("ImageUpload", () => {
     expect(props.onChange).toHaveBeenCalledWith(null);
   });
 
+  it("keeps long filenames in a truncated summary with a clear action", () => {
+    const file = new File(["portrait"], "very-long-reference-portrait-export-name.webp", {
+      type: "image/webp",
+    });
+
+    renderImageUpload({
+      file,
+      previewUrl: "blob:http://localhost/portrait",
+    });
+
+    expect(screen.getByText(file.name)).toHaveClass("truncate");
+    expect(screen.getByText(file.name)).toHaveAttribute("title", file.name);
+    expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
+  });
+
   it("clears the file input when parent state clears the file", async () => {
     const user = userEvent.setup();
     const file = new File(["portrait"], "portrait.webp", { type: "image/webp" });
