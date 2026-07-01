@@ -225,7 +225,14 @@ export function App() {
 
   const handleStartRecording = () => {
     setRecordingCompletionMessage(null);
-    recording.startRecording();
+    if (recording.startRecording()) {
+      liveOverlay.releaseInteractionHold();
+    }
+  };
+
+  const handleStopRecording = () => {
+    recording.stopRecording();
+    liveOverlay.releaseInteractionHold();
   };
 
   const handleDiscardRecording = () => {
@@ -295,7 +302,7 @@ export function App() {
         onResetRecording={recording.resetRecording}
         onReviewExpandedChange={setIsRecordingReviewExpanded}
         onStartRecording={handleStartRecording}
-        onStopRecording={recording.stopRecording}
+        onStopRecording={handleStopRecording}
       />
     </main>
   );

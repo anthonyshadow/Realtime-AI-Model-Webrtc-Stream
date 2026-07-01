@@ -1,5 +1,5 @@
 # UI UX Stream First Redesign Plan
-> Last updated: 2026-06-30
+> Last updated: 2026-07-01
 
 This is the audit and implementation plan for redesigning the camera/session control UI into a stream-first realtime video experience. It is planning-only and does not change runtime behavior.
 
@@ -835,6 +835,26 @@ Manual QA:
 - Keyboard-only reveal, use, and hide cycle.
 - Reduced motion enabled.
 - Check that no overlay hides while typing prompt, selecting/uploading file, confirming discard, reviewing clip, or reading an error.
+
+## Final Integration Review Notes
+
+Final integration review on 2026-07-01 found one non-runtime regression: the
+`LiveVtonConnectionFailure` Storybook play function queried a unique `Lucy VTON
+3` heading even though the live error drawer intentionally renders both a
+session heading and model-controls heading with that accessible name. The story
+assertion now uses a non-unique-safe heading query and leaves the accessible UI
+hierarchy unchanged.
+
+Final verification commands:
+
+- `npm run typecheck`: passed.
+- `npm run lint --if-present`: passed as a no-op because no lint script is configured.
+- `npm run test:unit`: passed.
+- `npm run test:storybook`: passed after the story assertion fix.
+- `npm run test:e2e`: passed with mocked browser, Decart, and recording APIs.
+- `npm run test:a11y`: passed for the configured Storybook a11y smoke stories.
+- `npm run build-storybook`: passed.
+- `npm run build`: passed.
 
 ## Guardrails
 

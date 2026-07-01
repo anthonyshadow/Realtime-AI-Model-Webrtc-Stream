@@ -404,7 +404,7 @@ export const LiveVtonConnectionFailure: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Model connection failed")).toBeVisible();
-    await expect(canvas.getByRole("heading", { name: "Lucy VTON 3" })).toBeVisible();
+    await expect(canvas.getAllByRole("heading", { name: "Lucy VTON 3" })[0]).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Back to local camera" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Reset session" })).toBeVisible();
   },

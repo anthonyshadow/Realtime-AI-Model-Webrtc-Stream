@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../App";
@@ -83,6 +83,26 @@ class FakeMediaRecorder extends EventTarget {
 
 type RecordingState = "inactive" | "recording" | "paused";
 
+function advanceTimersByTime(ms: number) {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
+function dispatchWindowEvent(event: Event) {
+  act(() => {
+    window.dispatchEvent(event);
+  });
+}
+
+async function flushMicrotasks(times = 1) {
+  for (let index = 0; index < times; index += 1) {
+    await act(async () => {
+      await Promise.resolve();
+    });
+  }
+}
+
 describe("App", () => {
   beforeEach(() => {
     FakeMediaRecorder.reset();
@@ -111,6 +131,7 @@ describe("App", () => {
 
   afterEach(() => {
     vi.stubGlobal("MediaRecorder", undefined);
+    vi.useRealTimers();
   });
 
   it("renders the idle video stage and ready controls", () => {
@@ -154,6 +175,88 @@ describe("App", () => {
     expect(
       screen.getByRole("complementary", { name: "Live studio controls" }),
     ).not.toContainElement(screen.getByRole("region", { name: "Recording dock" }));
+  });
+
+  it("auto-hides live controls and recording dock after local camera inactivity", async () => {
+    vi.useFakeTimers();
+    const stream = createMockMediaStream({ audio: true });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    const startButton = screen.getByRole("button", { name: "Start local camera" });
+    act(() => {
+      startButton.focus();
+    });
+    fireEvent.click(startButton);
+    await flushMicrotasks(5);
+
+    expect(screen.getByRole("button", { name: "Record" })).toBeEnabled();
+
+    const panel = screen.getByRole("complementary", { name: "Live studio controls" });
+    const dock = screen.getByRole("region", { name: "Recording dock" });
+
+    expect(panel).toHaveClass("opacity-100");
+    expect(dock).toHaveClass("opacity-100");
+
+    advanceTimersByTime(2999);
+
+    expect(panel).toHaveClass("opacity-100");
+    expect(dock).toHaveClass("opacity-100");
+
+    advanceTimersByTime(1);
+
+    expect(panel).toHaveClass("opacity-0");
+    expect(dock).toHaveClass("opacity-0");
+
+    dispatchWindowEvent(new MouseEvent("mousemove"));
+
+    expect(panel).toHaveClass("opacity-100");
+    expect(dock).toHaveClass("opacity-100");
+
+    advanceTimersByTime(3000);
+
+    expect(panel).toHaveClass("opacity-0");
+    expect(dock).toHaveClass("opacity-0");
+
+    dispatchWindowEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+
+    expect(panel).toHaveClass("opacity-100");
+    expect(dock).toHaveClass("opacity-100");
+  });
+
+  it("auto-hides live controls and recording dock while recording is idle", async () => {
+    vi.useFakeTimers();
+    const stream = createMockMediaStream({ audio: true });
+    mockGetUserMedia.mockResolvedValueOnce(stream);
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start local camera" }));
+    await flushMicrotasks(5);
+
+    const panel = screen.getByRole("complementary", { name: "Live studio controls" });
+    const dock = screen.getByRole("region", { name: "Recording dock" });
+    const recordButton = screen.getByRole("button", { name: "Record" });
+
+    fireEvent.pointerEnter(dock);
+    act(() => {
+      recordButton.focus();
+    });
+    fireEvent.click(recordButton);
+
+    expect(screen.getByRole("button", { name: "Stop recording" })).toBeEnabled();
+    expect(FakeMediaRecorder.instances).toHaveLength(1);
+    expect(panel).toHaveClass("opacity-100");
+    expect(dock).toHaveClass("opacity-100");
+
+    advanceTimersByTime(3000);
+
+    expect(panel).toHaveClass("opacity-0");
+    expect(dock).toHaveClass("opacity-0");
+
+    dispatchWindowEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+
+    expect(panel).toHaveClass("opacity-100");
+    expect(dock).toHaveClass("opacity-100");
   });
 
   it("records an active local camera session without touching Decart", async () => {

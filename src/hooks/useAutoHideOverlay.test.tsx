@@ -55,6 +55,28 @@ function TestMultiRootOverlay() {
   );
 }
 
+function TestReleaseHoldOverlay() {
+  const { isVisible, releaseInteractionHold, rootProps } =
+    useAutoHideOverlay<HTMLDivElement>({
+      hideDelayMs: 1000,
+    });
+
+  return (
+    <>
+      <div
+        data-testid="overlay"
+        data-visible={isVisible ? "true" : "false"}
+        {...rootProps}
+      >
+        <button type="button">Inside control</button>
+      </div>
+      <button type="button" onClick={releaseInteractionHold}>
+        Release hold
+      </button>
+    </>
+  );
+}
+
 describe("useAutoHideOverlay", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -242,5 +264,27 @@ describe("useAutoHideOverlay", () => {
 
     expect(panelRoot).toHaveAttribute("data-visible", "false");
     expect(dockRoot).toHaveAttribute("data-visible", "false");
+  });
+
+  it("can release pointer and focus holds before idling out", () => {
+    render(<TestReleaseHoldOverlay />);
+    const overlay = screen.getByTestId("overlay");
+
+    advanceTimersByTime(1000);
+
+    expect(overlay).toHaveAttribute("data-visible", "false");
+
+    fireEvent.pointerEnter(overlay);
+    act(() => {
+      screen.getByRole("button", { name: "Inside control" }).focus();
+    });
+    advanceTimersByTime(5000);
+
+    expect(overlay).toHaveAttribute("data-visible", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Release hold" }));
+    advanceTimersByTime(1000);
+
+    expect(overlay).toHaveAttribute("data-visible", "false");
   });
 });

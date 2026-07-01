@@ -65,15 +65,30 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
     hideTimerRef.current = null;
   }, []);
 
+  const syncFocusWithin = useCallback(() => {
+    if (typeof document === "undefined" || typeof Node === "undefined") {
+      hasFocusWithinRef.current = false;
+      return false;
+    }
+
+    const activeElement = document.activeElement;
+    const hasFocusWithin =
+      activeElement instanceof Node &&
+      isNodeInsideOverlayRoot(overlayElementsRef.current, activeElement);
+
+    hasFocusWithinRef.current = hasFocusWithin;
+    return hasFocusWithin;
+  }, []);
+
   const canHide = useCallback(() => {
     return (
       enabledRef.current &&
       !forceVisibleRef.current &&
-      !hasFocusWithinRef.current &&
+      !syncFocusWithin() &&
       pointerRootIdsRef.current.size === 0 &&
       !isWindowInactiveRef.current
     );
-  }, []);
+  }, [syncFocusWithin]);
 
   const scheduleHide = useCallback(() => {
     clearHideTimer();
@@ -92,6 +107,25 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
   }, [canHide, clearHideTimer]);
 
   const showOverlay = useCallback(() => {
+    setIsVisibleState(true);
+    scheduleHide();
+  }, [scheduleHide]);
+
+  const releaseInteractionHold = useCallback(() => {
+    pointerRootIdsRef.current.clear();
+
+    if (typeof document !== "undefined" && typeof HTMLElement !== "undefined") {
+      const activeElement = document.activeElement;
+
+      if (
+        activeElement instanceof HTMLElement &&
+        isNodeInsideOverlayRoot(overlayElementsRef.current, activeElement)
+      ) {
+        activeElement.blur();
+      }
+    }
+
+    hasFocusWithinRef.current = false;
     setIsVisibleState(true);
     scheduleHide();
   }, [scheduleHide]);
@@ -237,6 +271,7 @@ export function useAutoHideOverlay<TElement extends HTMLElement = HTMLElement>({
     getRootProps: createRootProps,
     hide: hideOverlay,
     isVisible: !enabled || forceVisible ? true : isVisibleState,
+    releaseInteractionHold,
     rootProps,
     show: showOverlay,
   };
