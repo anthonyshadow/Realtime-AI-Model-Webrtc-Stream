@@ -21,7 +21,7 @@ const DEFAULT_PRESERVE_DETAILS = [
 ];
 
 export function buildLucyReferencePrompt({
-  baseInstruction = "",
+  baseInstruction = "Substitute the character in the video with the described adult character",
   gender = "",
   age = "",
   bodyType = "",
@@ -36,16 +36,20 @@ export function buildLucyReferencePrompt({
   preserve = DEFAULT_PRESERVE_DETAILS,
 }: LucyReferencePromptOptions): string {
   const parts: string[] = [];
-  const instruction = normalizeSentence(baseInstruction) || buildBaseInstruction({
-    age,
-    bodyType,
-    extraDetails,
-    gender,
-  });
+  const instruction =
+    normalizeSentence(baseInstruction) ||
+    buildBaseInstruction({
+      age,
+      bodyType,
+      extraDetails,
+      gender,
+    });
 
   parts.push(instruction);
-  pushDetail(parts, referenceDescription, (value) =>
-    `Use the reference image for the character look: ${value}`,
+  pushDetail(
+    parts,
+    referenceDescription,
+    (value) => `Use the reference image for the character look: ${value}`,
   );
   pushDetail(parts, hair, (value) => `Change the character's hair to ${value}`);
   pushDetail(parts, glasses, (value) => `Set eyewear to ${value}`);
