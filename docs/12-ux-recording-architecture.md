@@ -8,7 +8,7 @@ Use this as the maintainer contract for the redesigned control panel, bottom rec
 - `src/App.tsx` composes control-panel draft state, live-session state, recording state, and completion messages.
 - `src/components/ControlPanel/` owns setup, model controls, session actions, status, and errors.
 - `src/components/RecordingDock/` owns the bottom recording transport and review playback UI.
-- `src/components/StudioUI/ErrorBanner.tsx` owns the shared actionable error surface.
+- `src/components/StudioUI/` owns shared stream-first primitives: status pills, metric cards, section headers, surfaces/cards, file upload controls, buttons, and actionable error banners.
 - `src/hooks/useAutoHideOverlay.ts` owns shared overlay visibility behavior, including multi-root live overlays.
 - `src/hooks/useLiveSession.ts` owns local camera, model/API lifecycle, display stream, recordable stream, and model release back to local preview.
 - `src/hooks/useRecordingCompletionFlow.ts` coordinates post-recording model release after the recorder finalizes.
@@ -17,6 +17,16 @@ Use this as the maintainer contract for the redesigned control panel, bottom rec
 - `src/lib/streamComposition.ts` owns recordable stream selection for local and model-backed sessions.
 
 UI components must stay presentational. They receive state and callbacks through props and must not request media, fetch tokens, import Decart, stop source tracks, or decide API lifecycle.
+
+Use `StudioUI` primitives for new or touched status, metric, upload, button,
+surface, and error UI before adding local class strings. Control-panel and dock
+components may keep thin domain wrappers when they adapt model copy, recording
+state, validation, or accessibility labels to those primitives.
+
+Do not assume one session-mode value drives every surface. After model recording
+release, the control-panel draft can reset to Local camera while the recording
+artifact remains available for review, and a saved recording can outlive the
+live session.
 
 ## Control Panel Contract
 
@@ -52,6 +62,13 @@ Section organization should stay progressive:
 - `StatusMessage`, `StatusSummary`, and errors should be clear enough to recover, but not visually louder than the primary session action unless action is blocked.
 - `ControlPanel` distinguishes no recorder, compact recorder transport, collapsed recorded controls, and expanded review sheet layouts. Live drawers must reserve enough safe-area-aware bottom space for compact recorder surfaces, and the app hides the drawer while an expanded review sheet is active instead of relying on z-index overlap.
 
+Compatibility wrappers and re-exports should stay clearly marked when retained.
+`AutoHidingControlPanel` is not the app-shell overlay owner; `App.tsx` coordinates
+the shared live overlay and passes root props to `ControlPanel` and
+`FloatingRecordingDock`. `src/components/ControlPanel/ErrorBanner.tsx` is a
+stable re-export of the shared `StudioUI/ErrorBanner`; new shared error surfaces
+should use the `StudioUI` import path.
+
 Future features should follow the same hierarchy. Add new model options to the model section or advanced disclosure. Add new session-wide actions to the session actions area only when they affect the live session itself. Add new recording or clip-management features to the recording dock or a dock-connected review surface, not to the control panel.
 
 ## Error Recovery Contract
@@ -74,6 +91,24 @@ Do not expose secrets, stack traces, raw SDK errors, or `DECART_API_KEY` values 
 the UI. Keep live-session error banners pinned by the overlay force-visible
 contract so a user can recover even when controls would otherwise auto-hide.
 Avoid repeating the same error sentence in nearby status text and the banner.
+
+## Shared Accessibility Contract
+
+These rules apply across setup panels, live drawers, recorder transport, review
+sheets, discard confirmation, and error surfaces:
+
+- all controls remain keyboard reachable
+- visible focus rings use sufficient contrast
+- touch targets are at least 44px by 44px
+- color is never the only selected, ready, recording, or error indicator
+- status updates use `role="status"` or polite live-region behavior; critical
+  errors use alert semantics
+- file upload controls use a real file input associated with a visible label,
+  even when a custom upload button triggers it
+- hidden overlays must not create invisible focus traps; if future work uses
+  `inert` or `aria-hidden`, provide an explicit keyboard reveal path
+- reduced-motion users should not depend on transform-heavy transitions or
+  animated pulse states
 
 ## Recording Dock Contract
 

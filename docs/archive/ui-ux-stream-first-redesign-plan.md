@@ -1,14 +1,21 @@
 # UI UX Stream First Redesign Plan
 > Last updated: 2026-07-01
+> Archived: 2026-07-01
+> Status: Historical. Canonical docs override this file.
 
 This is the audit and implementation plan for redesigning the camera/session control UI into a stream-first realtime video experience. It is planning-only and does not change runtime behavior.
 
+Current canonical UX guidance is consolidated in
+[../08-ui-and-ux.md](../08-ui-and-ux.md) and
+[../12-ux-recording-architecture.md](../12-ux-recording-architecture.md);
+visual reference material remains in [../context/screens.md](../context/screens.md).
+
 Reference inputs:
 
-- [context/screens.md](context/screens.md)
-- [context/assets/ai-video-studio-redesigned-experience-2026-06-30.png](context/assets/ai-video-studio-redesigned-experience-2026-06-30.png)
-- [08-ui-and-ux.md](08-ui-and-ux.md)
-- [12-ux-recording-architecture.md](12-ux-recording-architecture.md)
+- [../context/screens.md](../context/screens.md)
+- [../context/assets/ai-video-studio-redesigned-experience-2026-06-30.png](../context/assets/ai-video-studio-redesigned-experience-2026-06-30.png)
+- [../08-ui-and-ux.md](../08-ui-and-ux.md)
+- [../12-ux-recording-architecture.md](../12-ux-recording-architecture.md)
 
 ## Design Intent
 
@@ -551,7 +558,7 @@ Rollback strategy: remove the helper/hook and inline usage; existing hooks remai
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 1 from docs/ui-ux-stream-first-redesign-plan.md only. Add a derived studio UI state helper/hook for session/setup/live/recording/review/error branching without changing visible UI or Decart/camera/recording behavior. Keep components presentational, preserve all existing tests, and run the closest checks.
+Use $frontend-design. Implement Phase 1 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Add a derived studio UI state helper/hook for session/setup/live/recording/review/error branching without changing visible UI or Decart/camera/recording behavior. Keep components presentational, preserve all existing tests, and run the closest checks.
 ```
 
 ### Phase 2: Build Setup Panels For Camera Off
@@ -582,7 +589,7 @@ Rollback strategy: keep old `ControlPanel` path behind a simple branch until the
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 2 from docs/ui-ux-stream-first-redesign-plan.md only. Create the camera-off Session Selector and Pre-Camera Check UI using existing session mode constants. Do not call camera, Decart, WebRTC, or token APIs from the pre-check step. Preserve existing start/apply/recording behavior and update local tests/stories for the new setup states.
+Use $frontend-design. Implement Phase 2 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Create the camera-off Session Selector and Pre-Camera Check UI using existing session mode constants. Do not call camera, Decart, WebRTC, or token APIs from the pre-check step. Preserve existing start/apply/recording behavior and update local tests/stories for the new setup states.
 ```
 
 ### Phase 3: Introduce StreamViewport And Shared StatusPill
@@ -613,7 +620,7 @@ Rollback strategy: keep `VideoStage` API compatible so implementation can revert
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 3 from docs/ui-ux-stream-first-redesign-plan.md only. Refactor the video stage into a stream-first viewport with a shared StatusPill while preserving stream attachment behavior and current app state props. Do not alter camera, Decart, recording, or API behavior. Add/update VideoStage stories and focused tests.
+Use $frontend-design. Implement Phase 3 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Refactor the video stage into a stream-first viewport with a shared StatusPill while preserving stream attachment behavior and current app state props. Do not alter camera, Decart, recording, or API behavior. Add/update VideoStage stories and focused tests.
 ```
 
 ### Phase 4: LiveControlsOverlay And ControlDrawer
@@ -648,7 +655,7 @@ Rollback strategy: retain existing `AutoHidingControlPanel` and switch App back 
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 4 from docs/ui-ux-stream-first-redesign-plan.md only. Add LiveControlsOverlay and ControlDrawer for active sessions, using the existing auto-hide contract and preserving all callbacks/state. Controls must reveal on mouse/tap/keyboard/focus and stay visible during interaction, input, upload, confirmation, and errors. Do not change Decart/camera/recording behavior.
+Use $frontend-design. Implement Phase 4 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Add LiveControlsOverlay and ControlDrawer for active sessions, using the existing auto-hide contract and preserving all callbacks/state. Controls must reveal on mouse/tap/keyboard/focus and stay visible during interaction, input, upload, confirmation, and errors. Do not change Decart/camera/recording behavior.
 ```
 
 ### Phase 5: Responsive Prompt And File Upload Controls
@@ -680,7 +687,7 @@ Rollback strategy: keep the old `ImageUpload` implementation available until the
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 5 from docs/ui-ux-stream-first-redesign-plan.md only. Redesign prompt and image upload controls to stack cleanly on mobile and prevent clipping/overlap, while preserving file validation, clear behavior, object URL preview, and model-specific copy. Update local tests and stories.
+Use $frontend-design. Implement Phase 5 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Redesign prompt and image upload controls to stack cleanly on mobile and prevent clipping/overlap, while preserving file validation, clear behavior, object URL preview, and model-specific copy. Update local tests and stories.
 ```
 
 ### Phase 6: RecorderBar And RecordingReviewSheet
@@ -714,7 +721,7 @@ Rollback strategy: keep `FloatingRecordingDock` public props stable and revert i
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 6 from docs/ui-ux-stream-first-redesign-plan.md only. Refactor the recording dock into a compact RecorderBar plus RecordingReviewSheet. Preserve MediaRecorder hook behavior, object URL cleanup, download, discard, model-session release, and local preview continuity. Use the requested review actions and discard copy. Update tests/stories/e2e as needed.
+Use $frontend-design. Implement Phase 6 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Refactor the recording dock into a compact RecorderBar plus RecordingReviewSheet. Preserve MediaRecorder hook behavior, object URL cleanup, download, discard, model-session release, and local preview continuity. Use the requested review actions and discard copy. Update tests/stories/e2e as needed.
 ```
 
 ### Phase 7: Error Banner And Recovery Actions
@@ -745,7 +752,7 @@ Rollback strategy: keep current `StatusMessage` error path until the new banner 
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 7 from docs/ui-ux-stream-first-redesign-plan.md only. Consolidate error display into a reusable ErrorBanner with recovery actions for camera permission, Decart token, connection, recording, and upload validation errors. Do not expose secrets or alter API behavior. Preserve existing error tests and add focused coverage for recovery CTAs.
+Use $frontend-design. Implement Phase 7 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Consolidate error display into a reusable ErrorBanner with recovery actions for camera permission, Decart token, connection, recording, and upload validation errors. Do not expose secrets or alter API behavior. Preserve existing error tests and add focused coverage for recovery CTAs.
 ```
 
 ### Phase 8: Responsive QA And Visual Coverage Hardening
@@ -780,7 +787,7 @@ Rollback strategy: tests/stories can be adjusted without changing runtime. If a 
 Prompt to paste:
 
 ```text
-Use $frontend-design. Implement Phase 8 from docs/ui-ux-stream-first-redesign-plan.md only. Add Storybook, unit/component, a11y, and Playwright coverage for the stream-first states and responsive overlap rules. Do not change runtime behavior except for minor testability attributes if necessary. Prefer semantic and bounding-box assertions over brittle class snapshots.
+Use $frontend-design. Implement Phase 8 from docs/archive/ui-ux-stream-first-redesign-plan.md only. Add Storybook, unit/component, a11y, and Playwright coverage for the stream-first states and responsive overlap rules. Do not change runtime behavior except for minor testability attributes if necessary. Prefer semantic and bounding-box assertions over brittle class snapshots.
 ```
 
 ## 9. Testing Strategy

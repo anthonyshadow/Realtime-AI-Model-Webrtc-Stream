@@ -5,7 +5,7 @@
 
 The project is in a healthy, recently organized state. The documentation set already has a compact root entry point, canonical topic docs, task-specific agent routing, short repo skills, and an archive area. Source architecture is also mostly well bounded: `App.tsx` composes state and hooks, hooks own lifecycle, `lib/` owns isolated helpers, components stay presentational, and Decart token creation remains server-side.
 
-The main documentation risk is not missing coverage; it is future token waste. Most docs are short, but `docs/ui-ux-stream-first-redesign-plan.md` is a large completed implementation plan that now duplicates canonical UX and recording docs. Future agents should not read it by default. The next highest-value documentation work is routing refinement in `docs/00-start-here.md`, `docs/02-architecture.md`, `docs/08-ui-and-ux.md`, and `docs/12-ux-recording-architecture.md`.
+The main documentation risk is not missing coverage; it is future token waste. Most docs are short, but `docs/archive/ui-ux-stream-first-redesign-plan.md` is a large completed implementation plan archived after its current guidance was consolidated into canonical UX and recording docs. Future agents should not read it by default.
 
 The main code cleanup opportunities are low-to-medium risk duplicate reduction: shared status predicates and labels, duplicate status/metric UI primitives, duplicate button styling, duplicated unit-test `FakeMediaRecorder` classes, and a now-superseded `AutoHidingControlPanel` wrapper. Larger files such as `App.tsx`, `FloatingRecordingDock.tsx`, and `SessionSetupPanel.tsx` should be split only after low-risk primitive and helper cleanup lands.
 
@@ -22,7 +22,7 @@ Markdown reviewed:
 
 - Root docs: `AGENTS.md`, `README.md`.
 - Canonical docs: `docs/00-start-here.md` through `docs/12-ux-recording-architecture.md`.
-- Plan/context docs: `docs/ui-ux-stream-first-redesign-plan.md`, `docs/context/*`.
+- Plan/context docs: `docs/archive/ui-ux-stream-first-redesign-plan.md`, `docs/context/*`.
 - Agent docs: `docs/agents/*`.
 - Skill docs: `docs/skills/*` and subfolders.
 - Testing docs: `docs/testing/*`.
@@ -57,7 +57,7 @@ Not found:
 | --- | --- | --- | --- | --- | --- | --- |
 | `AGENTS.md` | Compact always-read repo rules. | Current. | Duplicates some always-read rules intentionally. | Keep as-is. | Always read. | Low |
 | `README.md` | Human quickstart and project summary. | Current. | Some overlap with `00-start-here` is acceptable. | Keep as-is. | Read for onboarding or external summary. | Low |
-| `docs/00-start-here.md` | Main docs index and fast orientation. | Current but routing can be sharper. | Links the completed redesign plan as a normal doc. | Keep but update in routing phase. | Read after `AGENTS.md` for any task. | Low |
+| `docs/00-start-here.md` | Main docs index and fast orientation. | Current. | Historical/completed plans are excluded from the default path. | Keep as-is. | Read after `AGENTS.md` for any task. | Low |
 | `docs/01-project-overview.md` | Product scope, flow, capabilities, non-goals. | Current. | Some overlap with README and requirements, but concise. | Keep as-is. | Read for onboarding or feature planning. | Low |
 | `docs/02-architecture.md` | Source layout, ownership boundaries, runtime flow. | Current with a few cleanup-dependent references. | Mentions compatibility/legacy surfaces that may change after cleanup. | Keep but update after code cleanup. | Read for architecture, integration, refactor work. | Medium |
 | `docs/03-development.md` | Setup, environment, scripts, workflow. | Current. | No stale concern found. | Keep as-is. | Read for setup/tooling changes. | Low |
@@ -65,12 +65,12 @@ Not found:
 | `docs/05-storybook.md` | Storybook setup, commands, mocks, placement. | Current. | Some overlap with Storybook subdocs. | Keep as-is. | Read for Storybook changes. | Low |
 | `docs/06-api-and-integrations.md` | Decart token/SDK integration and security boundary. | Current. | Official links may need periodic verification. | Keep as-is. | Read for Decart/API/model changes. | Medium |
 | `docs/07-webrtc-and-media.md` | Media, stream, recording, and lifecycle behavior. | Current. | Detailed, but appropriate for high-risk media work. | Keep as-is. | Read for camera/WebRTC/recording changes. | Medium |
-| `docs/08-ui-and-ux.md` | Current UX rules and stream-first behavior. | Current, but can absorb final useful guidance from old plan. | Overlaps with `12` and completed redesign plan. | Keep but update after archival routing. | Read for UI/UX changes. | Medium |
+| `docs/08-ui-and-ux.md` | Current UX rules and stream-first behavior. | Current. | Some overlap with `12` is intentional; current short guidance from the old plan has been absorbed. | Keep as-is. | Read for UI/UX changes. | Medium |
 | `docs/09-agent-workflows.md` | Efficient repo navigation for agents. | Current. | Overlaps with `agent-read-order`, but intentionally shorter. | Keep as-is. | Read for agent process improvements. | Low |
 | `docs/10-deployment-and-env.md` | Local env, preview, deployment limits. | Current. | No stale concern found. | Keep as-is. | Read for env/deployment work. | Low |
 | `docs/11-documentation-maintenance.md` | Docs placement, dates, archive conventions. | Current. | No stale concern found. | Keep as-is. | Read for documentation changes. | Low |
 | `docs/12-ux-recording-architecture.md` | Maintainer contract for control panel, dock, recording, release behavior. | Current. | Duplicates some UX rules from `08`; should remain the deeper contract. | Keep but update after cleanup decisions. | Read for UI recording/control changes. | Medium |
-| `docs/ui-ux-stream-first-redesign-plan.md` | Historical redesign audit and phased plan. | Completed plan. | Large token sink; contains stale "current issue" observations and final verification. | Archive candidate. | Avoid unless investigating redesign history. | Low to medium |
+| `docs/archive/ui-ux-stream-first-redesign-plan.md` | Historical redesign audit and phased plan. | Archived completed plan. | Large token sink; contains stale "current issue" observations and final verification. | Keep archived. | Avoid unless investigating redesign history. | Low to medium |
 | `docs/agents/agent-read-order.md` | Minimal docs by task type. | Current. | Could eventually link the audit for cleanup work. | Keep as-is in first phase. | Read for task routing. | Low |
 | `docs/agents/always-read.md` | Always-read editing rules. | Current. | Intentional overlap with `AGENTS.md`. | Keep as-is. | Always read before editing. | Low |
 | `docs/agents/claude-guide.md` | Claude/manual-agent shim. | Current. | Root `CLAUDE.md` does not exist; this is the substitute. | Keep as-is. | Read only for Claude/manual assistant context. | Low |
@@ -78,7 +78,7 @@ Not found:
 | `docs/agents/implementation-rules.md` | Non-negotiable implementation rules. | Current. | Duplicates some canonical docs intentionally. | Keep as-is. | Read for any implementation task. | Medium |
 | `docs/agents/prompt-library.md` | Reusable short prompts. | Current. | No stale concern found. | Keep as-is. | Optional for delegation/prompt writing. | Low |
 | `docs/agents/repo-audit-checklist.md` | Broad audit checklist. | Current. | Overlaps with repo-audit skill; one is checklist, one procedure. | Keep as-is. | Read for broad cleanup audits. | Low |
-| `docs/archive/README.md` | Archive index. | Current. | Needs update if redesign plan is archived. | Keep as-is now; update in archive phase. | Avoid unless tracing history. | Low |
+| `docs/archive/README.md` | Archive index. | Current. | Lists the completed redesign plan and migration summary. | Keep as-is. | Avoid unless tracing history. | Low |
 | `docs/archive/documentation-migration-summary.md` | Historical migration record. | Archived. | Historical by design. | Keep as-is. | Avoid unless tracing previous doc moves. | Low |
 | `docs/context/implementation-decisions.md` | Decisions explaining architecture shape. | Current. | Some overlap with architecture, but valuable rationale. | Keep as-is. | Read for architectural tradeoffs. | Medium |
 | `docs/context/known-limitations.md` | Current product and browser limitations. | Current. | Some overlap with overview non-goals. | Keep as-is. | Read for scope expansion or production claims. | Low |
@@ -110,7 +110,7 @@ Not found:
 | Task type | Required docs | Optional docs | Avoid unless relevant | Reasoning |
 | --- | --- | --- | --- | --- |
 | General project onboarding | `AGENTS.md`, `docs/00-start-here.md`, `README.md`, `docs/01-project-overview.md` | `docs/context/product-requirements.md`, `docs/context/known-limitations.md` | Archived docs, completed redesign plan | Gives product, setup, and boundaries without deep implementation detail. |
-| UI/UX changes | `AGENTS.md`, `docs/00-start-here.md`, `docs/08-ui-and-ux.md`, `docs/12-ux-recording-architecture.md` | `docs/skills/ui-ux/*`, relevant stories/tests, `docs/context/screens.md` if visual reference is needed | `docs/ui-ux-stream-first-redesign-plan.md` unless investigating history | Current UX contracts live in `08` and `12`; the old plan should not be default context. |
+| UI/UX changes | `AGENTS.md`, `docs/00-start-here.md`, `docs/08-ui-and-ux.md`, `docs/12-ux-recording-architecture.md` | `docs/skills/ui-ux/*`, relevant stories/tests, `docs/context/screens.md` if visual reference is needed | `docs/archive/ui-ux-stream-first-redesign-plan.md` unless investigating history | Current UX contracts live in `08` and `12`; the old plan should not be default context. |
 | Design system or styling changes | `docs/08-ui-and-ux.md`, `docs/12-ux-recording-architecture.md`, `src/constants/design.ts`, `src/components/StudioUI/` | `docs/skills/ui-ux/responsive-ui-checklist.md`, StudioUI stories/tests | API/media docs unless behavior changes | Keeps work centered on primitives and visual contracts. |
 | Component refactors | `docs/02-architecture.md`, `docs/08-ui-and-ux.md`, closest component files/tests/stories | `docs/12-ux-recording-architecture.md` for control/dock work | Deployment docs, live smoke docs | Component work should preserve ownership boundaries and local coverage. |
 | Testing changes | `docs/04-testing.md`, closest test file | `docs/testing/test-strategy.md`, `docs/testing/mocks-and-fixtures.md`, relevant testing skill | Storybook docs unless stories change | Prevents over-reading while preserving mock and placement rules. |
@@ -197,6 +197,11 @@ Update canonical docs to match completed cleanup. Read docs/project-cleanup-and-
 
 ### Phase 3: Merge duplicate docs
 
+Status: Implemented on 2026-07-01. Current short UX guidance from the completed
+redesign plan was consolidated into `08` and `12`; `screens.md` was retained as
+visual reference only; the completed redesign plan now points readers to the
+canonical docs instead of acting as current guidance.
+
 Goal: reduce overlapping UX/context material without losing useful guidance.
 
 Files affected:
@@ -204,7 +209,7 @@ Files affected:
 - `docs/08-ui-and-ux.md`
 - `docs/12-ux-recording-architecture.md`
 - `docs/context/screens.md`
-- `docs/ui-ux-stream-first-redesign-plan.md`
+- `docs/archive/ui-ux-stream-first-redesign-plan.md`
 
 Exact intended changes:
 
@@ -230,11 +235,16 @@ Consolidate current UX guidance only. Read docs/project-cleanup-and-documentatio
 
 ### Phase 4: Archive or delete obsolete docs
 
+Status: Implemented on 2026-07-01. The completed redesign plan moved to
+`docs/archive/`, received archive metadata, and was added to the archive index.
+`docs/context/screens.md` was not archived or deleted because that still needs
+explicit human confirmation.
+
 Goal: move completed historical planning out of normal read paths.
 
 Files affected:
 
-- `docs/ui-ux-stream-first-redesign-plan.md`
+- `docs/archive/ui-ux-stream-first-redesign-plan.md`
 - `docs/archive/README.md`
 - Possibly `docs/context/screens.md` after human confirmation
 
@@ -524,7 +534,7 @@ Extract duplicated unit test recorder helpers only. Do not touch E2E browser-con
 
 ### Current token risks
 
-- `docs/ui-ux-stream-first-redesign-plan.md` is large and now historical.
+- `docs/archive/ui-ux-stream-first-redesign-plan.md` is large and now historical.
 - UI agents may read both `08`, `12`, `context/screens`, and the completed redesign plan even though `08` and `12` are enough for most tasks.
 - Broad refactor prompts can accidentally pull all docs, all stories, and large tests into context.
 - Long test files are useful but should be read only when directly affected.
@@ -546,7 +556,7 @@ Extract duplicated unit test recorder helpers only. Do not touch E2E browser-con
 
 ### Proposed archive docs
 
-- `docs/ui-ux-stream-first-redesign-plan.md`: archive candidate after any still-current guidance is copied into `08` or `12`.
+- `docs/archive/ui-ux-stream-first-redesign-plan.md`: archived completed redesign plan; avoid unless investigating history.
 - `docs/context/screens.md`: human-confirmation candidate; keep as visual reference if still useful, otherwise archive or label historical.
 - Existing `docs/archive/documentation-migration-summary.md`: keep historical.
 

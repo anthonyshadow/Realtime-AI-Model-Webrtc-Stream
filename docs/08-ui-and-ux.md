@@ -8,16 +8,32 @@ For the detailed maintainer contract covering control-panel boundaries, recordin
 ## Product Shape
 
 The app opens directly into the working video experience, not a marketing page.
+People should be able to choose a camera/model mode, start a live session, tune
+model inputs, and record without needing to understand Decart, WebRTC, token
+state, or `MediaRecorder`.
 
 ## Stream-First Design Foundation
+
+The stream is the largest object and the product surface. Status stays small and
+legible, and controls behave like temporary production overlays instead of a
+permanent dashboard. Keep the design quiet: fewer always-visible panels, shorter
+copy, clear state boundaries, and more breathing room for video.
 
 Shared stream-first UI primitives live in `src/components/StudioUI/`.
 Use `StatusPill`, `MetricCard`, `SectionHeader`, `Surface`/`Card`, the
 studio buttons, and `FileUploadControl` for new setup panels, drawers, recorder
 sheets, and error surfaces before adding one-off Tailwind treatments.
+Prefer these primitives for new or touched status, metric, upload, button,
+surface, and error UI. Keep domain wrappers such as `ImageUpload` only when they
+adapt model-specific copy, validation, or state to a shared primitive.
 
 Design tokens for spacing, radii, panel widths, overlay z-indexes, transition
 durations, and responsive breakpoints live in `src/constants/design.ts`.
+Keep color semantic: cyan for primary action/focus, green for ready/success,
+red for danger/error, and dark restrained surfaces/borders behind controls.
+Reserve display-size type for setup headlines; use short section headings,
+sentence-case control labels, concise captions, and tabular numerals for timers,
+durations, sizes, and status values.
 
 Before start:
 
@@ -29,6 +45,8 @@ Before start:
 - compact setup confirmation rows for selected mode, camera, microphone, and permission
 - one primary Start/Try again action plus secondary Reset
 - model prompt and image controls shown only for model-backed setup
+- setup and pre-check surfaces do not request camera, token, SDK, WebRTC, or
+  external network resources by themselves; Start triggers resource work
 
 While connecting:
 
@@ -48,6 +66,8 @@ While running:
 - mobile controls use a safe-area-aware bottom sheet lane above the recorder transport
 - controls reveal on mouse movement, touch, keyboard interaction, and focus, then auto-hide after inactivity
 - Escape may dismiss live overlays when no focus, hover, upload, or error state needs to keep them open
+- hidden live state leaves the active stream plus only critical indicators such
+  as recording or error
 - the live drawer reserves a larger safe-area-aware lane for the recorder transport on phones and desktop, uses a taller lane for collapsed saved-clip controls, and hides while an expanded captured-clip review sheet is active
 - recorder transport uses a compact phone layout with status/time on the first row and the action on the second row, so the drawer and recorder do not overlap at 320px+
 
@@ -91,6 +111,9 @@ The actions and feedback areas include:
 - sticky action access inside the scrollable panel on constrained heights
 
 Components should stay presentational and receive state/callbacks through props.
+Reusable visual styling should come from `src/components/StudioUI/`; control
+panel components should own session-specific grouping, labels, validation, and
+callbacks.
 
 ## Error Recovery
 
