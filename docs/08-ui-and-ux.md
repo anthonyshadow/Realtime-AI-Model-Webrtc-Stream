@@ -1,5 +1,5 @@
 # UI And UX
-> Last updated: 2026-07-01
+> Last updated: 2026-07-02
 
 Use this before modifying the video stage, floating control panel, or component states.
 
@@ -102,6 +102,7 @@ The model controls section appears only for model-backed sessions and includes:
 
 - a mode-specific title and compact helper: Lucy 2.1 for character/style transformation, Lucy VTON 3 for garment try-on
 - prompt input with an empty initial value and placeholder-only guidance for model-backed sessions
+- Lucy 2.1 collapsed prompt generator for optional adult character/reference details, with a generated preview and explicit Use generated prompt action
 - image upload, truncated filename, preview/empty state, and clear action for model-backed sessions
 - options disclosure with Enhance prompt toggle off by default for model-backed sessions
 - Apply enabled only when the model session is connected/generating and there are unapplied changes

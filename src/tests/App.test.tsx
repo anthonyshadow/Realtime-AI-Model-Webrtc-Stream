@@ -745,6 +745,40 @@ describe("App", () => {
     expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
   });
 
+  it("applies a generated Lucy prompt without clearing the selected image", async () => {
+    const user = userEvent.setup();
+    const file = new File(["portrait"], "portrait.png", { type: "image/png" });
+    render(<App />);
+
+    await selectLucyMode(user);
+    await user.upload(screen.getByLabelText("Reference portrait"), file);
+    await user.type(screen.getByLabelText(/Transformation prompt/i), "Initial character prompt");
+    await user.click(screen.getByRole("button", { name: "Start Lucy session" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Stop session" })).toBeInTheDocument());
+
+    await user.click(screen.getByText("Prompt generator"));
+    await user.type(screen.getByLabelText("Hair"), "short silver hair");
+    await user.click(screen.getByRole("button", { name: "Use generated prompt" }));
+
+    const generatedPrompt =
+      "Substitute the character in the video with the described adult character. Change the character's hair to short silver hair.";
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue(generatedPrompt),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      expect(decartMocks.realtimeClient.set).toHaveBeenCalledWith({
+        prompt: generatedPrompt,
+        image: file,
+        enhance: false,
+      });
+    });
+    expect(decartMocks.realtimeClient.setPrompt).not.toHaveBeenCalled();
+  });
+
   it("applies a changed image with the existing prompt", async () => {
     const user = userEvent.setup();
     const firstFile = new File(["portrait"], "portrait.png", { type: "image/png" });

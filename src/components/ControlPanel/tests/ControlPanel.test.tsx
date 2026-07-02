@@ -114,6 +114,7 @@ describe("ControlPanel", () => {
     );
     expect(screen.getByRole("checkbox", { name: /Enhance prompt/i })).not.toBeChecked();
     expect(screen.getByLabelText("Reference portrait")).toBeInTheDocument();
+    expect(screen.getByText("Prompt generator").closest("details")).not.toHaveAttribute("open");
     expect(screen.getByRole("button", { name: "Start Lucy session" })).toBeDisabled();
     expect(screen.getByText("Add a prompt or image to start.")).toBeInTheDocument();
   });
@@ -140,7 +141,34 @@ describe("ControlPanel", () => {
       "Substitute the top with a denim jacket",
     );
     expect(screen.getByLabelText("Garment image")).toBeInTheDocument();
+    expect(screen.queryByText("Prompt generator")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start VTON session" })).toBeEnabled();
+  });
+
+  it("previews a generated Lucy prompt without overwriting the main prompt", async () => {
+    const user = userEvent.setup();
+    const props = renderControlPanel({
+      prompt: "Manual prompt",
+      sessionMode: "lucy-2.1",
+    });
+
+    await user.click(screen.getByText("Prompt generator"));
+    await user.selectOptions(screen.getByLabelText("Gender"), "female");
+    await user.type(screen.getByLabelText("Age"), "late 20s");
+    await user.type(screen.getByLabelText("Body type"), "athletic");
+    await user.type(screen.getByLabelText("Reference description"), "warm brown eyes and short black hair");
+    await user.type(screen.getByLabelText("Preserve details"), "natural expression, realistic skin texture");
+
+    const generatedPrompt =
+      "Substitute the character in the video with an adult female, late 20s, with an athletic body type. Use the reference image for the character look: warm brown eyes and short black hair. Preserve natural expression, realistic skin texture.";
+
+    expect(screen.getByText(generatedPrompt)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Transformation prompt/i)).toHaveValue("Manual prompt");
+    expect(props.onPromptChange).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Use generated prompt" }));
+
+    expect(props.onPromptChange).toHaveBeenCalledWith(generatedPrompt);
   });
 
   it("passes setup mode card selections upward", async () => {

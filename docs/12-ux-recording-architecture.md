@@ -1,5 +1,5 @@
 # UX And Recording Architecture
-> Last updated: 2026-07-01
+> Last updated: 2026-07-02
 
 Use this as the maintainer contract for the redesigned control panel, bottom recording dock, recording completion flow, and API usage guardrails.
 
@@ -60,6 +60,7 @@ Section organization should stay progressive:
 - `ModelControlsSection` appears only for model-backed modes.
 - `ModelControlsSection` uses a mode-specific title and short helper: Lucy 2.1 is for character/style transformation, and Lucy VTON 3 is for garment try-on.
 - `PromptControlsSection` and `ReferenceImageSection` remain model-specific controls and should not appear in Local camera mode.
+- Lucy 2.1 prompt generation stays as a collapsed, presentational model-control helper. It may preview structured adult character/reference prompts, but it only updates the main prompt through an explicit user action so Start/Apply continue to send the normal prompt, image, and Enhance snapshot.
 - Upload controls must stack within the drawer/sheet, truncate long filenames, keep preview/empty states visible, and expose a clear action without overlapping the recorder lane.
 - `AdvancedOptionsSection` holds optional model controls such as Enhance prompt. Keep it collapsed or visually secondary by default unless a feature is core to starting the session.
 - `SessionActionsSection` keeps session-level actions sticky inside the scrollable panel on short viewports. Apply is enabled only for connected/generating model sessions with unapplied changes, and full Apply continues sending prompt, image, and Enhance together.

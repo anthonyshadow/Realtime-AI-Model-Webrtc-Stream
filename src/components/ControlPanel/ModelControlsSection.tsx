@@ -1,6 +1,7 @@
 import type { ModelModeConfig } from "../../constants/models";
 import { AdvancedOptionsSection } from "./AdvancedOptionsSection";
 import { ControlPanelSection } from "./ControlPanelSection";
+import { LucyPromptGenerator } from "./LucyPromptGenerator";
 import { PromptControlsSection } from "./PromptControlsSection";
 import { ReferenceImageSection } from "./ReferenceImageSection";
 
@@ -42,6 +43,9 @@ export function ModelControlsSection({
         value={prompt}
         onChange={onPromptChange}
       />
+      {modelConfig.id === "lucy-2.1" ? (
+        <LucyPromptGenerator onUsePrompt={onPromptChange} />
+      ) : null}
       <ReferenceImageSection
         actionText={modelConfig.imageActionText}
         altText={modelConfig.imageAltText}

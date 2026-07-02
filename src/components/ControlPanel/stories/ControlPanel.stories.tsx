@@ -155,6 +155,33 @@ export const IdleLucyAdvancedExpanded: Story = {
   },
 };
 
+export const IdleLucyPromptGeneratorExpanded: Story = {
+  args: {
+    enhancePrompt: lucyConfig.enhanceDefault,
+    sessionMode: "lucy-2.1",
+    prompt: "",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByText("Prompt generator"));
+    await userEvent.selectOptions(canvas.getByLabelText("Gender"), "female");
+    await userEvent.type(canvas.getByLabelText("Age"), "late 20s");
+    await userEvent.type(
+      canvas.getByLabelText("Reference description"),
+      "warm brown eyes and short black hair",
+    );
+    await userEvent.type(canvas.getByLabelText("Preserve details"), "natural expression");
+
+    await expect(
+      canvas.getByText(
+        "Substitute the character in the video with an adult female, late 20s. Use the reference image for the character look: warm brown eyes and short black hair. Preserve natural expression.",
+      ),
+    ).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Use generated prompt" })).toBeEnabled();
+  },
+};
+
 export const LocalLiveSession: Story = {
   args: {
     activeSessionMode: "local",
@@ -516,6 +543,30 @@ export const MobileVtonModelControls: Story = {
     await expect(canvas.getByTestId("file-upload-summary")).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Apply" })).toBeEnabled();
     await expect(canvas.getByRole("button", { name: "Stop session" })).toBeVisible();
+  },
+};
+
+export const MobileLucyPromptGenerator: Story = {
+  args: {
+    activeSessionMode: "lucy-2.1",
+    canChangeSessionMode: false,
+    elapsedLabel: "01:21",
+    enhancePrompt: lucyConfig.enhanceDefault,
+    hasPendingChanges: true,
+    imageFile: createMockImageFile("reference-portrait.webp", "image/webp"),
+    imagePreviewUrl: portraitPreviewUrl,
+    prompt: "Substitute the character in the video with an adult female, late 20s.",
+    sessionMode: "lucy-2.1",
+    status: "connected",
+  },
+  render: (args) => renderFramedControlPanel(args, "h-[760px] w-[320px] max-w-full"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getAllByRole("heading", { name: "Lucy 2.1" })[0]).toBeVisible();
+    await userEvent.click(canvas.getByText("Prompt generator"));
+    await expect(canvas.getByLabelText("Gender")).toBeVisible();
+    await expect(canvas.getByRole("button", { name: "Apply" })).toBeEnabled();
   },
 };
 
