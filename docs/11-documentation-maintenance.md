@@ -1,5 +1,5 @@
 # Documentation Maintenance
-> Last updated: 2026-06-30
+> Last updated: 2026-07-01
 
 Use this when adding, moving, or updating docs, skills, stories, or tests.
 
@@ -33,6 +33,12 @@ Archived docs should use:
 - `docs/agents/`: agent rules and read paths.
 - `docs/skills/`: reusable task procedures.
 - `docs/archive/`: historical material only.
+
+## Reading Scope
+
+- Prefer the smallest task-specific read path in [agents/agent-read-order.md](agents/agent-read-order.md).
+- Keep broad context, archived docs, completed plans, visual references, and live-smoke docs out of default reads unless the task specifically needs them.
+- Update routing docs when adding a document that should be read only for a narrow class of work.
 
 ## Source Scaffolding
 

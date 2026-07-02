@@ -8,11 +8,10 @@ This is the audit and implementation plan for redesigning the camera/session con
 Current canonical UX guidance is consolidated in
 [../08-ui-and-ux.md](../08-ui-and-ux.md) and
 [../12-ux-recording-architecture.md](../12-ux-recording-architecture.md);
-visual reference material remains in [../context/screens.md](../context/screens.md).
+visual reference material remains in [../context/assets/](../context/assets/).
 
 Reference inputs:
 
-- [../context/screens.md](../context/screens.md)
 - [../context/assets/ai-video-studio-redesigned-experience-2026-06-30.png](../context/assets/ai-video-studio-redesigned-experience-2026-06-30.png)
 - [../08-ui-and-ux.md](../08-ui-and-ux.md)
 - [../12-ux-recording-architecture.md](../12-ux-recording-architecture.md)

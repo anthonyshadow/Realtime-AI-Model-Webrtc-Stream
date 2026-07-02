@@ -1,76 +1,20 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockMediaStream } from "../test/mocks/browserMocks";
+import {
+  FakeMediaRecorder,
+  installFakeMediaRecorder,
+  uninstallFakeMediaRecorder,
+} from "../test/mocks/fakeMediaRecorder";
 import { useSessionRecording } from "./useSessionRecording";
-
-class FakeMediaRecorder extends EventTarget {
-  static instances: FakeMediaRecorder[] = [];
-  static supportedMimeTypes = new Set<string>();
-  static shouldThrowOnStart = false;
-  static isTypeSupported = vi.fn((mimeType: string) =>
-    FakeMediaRecorder.supportedMimeTypes.has(mimeType),
-  );
-
-  mimeType: string;
-  state: RecordingState = "inactive";
-  start = vi.fn(() => {
-    if (FakeMediaRecorder.shouldThrowOnStart) {
-      throw new Error("start failed");
-    }
-
-    this.state = "recording";
-  });
-  stop = vi.fn(() => {
-    this.state = "inactive";
-  });
-
-  constructor(
-    public stream: MediaStream,
-    options: MediaRecorderOptions = {},
-  ) {
-    super();
-    this.mimeType = options.mimeType ?? "video/webm";
-    FakeMediaRecorder.instances.push(this);
-  }
-
-  emitData(data: Blob) {
-    const event = new Event("dataavailable") as BlobEvent;
-    Object.defineProperty(event, "data", {
-      value: data,
-    });
-    this.dispatchEvent(event);
-  }
-
-  emitError(error = new Error("encoder failed")) {
-    const event = new Event("error") as Event & { error: Error };
-    Object.defineProperty(event, "error", {
-      value: error,
-    });
-    this.dispatchEvent(event);
-  }
-
-  emitStop() {
-    this.dispatchEvent(new Event("stop"));
-  }
-
-  static reset(supportedMimeTypes = ["video/webm;codecs=vp8,opus"]) {
-    FakeMediaRecorder.instances = [];
-    FakeMediaRecorder.supportedMimeTypes = new Set(supportedMimeTypes);
-    FakeMediaRecorder.shouldThrowOnStart = false;
-    FakeMediaRecorder.isTypeSupported.mockClear();
-  }
-}
-
-type RecordingState = "inactive" | "recording" | "paused";
 
 describe("useSessionRecording", () => {
   beforeEach(() => {
-    FakeMediaRecorder.reset();
-    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+    installFakeMediaRecorder();
   });
 
   afterEach(() => {
-    vi.stubGlobal("MediaRecorder", undefined);
+    uninstallFakeMediaRecorder();
     vi.useRealTimers();
   });
 

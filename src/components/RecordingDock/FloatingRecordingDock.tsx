@@ -5,7 +5,6 @@ import {
   studioPanelWidths,
 } from "../../constants/design";
 import type { SessionRecordingState } from "../../hooks/useSessionRecording";
-import { getStudioErrorDescriptor } from "../../lib/errors";
 import {
   useAutoHideOverlay,
   type AutoHideOverlayRootProps,
@@ -15,6 +14,10 @@ import { cx } from "../StudioUI/classNames";
 import { RecordingDockButton } from "./RecordingDockButton";
 import { RecordingPlaybackPanel } from "./RecordingPlaybackPanel";
 import { RecordingStatusBadge } from "./RecordingStatusBadge";
+import {
+  getRecordingErrorDescriptor,
+  getRecordingStatus,
+} from "./recordingDockStatus";
 
 const RECORDING_DOCK_IDLE_MS = 3000;
 
@@ -262,118 +265,4 @@ export function FloatingRecordingDock({
       </div>
     </div>
   );
-}
-
-type RecordingStatusInput = Pick<
-  FloatingRecordingDockProps,
-  | "completionMessage"
-  | "durationLabel"
-  | "filename"
-  | "hasRecordableStream"
-  | "isSupported"
-  | "sizeLabel"
-  | "standbyMessage"
-  | "state"
->;
-
-function getRecordingStatus({
-  completionMessage,
-  durationLabel,
-  filename,
-  hasRecordableStream,
-  isSupported,
-  sizeLabel,
-  standbyMessage,
-  state,
-}: RecordingStatusInput) {
-  if (state === "recording") {
-    return {
-      badgeLabel: "REC",
-      title: "Recording",
-      message: "Capturing the current session output.",
-      tone: "recording" as const,
-    };
-  }
-
-  if (state === "stopping") {
-    return {
-      badgeLabel: "Saving",
-      title: "Saving clip",
-      message: "Finalizing the recording.",
-      tone: "recording" as const,
-    };
-  }
-
-  if (state === "recorded") {
-    const clipDetails = [durationLabel, sizeLabel].filter(Boolean).join(" - ");
-
-    return {
-      badgeLabel: "Saved",
-      title: "Clip captured",
-      message: completionMessage
-        ? "Model session ended. Local camera remains on."
-        : filename
-          ? `${filename} - ${clipDetails}`
-          : "Review the latest recording when you are ready.",
-      tone: "recorded" as const,
-    };
-  }
-
-  if (state === "error") {
-    if (!isSupported) {
-      return {
-        badgeLabel: "Blocked",
-        title: "Unavailable",
-        message: "Use a browser with recording support.",
-        tone: "error" as const,
-      };
-    }
-
-    return {
-      badgeLabel: "Error",
-      title: "Recorder error",
-      message: "Use the recovery action below.",
-      tone: "error" as const,
-    };
-  }
-
-  if (!hasRecordableStream) {
-    return {
-      badgeLabel: "Waiting",
-      title: "Standby",
-      message: standbyMessage ?? "Start a session and wait for the stream to be ready.",
-      tone: "standby" as const,
-    };
-  }
-
-  if (!isSupported) {
-    return {
-      badgeLabel: "Blocked",
-      title: "Unavailable",
-      message: "Use a browser with recording support.",
-      tone: "error" as const,
-    };
-  }
-
-  return {
-    badgeLabel: "Ready",
-    title: "Ready",
-    message: "Record this session when you are ready.",
-    tone: "ready" as const,
-  };
-}
-
-function getRecordingErrorDescriptor({
-  error,
-  isSupported,
-}: Pick<FloatingRecordingDockProps, "error" | "isSupported">) {
-  if (!isSupported) {
-    return {
-      kind: "recording" as const,
-      title: "Recording unavailable",
-      message: "Recording is not supported in this browser.",
-    };
-  }
-
-  return getStudioErrorDescriptor(error ?? "Recording failed.", "recording");
 }

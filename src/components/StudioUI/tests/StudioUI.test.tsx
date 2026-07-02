@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
+  Button,
   Card,
   DangerButton,
   ErrorBanner,
@@ -24,6 +25,7 @@ describe("StudioUI primitives", () => {
         <PrimaryButton onClick={onPrimaryClick}>Start camera</PrimaryButton>
         <SecondaryButton disabled>Reset</SecondaryButton>
         <DangerButton>Stop session</DangerButton>
+        <Button variant="solid">Apply</Button>
       </div>,
     );
 
@@ -32,6 +34,7 @@ describe("StudioUI primitives", () => {
     expect(onPrimaryClick).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Reset" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Stop session" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Apply" })).toHaveClass("bg-white");
   });
 
   it("renders status, metric, section, and surface primitives", () => {
@@ -45,6 +48,7 @@ describe("StudioUI primitives", () => {
         />
         <StatusPill label="Connected" role="status" tone="success" value="Live" />
         <MetricCard isNumeric label="Time" value="00:06" />
+        <MetricCard density="compact" label="Changes" value="Synced" />
         <ErrorBanner
           message="Recording failed. Try again or restart the session."
           title="Recording failed"
@@ -57,6 +61,7 @@ describe("StudioUI primitives", () => {
     expect(screen.getByRole("heading", { name: "Choose a session" })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Connected");
     expect(screen.getByText("00:06")).toBeInTheDocument();
+    expect(screen.getByText("Synced")).toHaveClass("text-xs");
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Recording failed. Try again or restart the session.",
     );

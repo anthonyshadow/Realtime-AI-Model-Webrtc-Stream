@@ -24,6 +24,8 @@ Skills are execution checklists, not architecture docs. Read the skill's `Read f
 - Prefer canonical docs over archived docs.
 - Avoid archived docs and completed implementation plans unless the task directly touches history or archival cleanup.
 - Use [project-cleanup-and-documentation-audit.md](project-cleanup-and-documentation-audit.md) only for cleanup, refactor, or documentation audit work.
+- Use [testing/live-smoke-tests.md](testing/live-smoke-tests.md) only when an explicitly gated live Decart smoke-test workflow is in scope.
+- Use [context/assets/](context/assets/) only for visual reference, UI comparison, or design archaeology.
 - Do not read every file for a narrow task.
 - Use source search to verify claims.
 - Preserve existing boundaries unless the task requires a boundary change.

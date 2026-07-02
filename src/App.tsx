@@ -3,9 +3,6 @@ import { ControlPanel } from "./components/ControlPanel/ControlPanel";
 import { FloatingRecordingDock } from "./components/RecordingDock/FloatingRecordingDock";
 import { VideoStage } from "./components/VideoStage/VideoStage";
 import {
-  getModelConfig,
-} from "./constants/models";
-import {
   DEFAULT_SESSION_MODE,
   getSessionModeConfig,
   isModelBackedSessionMode,
@@ -17,20 +14,19 @@ import { useObjectUrl } from "./hooks/useObjectUrl";
 import { useRecordingCompletionFlow } from "./hooks/useRecordingCompletionFlow";
 import { useSessionRecording } from "./hooks/useSessionRecording";
 import { useSessionTimer } from "./hooks/useSessionTimer";
-import type { RecordableStreamSource } from "./lib/streamComposition";
-import type { ApplyRealtimeStateInput, StartRealtimeSessionInput } from "./types/realtime";
-
-type ControlPanelDraft = {
-  sessionMode: SessionModeId;
-  prompt: string;
-  image: File | null;
-  enhance: boolean;
-};
+import {
+  createApplyInput,
+  createControlPanelDraft,
+  createDraftKey,
+  createStartSessionInput,
+  type ControlPanelDraft,
+} from "./lib/controlPanelDraft";
+import { getRecordingOverlayState } from "./lib/recordingOverlayState";
+import { isAutoHideableRealtimeStatus } from "./lib/realtimeStatus";
 
 const MODEL_RECORDING_RELEASE_MESSAGE =
   "Recording ready. Model session ended to save usage. Local camera remains on.";
 const LIVE_OVERLAY_IDLE_MS = 3000;
-const AUTO_HIDE_LIVE_STATUSES = new Set(["connected", "generating", "reconnecting"]);
 
 export function App() {
   const realtime = useLiveSession();
@@ -59,36 +55,27 @@ export function App() {
     lastAppliedDraftKey !== null &&
     lastAppliedDraftKey !== draftKey;
   const hasRecordableStream = realtime.recordableStream !== null && realtime.isRunning;
-  const hasRecordingArtifact =
-    recording.state === "recorded" || Boolean(recording.filename || recording.objectUrl);
-  const hasCriticalRecordingState =
-    recording.isRecording || recording.state === "stopping" || recording.state === "error";
-  const shouldRenderRecordingDock =
-    realtime.isRunning || hasCriticalRecordingState || hasRecordingArtifact;
-  const recordingDockLayout = isRecordingReviewExpanded && hasRecordingArtifact
-    ? "review"
-    : hasRecordingArtifact
-      ? "recorded"
-    : shouldRenderRecordingDock
-      ? "transport"
-      : "none";
+  const recordingOverlayState = getRecordingOverlayState({
+    activeSessionMode: realtime.activeSessionMode,
+    filename: recording.filename,
+    formError,
+    hasRecordableStream,
+    isDiscardConfirming,
+    isRecording: recording.isRecording,
+    isReviewExpanded: isRecordingReviewExpanded,
+    isSessionRunning: realtime.isRunning,
+    objectUrl: recording.objectUrl,
+    realtimeError: realtime.error,
+    realtimeStatus: realtime.status,
+    recordableStreamSource: realtime.recordableStreamSource,
+    recordingState: recording.state,
+  });
   const shouldAutoHideLiveOverlays =
-    realtime.isRunning && AUTO_HIDE_LIVE_STATUSES.has(realtime.status);
-  const shouldForceLiveOverlaysVisible =
-    realtime.status === "error" ||
-    isDiscardConfirming ||
-    Boolean(formError ?? realtime.error) ||
-    recording.state === "error";
+    realtime.isRunning && isAutoHideableRealtimeStatus(realtime.status);
   const liveOverlay = useAutoHideOverlay<HTMLElement>({
     enabled: shouldAutoHideLiveOverlays,
-    forceVisible: shouldForceLiveOverlaysVisible,
+    forceVisible: recordingOverlayState.shouldForceLiveOverlaysVisible,
     hideDelayMs: LIVE_OVERLAY_IDLE_MS,
-  });
-  const recordingStandbyMessage = getRecordingStandbyMessage({
-    activeSessionMode: realtime.activeSessionMode,
-    hasRecordableStream,
-    isRunning: realtime.isRunning,
-    recordableStreamSource: realtime.recordableStreamSource,
   });
 
   const handleSessionModeChange = (nextMode: SessionModeId) => {
@@ -255,7 +242,7 @@ export function App() {
         enhancePrompt={draft.enhance}
         hasPendingChanges={hasPendingChanges}
         isVisible={
-          isRecordingReviewExpanded && !shouldForceLiveOverlaysVisible
+          isRecordingReviewExpanded && !recordingOverlayState.shouldForceLiveOverlaysVisible
             ? false
             : liveOverlay.isVisible
         }
@@ -268,8 +255,8 @@ export function App() {
         status={realtime.status}
         elapsedLabel={timer.elapsedLabel}
         error={formError ?? realtime.error}
-        recordingDockLayout={recordingDockLayout}
-        reserveRecordingDockSpace={shouldRenderRecordingDock}
+        recordingDockLayout={recordingOverlayState.recordingDockLayout}
+        reserveRecordingDockSpace={recordingOverlayState.shouldRenderRecordingDock}
         onEnhancePromptChange={handleEnhancePromptChange}
         onSessionModeChange={handleSessionModeChange}
         onPromptChange={handlePromptChange}
@@ -295,7 +282,7 @@ export function App() {
         objectUrl={recording.objectUrl}
         overlayProps={liveOverlay.getRootProps("recording-dock")}
         sizeLabel={recording.sizeLabel}
-        standbyMessage={recordingStandbyMessage}
+        standbyMessage={recordingOverlayState.recordingStandbyMessage}
         state={recording.state}
         onDiscardConfirmingChange={setIsDiscardConfirming}
         onDiscardRecording={handleDiscardRecording}
@@ -306,92 +293,4 @@ export function App() {
       />
     </main>
   );
-}
-
-function getRecordingStandbyMessage({
-  activeSessionMode,
-  hasRecordableStream,
-  isRunning,
-  recordableStreamSource,
-}: {
-  activeSessionMode: SessionModeId | null;
-  hasRecordableStream: boolean;
-  isRunning: boolean;
-  recordableStreamSource: RecordableStreamSource;
-}) {
-  if (
-    isRunning &&
-    !hasRecordableStream &&
-    recordableStreamSource === "none" &&
-    isModelBackedSessionMode(activeSessionMode)
-  ) {
-    return "Waiting for model output before recording.";
-  }
-
-  return undefined;
-}
-
-function createControlPanelDraft(sessionMode: SessionModeId): ControlPanelDraft {
-  if (!isModelBackedSessionMode(sessionMode)) {
-    return {
-      sessionMode,
-      prompt: "",
-      image: null,
-      enhance: false,
-    };
-  }
-
-  const config = getModelConfig(sessionMode);
-
-  return {
-    sessionMode,
-    prompt: config.defaultPrompt,
-    image: null,
-    enhance: config.enhanceDefault,
-  };
-}
-
-function createApplyInput(input: ControlPanelDraft): ApplyRealtimeStateInput | null {
-  if (!isModelBackedSessionMode(input.sessionMode)) {
-    return null;
-  }
-
-  return {
-    modelMode: input.sessionMode,
-    prompt: input.prompt,
-    image: input.image,
-    enhance: input.enhance,
-  };
-}
-
-function createStartSessionInput(input: ControlPanelDraft): StartRealtimeSessionInput {
-  if (!isModelBackedSessionMode(input.sessionMode)) {
-    return {
-      sessionMode: input.sessionMode,
-    };
-  }
-
-  return {
-    sessionMode: input.sessionMode,
-    modelMode: input.sessionMode,
-    prompt: input.prompt,
-    image: input.image,
-    enhance: input.enhance,
-  };
-}
-
-function createDraftKey(input: ControlPanelDraft) {
-  return JSON.stringify({
-    sessionMode: input.sessionMode,
-    prompt: input.prompt.trim(),
-    enhance: input.enhance,
-    image: input.image
-      ? {
-          name: input.image.name,
-          size: input.image.size,
-          type: input.image.type,
-          lastModified: input.image.lastModified,
-        }
-      : null,
-  });
 }

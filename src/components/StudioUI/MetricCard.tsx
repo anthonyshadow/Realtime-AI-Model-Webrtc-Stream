@@ -4,6 +4,7 @@ import { cx } from "./classNames";
 export type MetricCardTone = "active" | "default" | "danger" | "success";
 
 export type MetricCardProps = HTMLAttributes<HTMLDivElement> & {
+  density?: "compact" | "default";
   description?: string;
   isNumeric?: boolean;
   label: string;
@@ -27,6 +28,7 @@ const valueClassNames: Record<MetricCardTone, string> = {
 
 export function MetricCard({
   className,
+  density = "default",
   description,
   isNumeric = false,
   label,
@@ -38,7 +40,8 @@ export function MetricCard({
     <div
       {...props}
       className={cx(
-        "min-w-0 rounded-md border px-3 py-2.5",
+        "min-w-0 rounded-md border",
+        density === "compact" ? "px-2.5 py-2" : "px-3 py-2.5",
         toneClassNames[tone],
         className,
       )}
@@ -49,6 +52,7 @@ export function MetricCard({
       <p
         className={cx(
           "mt-0.5 truncate text-sm font-semibold",
+          density === "compact" && "text-xs",
           isNumeric && "tabular-nums",
           valueClassNames[tone],
         )}

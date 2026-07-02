@@ -17,6 +17,8 @@ import type { RealtimeStatus } from "../../types/realtime";
 import { cx } from "../StudioUI/classNames";
 import {
   ErrorBanner,
+  MetricCard,
+  type MetricCardTone,
   PrimaryButton,
   SecondaryButton,
   StatusPill,
@@ -271,26 +273,12 @@ function SetupSessionModeCards({ value, onChange }: SetupSessionModeCardsProps) 
 
 type SetupCheckItemProps = {
   label: string;
-  tone?: "active" | "danger" | "default";
+  tone?: Extract<MetricCardTone, "active" | "danger" | "default">;
   value: string;
 };
 
 function SetupCheckItem({ label, tone = "default", value }: SetupCheckItemProps) {
-  const toneClassName =
-    tone === "danger"
-      ? "border-red-300/30 bg-red-500/10 text-red-100"
-      : tone === "active"
-        ? "border-cyan-300/25 bg-cyan-300/10 text-cyan-100"
-        : "border-white/10 bg-black/25 text-white";
-
-  return (
-    <div className={cx("min-w-0 rounded-md border px-3 py-2.5", toneClassName)}>
-      <p className="truncate text-[10px] font-medium uppercase text-neutral-400">
-        {label}
-      </p>
-      <p className="mt-0.5 truncate text-sm font-semibold">{value}</p>
-    </div>
-  );
+  return <MetricCard label={label} tone={tone} value={value} />;
 }
 
 function getStatusLabel(status: RealtimeStatus, error: string | null) {

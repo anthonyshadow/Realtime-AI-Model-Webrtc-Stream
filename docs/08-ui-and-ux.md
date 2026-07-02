@@ -26,6 +26,8 @@ sheets, and error surfaces before adding one-off Tailwind treatments.
 Prefer these primitives for new or touched status, metric, upload, button,
 surface, and error UI. Keep domain wrappers such as `ImageUpload` only when they
 adapt model-specific copy, validation, or state to a shared primitive.
+Use compact `MetricCard` density for operational summaries and the solid studio
+button variant for white Apply-style actions.
 
 Design tokens for spacing, radii, panel widths, overlay z-indexes, transition
 durations, and responsive breakpoints live in `src/constants/design.ts`.

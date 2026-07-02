@@ -10,6 +10,10 @@ import {
   createLocalRecordableStream,
   createModelOutputRecordableStream,
 } from "../lib/streamComposition";
+import {
+  isConnectingRealtimeStatus,
+  isRunningRealtimeStatus,
+} from "../lib/realtimeStatus";
 import type {
   ApplyRealtimeStateInput,
   RealtimeStatus,
@@ -18,18 +22,6 @@ import type {
 } from "../types/realtime";
 import { useDecartModelSession } from "./useDecartModelSession";
 import { useMediaSession } from "./useMediaSession";
-
-const RUNNING_STATUSES = new Set<RealtimeStatus>([
-  "connected",
-  "generating",
-  "reconnecting",
-]);
-
-const CONNECTING_STATUSES = new Set<RealtimeStatus>([
-  "requesting-camera",
-  "requesting-token",
-  "connecting",
-]);
 
 export function useLiveSession(): UseLiveSessionReturn {
   const {
@@ -69,8 +61,8 @@ export function useLiveSession(): UseLiveSessionReturn {
     return createLocalRecordableStream(null);
   }, [activeSessionMode, localStream, modelOutputStream]);
   const recordableStream = recordableStreamComposition.stream;
-  const isRunning = RUNNING_STATUSES.has(status);
-  const isConnecting = CONNECTING_STATUSES.has(status);
+  const isRunning = isRunningRealtimeStatus(status);
+  const isConnecting = isConnectingRealtimeStatus(status);
   const error = sessionError ?? modelError ?? mediaError;
 
   const stopLowerSessions = useCallback(() => {
@@ -219,7 +211,7 @@ export function useLiveSession(): UseLiveSessionReturn {
   const resetRealtimeState = useCallback(async () => {
     setSessionError(null);
 
-    if (CONNECTING_STATUSES.has(status)) {
+    if (isConnectingRealtimeStatus(status)) {
       startRequestIdRef.current += 1;
       stopLowerSessions();
       setActiveSessionMode(null);

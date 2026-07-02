@@ -1,6 +1,10 @@
 import type { RealtimeStatus } from "../../types/realtime";
-import { studioClassNames } from "../../constants/design";
-import { cx } from "../StudioUI/classNames";
+import {
+  canApplyRealtimeStatus,
+  isConnectingRealtimeStatus,
+  isRunningRealtimeStatus,
+} from "../../lib/realtimeStatus";
+import { Button, type StudioButtonVariant } from "../StudioUI";
 
 type SessionControlsProps = {
   canApplyChanges: boolean;
@@ -14,18 +18,6 @@ type SessionControlsProps = {
   onApply: () => void;
 };
 
-const RUNNING_STATUSES = new Set<RealtimeStatus>([
-  "connected",
-  "generating",
-  "reconnecting",
-]);
-const APPLY_STATUSES = new Set<RealtimeStatus>(["connected", "generating"]);
-const CONNECTING_STATUSES = new Set<RealtimeStatus>([
-  "requesting-camera",
-  "requesting-token",
-  "connecting",
-]);
-
 export function SessionControls({
   canApplyChanges,
   hasPendingChanges,
@@ -37,48 +29,40 @@ export function SessionControls({
   onStop,
   onApply,
 }: SessionControlsProps) {
-  const isRunning = RUNNING_STATUSES.has(status);
-  const isConnecting = CONNECTING_STATUSES.has(status);
-  const canApply = canApplyChanges && hasPendingChanges && APPLY_STATUSES.has(status);
+  const isRunning = isRunningRealtimeStatus(status);
+  const isConnecting = isConnectingRealtimeStatus(status);
+  const canApply = canApplyChanges && hasPendingChanges && canApplyRealtimeStatus(status);
   const startStopLabel = isRunning || isConnecting ? "Stop session" : startLabel;
-  const startStopClassName =
-    isRunning || isConnecting
-      ? "border border-red-300/35 bg-red-500/15 text-red-50 hover:border-red-200/60"
-      : "bg-cyan-300 text-neutral-950 hover:bg-cyan-200";
-  const applyClassName = canApply
-    ? "bg-white text-neutral-950 hover:bg-neutral-200"
-    : "border border-white/15 text-white hover:border-white/30";
-  const buttonClassName = cx(
-    "min-h-11 rounded-md px-3 py-2.5 text-center text-sm font-semibold leading-tight transition",
-    studioClassNames.focusRing,
-    studioClassNames.disabled,
-  );
+  const startStopVariant: StudioButtonVariant =
+    isRunning || isConnecting ? "danger" : "primary";
+  const applyVariant: StudioButtonVariant = canApply ? "solid" : "secondary";
 
   return (
     <div className="grid grid-cols-2 gap-2">
-      <button
-        className={cx("col-span-2", buttonClassName, startStopClassName)}
-        type="button"
+      <Button
+        className="col-span-2"
+        fullWidth
         onClick={isRunning || isConnecting ? onStop : onStart}
+        variant={startStopVariant}
       >
         {startStopLabel}
-      </button>
-      <button
-        className={cx(buttonClassName, applyClassName)}
-        type="button"
+      </Button>
+      <Button
         disabled={!canApply || isApplying}
+        fullWidth
         onClick={onApply}
+        variant={applyVariant}
       >
         {isApplying ? "Applying" : "Apply"}
-      </button>
-      <button
-        className={cx(buttonClassName, "border border-white/15 text-white hover:border-white/30")}
-        type="button"
+      </Button>
+      <Button
         disabled={isApplying}
+        fullWidth
         onClick={onReset}
+        variant="secondary"
       >
         Reset
-      </button>
+      </Button>
     </div>
   );
 }

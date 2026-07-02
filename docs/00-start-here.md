@@ -28,9 +28,9 @@ Best first file for humans and agents. Read this, then open only the task-specif
 - [10-deployment-and-env.md](10-deployment-and-env.md): local env, preview mode, and deployment limits.
 - [11-documentation-maintenance.md](11-documentation-maintenance.md): where docs, skills, tests, and stories go.
 - [12-ux-recording-architecture.md](12-ux-recording-architecture.md): control panel, recording dock, recording lifecycle, API release, stream strategy, cleanup, and QA guardrails.
-- [context/screens.md](context/screens.md): remembered redesigned screen breakdown and visual reference for upcoming UI work.
 
 Historical archives and completed implementation plans are not part of the default read path. Open them only when investigating history or archiving old plans.
+Visual reference assets in [context/assets/](context/assets/) are also outside the default path. Open them only for UI comparison or design archaeology.
 
 ## Agent Context
 

@@ -98,9 +98,12 @@ tests/
 - `src/hooks/useSessionTimer.ts`: elapsed time and display label.
 - `src/hooks/useObjectUrl.ts`: object URL creation and revocation.
 - `src/lib/decartClient.ts`: browser-safe token fetch, SDK import, client creation, model resolution, realtime connection, and initial-state mapping.
+- `src/lib/controlPanelDraft.ts`: pure control-panel draft creation, Apply input creation, Start input creation, and pending-change key generation.
 - `src/lib/realtimeState.ts`: atomic realtime state payload construction.
+- `src/lib/realtimeStatus.ts`: shared realtime status predicates, short labels, and badge tones.
 - `src/lib/media.ts`: local media stream, model camera stream, stream stop, and video attachment helpers.
 - `src/lib/recording.ts`: MIME type selection, recording extension mapping, timestamped filename generation, duration formatting, and file size formatting.
+- `src/lib/recordingOverlayState.ts`: pure recording dock layout, overlay force-visible, and model-output standby copy derivation for `App`.
 - `src/lib/streamComposition.ts`: recordable stream composition from local or model output tracks without stopping source tracks.
 - `src/lib/errors.ts`: user-friendly error mapping.
 - `src/constants/models.ts`: supported model registry and mode-specific UI behavior.
@@ -122,13 +125,13 @@ Current UI pieces:
 - `StatusSummary`, `StatusMessage`, `PromptInput`, `ImageUpload`
 - `EnhanceToggle`, `SessionControls`, `TimerDisplay`
 - `FloatingRecordingDock`, `RecordingDockButton`, `RecordingStatusBadge`, `RecordingPlaybackPanel`
+- `RecordingDock/recordingDockStatus.ts` owns pure recorder status and error-descriptor copy.
 - `StudioUI` primitives: `StatusPill`, `MetricCard`, `SectionHeader`, `Surface`, `Card`, `FileUploadControl`, `Button`, `PrimaryButton`, `SecondaryButton`, `DangerButton`, and `ErrorBanner`
 
 Prefer `StudioUI` primitives for new or touched status, metric, upload, button, surface, and error UI. Domain-specific components such as `ImageUpload` can adapt model copy and validation while delegating reusable presentation to `FileUploadControl`.
 
-Compatibility surfaces still present:
+Compatibility surface still present:
 
-- `AutoHidingControlPanel` wraps `ControlPanel` for isolated compatibility and tests. The app shell coordinates the shared live overlay with `useAutoHideOverlay()` and passes overlay props to both `ControlPanel` and `FloatingRecordingDock`.
 - `src/components/ControlPanel/ErrorBanner.tsx` re-exports `StudioUI/ErrorBanner` for stable older imports and stories. New shared error UI should import from `src/components/StudioUI`.
 
 ## State Update Rule

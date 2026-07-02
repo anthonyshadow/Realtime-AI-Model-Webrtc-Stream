@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { studioClassNames } from "../../constants/design";
 import { cx } from "./classNames";
 
-export type StudioButtonVariant = "danger" | "primary" | "secondary";
+export type StudioButtonVariant = "danger" | "primary" | "secondary" | "solid";
 
 export type StudioButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   fullWidth?: boolean;
@@ -18,6 +18,8 @@ const variantClassNames: Record<StudioButtonVariant, string> = {
     "border border-cyan-200/70 bg-cyan-300 text-neutral-950 hover:bg-cyan-200 active:bg-cyan-100",
   secondary:
     "border border-white/15 bg-white/[0.03] text-white hover:border-white/30 hover:bg-white/[0.07] active:bg-white/10",
+  solid:
+    "border border-transparent bg-white text-neutral-950 hover:bg-neutral-200 active:bg-neutral-300",
 };
 
 export function Button({

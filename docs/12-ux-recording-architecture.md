@@ -8,12 +8,16 @@ Use this as the maintainer contract for the redesigned control panel, bottom rec
 - `src/App.tsx` composes control-panel draft state, live-session state, recording state, and completion messages.
 - `src/components/ControlPanel/` owns setup, model controls, session actions, status, and errors.
 - `src/components/RecordingDock/` owns the bottom recording transport and review playback UI.
+- `src/components/RecordingDock/recordingDockStatus.ts` owns pure recorder status and error-descriptor copy.
 - `src/components/StudioUI/` owns shared stream-first primitives: status pills, metric cards, section headers, surfaces/cards, file upload controls, buttons, and actionable error banners.
 - `src/hooks/useAutoHideOverlay.ts` owns shared overlay visibility behavior, including multi-root live overlays.
 - `src/hooks/useLiveSession.ts` owns local camera, model/API lifecycle, display stream, recordable stream, and model release back to local preview.
 - `src/hooks/useRecordingCompletionFlow.ts` coordinates post-recording model release after the recorder finalizes.
 - `src/hooks/useSessionRecording.ts` owns `MediaRecorder`, recording state, Blob/object URL, filename, duration, size, and object URL cleanup.
+- `src/lib/controlPanelDraft.ts` owns pure draft, start-input, apply-input, and pending-change key creation for the control panel.
 - `src/lib/errors.ts` owns user-facing error classification and copy for camera, Decart, network, recording, and upload failures.
+- `src/lib/realtimeStatus.ts` owns shared realtime status predicates, badge labels, summary labels, and badge tones.
+- `src/lib/recordingOverlayState.ts` owns pure recording dock layout, overlay force-visible, and model-output standby derivation for `App`.
 - `src/lib/streamComposition.ts` owns recordable stream selection for local and model-backed sessions.
 
 UI components must stay presentational. They receive state and callbacks through props and must not request media, fetch tokens, import Decart, stop source tracks, or decide API lifecycle.
@@ -62,12 +66,12 @@ Section organization should stay progressive:
 - `StatusMessage`, `StatusSummary`, and errors should be clear enough to recover, but not visually louder than the primary session action unless action is blocked.
 - `ControlPanel` distinguishes no recorder, compact recorder transport, collapsed recorded controls, and expanded review sheet layouts. Live drawers must reserve enough safe-area-aware bottom space for compact recorder surfaces, and the app hides the drawer while an expanded review sheet is active instead of relying on z-index overlap.
 
-Compatibility wrappers and re-exports should stay clearly marked when retained.
-`AutoHidingControlPanel` is not the app-shell overlay owner; `App.tsx` coordinates
-the shared live overlay and passes root props to `ControlPanel` and
-`FloatingRecordingDock`. `src/components/ControlPanel/ErrorBanner.tsx` is a
-stable re-export of the shared `StudioUI/ErrorBanner`; new shared error surfaces
-should use the `StudioUI` import path.
+Compatibility re-exports should stay clearly marked when retained.
+`App.tsx` coordinates the shared live overlay and passes root props to
+`ControlPanel` and `FloatingRecordingDock`.
+`src/components/ControlPanel/ErrorBanner.tsx` is a stable re-export of the
+shared `StudioUI/ErrorBanner`; new shared error surfaces should use the
+`StudioUI` import path.
 
 Future features should follow the same hierarchy. Add new model options to the model section or advanced disclosure. Add new session-wide actions to the session actions area only when they affect the live session itself. Add new recording or clip-management features to the recording dock or a dock-connected review surface, not to the control panel.
 

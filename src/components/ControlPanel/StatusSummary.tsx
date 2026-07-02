@@ -2,7 +2,9 @@ import {
   getSessionModeConfig,
   type SessionModeId,
 } from "../../constants/sessionModes";
+import { getRealtimeStatusSummaryLabel } from "../../lib/realtimeStatus";
 import type { RealtimeStatus } from "../../types/realtime";
+import { MetricCard, type MetricCardTone } from "../StudioUI";
 
 type StatusSummaryProps = {
   activeSessionMode: SessionModeId | null;
@@ -10,18 +12,6 @@ type StatusSummaryProps = {
   isApplying: boolean;
   selectedSessionMode: SessionModeId;
   status: RealtimeStatus;
-};
-
-const STATUS_LABELS: Record<RealtimeStatus, string> = {
-  idle: "Idle",
-  "requesting-camera": "Camera",
-  "requesting-token": "Token",
-  connecting: "Connecting",
-  connected: "Live",
-  generating: "Generating",
-  reconnecting: "Reconnecting",
-  disconnected: "Stopped",
-  error: "Error",
 };
 
 export function StatusSummary({
@@ -40,8 +30,8 @@ export function StatusSummary({
       <StatusCell label="Mode" value={sessionConfig.shortLabel} />
       <StatusCell
         label="Session"
-        value={STATUS_LABELS[status]}
-        tone={status === "error" ? "error" : "default"}
+        value={getRealtimeStatusSummaryLabel(status)}
+        tone={status === "error" ? "danger" : "default"}
       />
       <StatusCell
         label="Changes"
@@ -55,21 +45,11 @@ export function StatusSummary({
 type StatusCellProps = {
   label: string;
   value: string;
-  tone?: "active" | "default" | "error";
+  tone?: Extract<MetricCardTone, "active" | "danger" | "default">;
 };
 
 function StatusCell({ label, value, tone = "default" }: StatusCellProps) {
-  const valueClassName =
-    tone === "error"
-      ? "text-red-100"
-      : tone === "active"
-        ? "text-cyan-100"
-        : "text-white";
-
   return (
-    <div className="min-w-0 rounded-md border border-white/10 bg-black/25 px-2.5 py-2">
-      <p className="text-[10px] font-medium uppercase text-neutral-400">{label}</p>
-      <p className={`mt-0.5 truncate text-xs font-semibold ${valueClassName}`}>{value}</p>
-    </div>
+    <MetricCard density="compact" label={label} tone={tone} value={value} />
   );
 }

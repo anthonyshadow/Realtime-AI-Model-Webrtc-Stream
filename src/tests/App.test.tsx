@@ -7,6 +7,11 @@ import {
   mockGetUserMedia,
   type MockMediaStreamTrack,
 } from "../test/mocks/browserMocks";
+import {
+  FakeMediaRecorder,
+  installFakeMediaRecorder,
+  uninstallFakeMediaRecorder,
+} from "../test/mocks/fakeMediaRecorder";
 
 const decartMocks = vi.hoisted(() => ({
   connectRealtimeModel: vi.fn(),
@@ -28,60 +33,6 @@ vi.mock("../lib/decartClient", () => ({
   fetchRealtimeToken: decartMocks.fetchRealtimeToken,
   getRealtimeModel: decartMocks.getRealtimeModel,
 }));
-
-class FakeMediaRecorder extends EventTarget {
-  static instances: FakeMediaRecorder[] = [];
-  static supportedMimeTypes = new Set<string>();
-  static isTypeSupported = vi.fn((mimeType: string) =>
-    FakeMediaRecorder.supportedMimeTypes.has(mimeType),
-  );
-
-  mimeType: string;
-  state: RecordingState = "inactive";
-  start = vi.fn(() => {
-    this.state = "recording";
-  });
-  stop = vi.fn(() => {
-    this.state = "inactive";
-  });
-
-  constructor(
-    public stream: MediaStream,
-    options: MediaRecorderOptions = {},
-  ) {
-    super();
-    this.mimeType = options.mimeType ?? "video/webm";
-    FakeMediaRecorder.instances.push(this);
-  }
-
-  emitData(data: Blob) {
-    const event = new Event("dataavailable") as BlobEvent;
-    Object.defineProperty(event, "data", {
-      value: data,
-    });
-    this.dispatchEvent(event);
-  }
-
-  emitError(error = new Error("encoder failed")) {
-    const event = new Event("error") as Event & { error: Error };
-    Object.defineProperty(event, "error", {
-      value: error,
-    });
-    this.dispatchEvent(event);
-  }
-
-  emitStop() {
-    this.dispatchEvent(new Event("stop"));
-  }
-
-  static reset(supportedMimeTypes = ["video/webm;codecs=vp8,opus"]) {
-    FakeMediaRecorder.instances = [];
-    FakeMediaRecorder.supportedMimeTypes = new Set(supportedMimeTypes);
-    FakeMediaRecorder.isTypeSupported.mockClear();
-  }
-}
-
-type RecordingState = "inactive" | "recording" | "paused";
 
 function advanceTimersByTime(ms: number) {
   act(() => {
@@ -105,8 +56,7 @@ async function flushMicrotasks(times = 1) {
 
 describe("App", () => {
   beforeEach(() => {
-    FakeMediaRecorder.reset();
-    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+    installFakeMediaRecorder();
     decartMocks.getRealtimeModel.mockResolvedValue({ fps: 24, height: 360, width: 640 });
     decartMocks.fetchRealtimeToken.mockResolvedValue({
       apiKey: "ek_test_client_token",
@@ -130,7 +80,7 @@ describe("App", () => {
   });
 
   afterEach(() => {
-    vi.stubGlobal("MediaRecorder", undefined);
+    uninstallFakeMediaRecorder();
     vi.useRealTimers();
   });
 

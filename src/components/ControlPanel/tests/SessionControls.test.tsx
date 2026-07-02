@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import type { RealtimeStatus } from "../../../types/realtime";
 import { SessionControls } from "../SessionControls";
 
 function renderControls(overrides: Partial<Parameters<typeof SessionControls>[0]> = {}) {
@@ -34,9 +35,14 @@ describe("SessionControls", () => {
     expect(screen.getByRole("button", { name: "Reset" })).toBeEnabled();
   });
 
-  it("stops while connecting", async () => {
+  it.each([
+    "requesting-camera",
+    "requesting-token",
+    "connecting",
+    "reconnecting",
+  ] satisfies RealtimeStatus[])("stops while %s", async (status) => {
     const user = userEvent.setup();
-    const props = renderControls({ status: "connecting" });
+    const props = renderControls({ status });
 
     await user.click(screen.getByRole("button", { name: "Stop session" }));
 
@@ -57,6 +63,24 @@ describe("SessionControls", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
     expect(props.onApply).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["connected", "generating"] satisfies RealtimeStatus[])(
+    "enables apply for pending changes while %s",
+    async (status) => {
+      const user = userEvent.setup();
+      const props = renderControls({ hasPendingChanges: true, status });
+
+      await user.click(screen.getByRole("button", { name: "Apply" }));
+
+      expect(props.onApply).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("keeps apply disabled while reconnecting even with pending changes", () => {
+    renderControls({ hasPendingChanges: true, status: "reconnecting" });
+
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
   });
 
   it("keeps apply disabled for local-only sessions", () => {

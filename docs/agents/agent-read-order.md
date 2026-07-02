@@ -11,6 +11,16 @@ Use this to choose the minimum useful context for a task.
 
 Avoid archived docs and completed implementation plans unless the task directly touches history or archival cleanup.
 
+## Broad Docs And Exceptions
+
+Read broad docs only when the task needs their scope:
+
+- `docs/archive/*`: only for history, archive cleanup, or verifying a migrated historical claim.
+- Completed plans: only for precedent or cleanup of that plan's artifacts.
+- [../testing/live-smoke-tests.md](../testing/live-smoke-tests.md): only for explicitly gated live Decart smoke-test workflow design.
+- [../context/assets/](../context/assets/): only for visual reference, UI comparison, or product/design archaeology.
+- [../project-cleanup-and-documentation-audit.md](../project-cleanup-and-documentation-audit.md): only for cleanup, refactor, or documentation audit work.
+
 ## UI Or Control Panel
 
 1. [../08-ui-and-ux.md](../08-ui-and-ux.md)
@@ -57,7 +67,7 @@ Avoid archived docs and completed implementation plans unless the task directly 
 ## Cleanup Or Refactor
 
 1. [../project-cleanup-and-documentation-audit.md](../project-cleanup-and-documentation-audit.md)
-2. [../skills/maintenance/repo-audit.md](../skills/maintenance/repo-audit.md) for broad repo audits
-3. [repo-audit-checklist.md](repo-audit-checklist.md) for checklist-driven audits
-4. Closest canonical docs for affected source areas
-5. Relevant source, tests, and stories
+2. Relevant source, tests, and stories
+3. Closest canonical docs for affected source areas
+4. [../skills/maintenance/repo-audit.md](../skills/maintenance/repo-audit.md) for broad repo audits only
+5. [repo-audit-checklist.md](repo-audit-checklist.md) for checklist-driven audits only

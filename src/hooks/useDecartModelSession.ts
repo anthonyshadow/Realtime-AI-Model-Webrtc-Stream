@@ -10,10 +10,9 @@ import {
   buildRealtimeClearPayload,
   buildRealtimeStatePayload,
 } from "../lib/realtimeState";
+import { canApplyRealtimeStatus } from "../lib/realtimeStatus";
 import type { LucyModelSpec } from "../types/decart";
 import type { ApplyRealtimeStateInput, RealtimeStatus } from "../types/realtime";
-
-const APPLY_STATUSES = new Set<RealtimeStatus>(["connected", "generating"]);
 
 type StartDecartModelSessionInput = ApplyRealtimeStateInput & {
   onStatusChange: (status: RealtimeStatus) => void;
@@ -176,7 +175,7 @@ export function useDecartModelSession(): UseDecartModelSessionReturn {
     async (input: ApplyRealtimeStateInput, lifecycleStatus: RealtimeStatus) => {
       const realtimeClient = realtimeClientRef.current;
 
-      if (!APPLY_STATUSES.has(lifecycleStatus) || !realtimeClient) {
+      if (!canApplyRealtimeStatus(lifecycleStatus) || !realtimeClient) {
         setModelError(`Start ${getModelConfig(input.modelMode).label} and wait for it to connect before applying changes.`);
         return false;
       }
@@ -209,7 +208,7 @@ export function useDecartModelSession(): UseDecartModelSessionReturn {
 
     setModelError(null);
 
-    if (!APPLY_STATUSES.has(lifecycleStatus) || !realtimeClient) {
+    if (!canApplyRealtimeStatus(lifecycleStatus) || !realtimeClient) {
       return true;
     }
 

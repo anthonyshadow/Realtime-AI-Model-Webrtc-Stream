@@ -83,7 +83,7 @@ Not found:
 | `docs/context/implementation-decisions.md` | Decisions explaining architecture shape. | Current. | Some overlap with architecture, but valuable rationale. | Keep as-is. | Read for architectural tradeoffs. | Medium |
 | `docs/context/known-limitations.md` | Current product and browser limitations. | Current. | Some overlap with overview non-goals. | Keep as-is. | Read for scope expansion or production claims. | Low |
 | `docs/context/product-requirements.md` | Product behavior and acceptance criteria. | Current. | Some overlap with overview, but more acceptance-focused. | Keep as-is. | Read for feature planning and acceptance criteria. | Medium |
-| `docs/context/screens.md` | Visual/reference breakdown for redesign. | Possibly historical. | Duplicates current UX docs and completed redesign plan. | Needs human confirmation. | Avoid unless doing visual/product reference work. | Low to medium |
+| `docs/context/assets/*` | Visual reference assets for the redesign. | Current as retained assets. | Useful only when visual comparison is needed. | Keep out of default read paths; ask before archive/delete. | Avoid unless doing visual/product reference work. | Low to medium |
 | `docs/skills/README.md` | Explains repo-local skills. | Current. | No stale concern found. | Keep as-is. | Optional; read before skill authoring. | Low |
 | `docs/skills/skill-index.md` | Skill index. | Current. | No stale concern found. | Keep as-is. | Read when choosing a task procedure. | Low |
 | `docs/skills/skill-template.md` | Template for new repo skills. | Current. | No stale concern found. | Keep as-is. | Read only when adding a skill. | Low |
@@ -110,7 +110,7 @@ Not found:
 | Task type | Required docs | Optional docs | Avoid unless relevant | Reasoning |
 | --- | --- | --- | --- | --- |
 | General project onboarding | `AGENTS.md`, `docs/00-start-here.md`, `README.md`, `docs/01-project-overview.md` | `docs/context/product-requirements.md`, `docs/context/known-limitations.md` | Archived docs, completed redesign plan | Gives product, setup, and boundaries without deep implementation detail. |
-| UI/UX changes | `AGENTS.md`, `docs/00-start-here.md`, `docs/08-ui-and-ux.md`, `docs/12-ux-recording-architecture.md` | `docs/skills/ui-ux/*`, relevant stories/tests, `docs/context/screens.md` if visual reference is needed | `docs/archive/ui-ux-stream-first-redesign-plan.md` unless investigating history | Current UX contracts live in `08` and `12`; the old plan should not be default context. |
+| UI/UX changes | `AGENTS.md`, `docs/00-start-here.md`, `docs/08-ui-and-ux.md`, `docs/12-ux-recording-architecture.md` | `docs/skills/ui-ux/*`, relevant stories/tests, `docs/context/assets/*` if visual reference is needed | `docs/archive/ui-ux-stream-first-redesign-plan.md` unless investigating history | Current UX contracts live in `08` and `12`; the old plan should not be default context. |
 | Design system or styling changes | `docs/08-ui-and-ux.md`, `docs/12-ux-recording-architecture.md`, `src/constants/design.ts`, `src/components/StudioUI/` | `docs/skills/ui-ux/responsive-ui-checklist.md`, StudioUI stories/tests | API/media docs unless behavior changes | Keeps work centered on primitives and visual contracts. |
 | Component refactors | `docs/02-architecture.md`, `docs/08-ui-and-ux.md`, closest component files/tests/stories | `docs/12-ux-recording-architecture.md` for control/dock work | Deployment docs, live smoke docs | Component work should preserve ownership boundaries and local coverage. |
 | Testing changes | `docs/04-testing.md`, closest test file | `docs/testing/test-strategy.md`, `docs/testing/mocks-and-fixtures.md`, relevant testing skill | Storybook docs unless stories change | Prevents over-reading while preserving mock and placement rules. |
@@ -198,9 +198,9 @@ Update canonical docs to match completed cleanup. Read docs/project-cleanup-and-
 ### Phase 3: Merge duplicate docs
 
 Status: Implemented on 2026-07-01. Current short UX guidance from the completed
-redesign plan was consolidated into `08` and `12`; `screens.md` was retained as
-visual reference only; the completed redesign plan now points readers to the
-canonical docs instead of acting as current guidance.
+redesign plan was consolidated into `08` and `12`; visual reference assets were
+retained under `docs/context/assets/`; the completed redesign plan now points
+readers to the canonical docs instead of acting as current guidance.
 
 Goal: reduce overlapping UX/context material without losing useful guidance.
 
@@ -208,18 +208,18 @@ Files affected:
 
 - `docs/08-ui-and-ux.md`
 - `docs/12-ux-recording-architecture.md`
-- `docs/context/screens.md`
+- `docs/context/assets/*`
 - `docs/archive/ui-ux-stream-first-redesign-plan.md`
 
 Exact intended changes:
 
 - Move any still-current short UX guidance from the completed redesign plan into `08` or `12`.
-- Keep visual reference content in `docs/context/screens.md` only if humans still want it.
+- Keep visual reference assets in `docs/context/assets/` only if humans still want them.
 - Do not merge archived historical narrative into canonical docs.
 
 Risks:
 
-- Medium. Visual intent can be lost if `screens.md` is removed too aggressively.
+- Medium. Visual intent can be lost if reference assets are removed too aggressively.
 
 Validation steps:
 
@@ -237,8 +237,8 @@ Consolidate current UX guidance only. Read docs/project-cleanup-and-documentatio
 
 Status: Implemented on 2026-07-01. The completed redesign plan moved to
 `docs/archive/`, received archive metadata, and was added to the archive index.
-`docs/context/screens.md` was not archived or deleted because that still needs
-explicit human confirmation.
+Visual reference assets under `docs/context/assets/` were not archived or
+deleted because that still needs explicit human confirmation.
 
 Goal: move completed historical planning out of normal read paths.
 
@@ -246,7 +246,7 @@ Files affected:
 
 - `docs/archive/ui-ux-stream-first-redesign-plan.md`
 - `docs/archive/README.md`
-- Possibly `docs/context/screens.md` after human confirmation
+- Possibly `docs/context/assets/*` after human confirmation
 
 Exact intended changes:
 
@@ -272,6 +272,11 @@ Archive completed historical docs only. Read docs/project-cleanup-and-documentat
 ```
 
 ### Phase 5: Add future-agent usage guidance
+
+Status: Implemented on 2026-07-01. Agent routing now calls out broad docs that
+future agents should avoid by default, and cleanup/refactor routing starts with
+the audit plus relevant source before broader audit procedures. Missing visual
+reference Markdown links were replaced with retained visual assets.
 
 Goal: make future prompts token-efficient by teaching agents when not to read broad docs.
 
@@ -307,25 +312,30 @@ Add future-agent usage guidance. Read docs/project-cleanup-and-documentation-aud
 
 | Area | Files | Duplication or issue found | Recommended refactor | Risk level | Tests/stories needed | Suggested phase |
 | --- | --- | --- | --- | --- | --- | --- |
-| Superseded auto-hide wrapper | `src/components/ControlPanel/AutoHidingControlPanel.tsx`, local test, docs | App now coordinates one shared live overlay for panel and dock; wrapper is only test/doc referenced. | Remove the wrapper and its dedicated test, or explicitly mark it as compatibility if retained. | Low to medium | `npm run test:unit`; ensure `useAutoHideOverlay` tests still cover behavior. | Low-risk cleanup |
+| Superseded auto-hide wrapper | `src/components/ControlPanel/AutoHidingControlPanel.tsx`, local test, docs | Implemented on 2026-07-01. App coordinates one shared live overlay for panel and dock; the wrapper and dedicated test were removed. | Keep `useAutoHideOverlay` as the canonical overlay behavior surface. | Low to medium | `npm run test:unit`; ensure `useAutoHideOverlay` tests still cover behavior. | Low-risk cleanup |
 | Compatibility hook re-export | `src/hooks/useDecartRealtimeSession.ts` | One-line compatibility re-export for older name. | Keep unless human confirms public/internal compatibility can be removed. | Medium | Typecheck and source search. | Human-confirmation |
 | Compatibility error re-export | `src/components/ControlPanel/ErrorBanner.tsx` | Re-exports `StudioUI/ErrorBanner`; useful only for stable imports/stories. | Retain or migrate story imports to `StudioUI` and remove after docs update. | Low | Storybook tests. | Human-confirmation |
-| Status predicates | `src/App.tsx`, `src/hooks/useLiveSession.ts`, `src/hooks/useDecartModelSession.ts`, `src/components/ControlPanel/SessionControls.tsx`, `src/components/ControlPanel/AutoHidingControlPanel.tsx` | Running, connecting, apply, and auto-hide status sets are repeated. | Add `src/lib/realtimeStatus.ts` or constants near `types/realtime.ts`. | Low | Unit tests for helper plus existing app/session tests. | Shared status helpers |
-| Status labels | `StatusBadge.tsx`, `StatusSummary.tsx`, stories/tests | Realtime status labels are duplicated with slightly different labels. | Centralize label/tone mapping or make context-specific helpers explicit. | Low | Status component stories/tests. | Shared status helpers |
-| Status pill primitive | `VideoStage/StatusBadge.tsx`, `StudioUI/StatusPill.tsx` | Two similar pill components. | Replace `StatusBadge` internals or usage with `StatusPill`; keep story title stable or update a11y if referenced. | Low | VideoStage stories/tests; Storybook test. | Primitive consolidation |
-| Metric cells | `StatusSummary.tsx`, `SessionSetupPanel.tsx`, `RecordingPlaybackPanel.tsx`, `StudioUI/MetricCard.tsx` | Local `StatusCell` and `SetupCheckItem` duplicate `MetricCard`. | Use `MetricCard` where sizing and text fit match. | Low | ControlPanel and StudioUI tests/stories. | Primitive consolidation |
-| Button styling | `SessionControls.tsx`, `RecordingDockButton.tsx`, `RecordingPlaybackPanel.tsx`, `StudioUI/Button.tsx` | Local button class strings duplicate shared button variants. | Use shared `Button`, `PrimaryButton`, `SecondaryButton`, `DangerButton` where shapes allow; keep rounded recorder CTA if intentional. | Medium | ControlPanel/RecordingDock tests and stories. | Primitive consolidation |
+| Status predicates | `src/App.tsx`, `src/hooks/useLiveSession.ts`, `src/hooks/useDecartModelSession.ts`, `src/components/ControlPanel/SessionControls.tsx` | Implemented on 2026-07-01. Running, connecting, apply, and auto-hide checks now use `src/lib/realtimeStatus.ts`. | Keep `src/lib/realtimeStatus.ts` as the shared predicate surface. | Low | `src/lib/realtimeStatus.test.ts` plus existing app/session tests. | Shared status helpers |
+| Status labels | `StatusBadge.tsx`, `StatusSummary.tsx`, stories/tests | Implemented on 2026-07-01. Context-specific labels now live in `src/lib/realtimeStatus.ts`. | Keep stage badge and control summary label helpers explicit because `connected`/`disconnected` copy differs by context. | Low | Status component stories/tests. | Shared status helpers |
+| Status pill primitive | `VideoStage/StatusBadge.tsx`, `StudioUI/StatusPill.tsx` | Implemented on 2026-07-01. `StatusBadge` keeps its public API and renders through `StatusPill`. | Keep the `StatusBadge` wrapper for stable video-stage imports and stories. | Low | VideoStage stories/tests; Storybook test. | Primitive consolidation |
+| Metric cells | `StatusSummary.tsx`, `SessionSetupPanel.tsx`, `RecordingPlaybackPanel.tsx`, `StudioUI/MetricCard.tsx` | Implemented on 2026-07-01. `StatusSummary` and setup checks now use `MetricCard`; `MetricCard` supports compact density. | Use `MetricCard` where sizing and text fit match. | Low | ControlPanel and StudioUI tests/stories. | Primitive consolidation |
+| Button styling | `SessionControls.tsx`, `RecordingDockButton.tsx`, `RecordingPlaybackPanel.tsx`, `StudioUI/Button.tsx` | Implemented on 2026-07-01 for `SessionControls`; `StudioUI/Button` has a `solid` variant. Recorder CTA and download anchors remain domain-specific. | Use shared buttons where variants match; keep recorder-specific rounded-full styling and download anchors. | Medium | ControlPanel/RecordingDock tests and stories. | Primitive consolidation |
 | Setup panel size | `SessionSetupPanel.tsx` | 326 lines with setup cards, check items, and helper logic in one file. | After primitive cleanup, split setup cards/checklist helpers or move reusable pieces. | Medium | ControlPanel tests/stories. | Reusable component extraction |
-| Recording dock size | `FloatingRecordingDock.tsx` | 379 lines mixing dock shell, status derivation, error descriptor, review coordination, layout classes. | Extract `getRecordingStatus` to pure helper and split transport/review shell only after tests stay green. | Medium to high | RecordingDock tests/stories, app recording tests, E2E recording flow. | Reusable component extraction |
-| App derived state | `src/App.tsx` | 397 lines combining draft state, overlay state, recording completion, event handlers, helper functions. | Extract pure helpers for draft/input/recording dock layout only; keep orchestration in App. | Medium | App tests and typecheck. | State cleanup |
-| Unit `FakeMediaRecorder` | `src/tests/App.test.tsx`, `src/hooks/useSessionRecording.test.ts` | Similar fake classes duplicated; hook version supports start failure. | Move a reusable fake to `src/test/mocks/fakeMediaRecorder.ts`. | Low to medium | App tests and hook tests. | Test helper cleanup |
+| Recording dock size | `FloatingRecordingDock.tsx` | Implemented on 2026-07-01 for status derivation. Dock status and recorder error-descriptor copy moved to `recordingDockStatus.ts`; shell/review splitting remains deferred. | Split transport/review shell only if future changes make the component harder to maintain. | Medium to high | RecordingDock tests/stories, app recording tests, E2E recording flow. | Reusable component extraction |
+| App derived state | `src/App.tsx` | Implemented on 2026-07-01 for pure draft and overlay derivation. Draft/input/key helpers moved to `controlPanelDraft.ts`; recording dock layout and standby copy moved to `recordingOverlayState.ts`. | Keep orchestration, hook calls, and event handlers in App. | Medium | App tests and typecheck. | State cleanup |
+| Unit `FakeMediaRecorder` | `src/tests/App.test.tsx`, `src/hooks/useSessionRecording.test.ts` | Implemented on 2026-07-01. Unit suites now share `src/test/mocks/fakeMediaRecorder.ts`. | Keep E2E browser-context recorder separate. | Low to medium | App tests and hook tests. | Test helper cleanup |
 | E2E browser mocks | `tests/e2e/app.spec.ts` | Large inline mock setup for media, Decart SDK, recorder, object URLs. | Keep separate for now because it runs in browser context; later split within E2E helpers if needed. | Medium | E2E suite. | Test cleanup, later |
 | Story fixtures/args | `src/stories/App.stories.tsx`, `ControlPanel.stories.tsx` | Long story files with repeated responsive/error state setup. | Extract local story fixtures only if story readability worsens. | Low | Storybook tests and a11y if IDs change. | Storybook coverage cleanup |
-| Visual reference assets | `docs/context/screens.md`, `docs/context/assets/*`, `screenshots/*` | Could be stale after redesign completion; value depends on human workflow. | Ask human before archive/delete; route away from default agent reads. | Low to medium | Link checks only. | Documentation pruning |
+| Visual reference assets | `docs/context/assets/*`, `screenshots/*` | Could be stale after redesign completion; value depends on human workflow. | Ask human before archive/delete; route away from default agent reads. | Low to medium | Link checks only. | Documentation pruning |
 
 ## 7. Code Cleanup Plan
 
 ### Low-risk cleanup
+
+Status: Implemented on 2026-07-01. `AutoHidingControlPanel` and its dedicated
+test were removed after source search confirmed there were no runtime imports.
+`useAutoHideOverlay.test.tsx` remains the canonical coverage for overlay
+visibility behavior.
 
 Goal: remove or explicitly retain no-longer-used compatibility surfaces.
 
@@ -359,6 +369,10 @@ Perform low-risk cleanup for AutoHidingControlPanel only. Verify imports with rg
 ```
 
 ### Duplicate utility extraction
+
+Status: Implemented on 2026-07-01. `src/lib/realtimeStatus.ts` now owns
+running, connecting, apply, auto-hide, badge-label, badge-tone, and summary-label
+helpers with focused unit tests.
 
 Goal: centralize repeated realtime status predicates and labels.
 
@@ -396,6 +410,12 @@ Extract shared realtime status helpers without changing behavior or copy. Read d
 ```
 
 ### Reusable component extraction
+
+Status: Implemented on 2026-07-01 for the low-risk primitive consolidation.
+`StatusBadge` renders through `StatusPill`, setup and status metrics use
+`MetricCard` with compact density where needed, and `SessionControls` uses the
+shared `Button` primitive plus a `solid` variant. Recorder-specific CTA and
+download anchor styling were retained intentionally.
 
 Goal: reduce duplicated UI primitives after helper cleanup.
 
@@ -465,6 +485,13 @@ Clean repeated styling only after primitive cleanup. Keep layout behavior unchan
 
 ### State/API cleanup
 
+Status: Implemented on 2026-07-01 for pure helper extraction.
+`src/lib/controlPanelDraft.ts` owns draft, Start input, Apply input, and draft-key
+creation. `src/lib/recordingOverlayState.ts` owns pure recording dock layout,
+overlay force-visible, and model-output standby derivation. `App.tsx` still owns
+hook composition, event handlers, recording completion flow, and live-session
+orchestration.
+
 Goal: make `App.tsx` and large hooks easier to read without moving ownership boundaries.
 
 Files affected:
@@ -496,6 +523,10 @@ Extract App pure helpers only. Preserve all behavior, Decart/media/recording own
 ```
 
 ### Test and Storybook coverage updates
+
+Status: Implemented on 2026-07-01 for duplicated unit recorder helpers.
+`src/test/mocks/fakeMediaRecorder.ts` is shared by App and recording hook unit
+tests. The E2E browser-context recorder mock remains in `tests/e2e/app.spec.ts`.
 
 Goal: keep cleanup safe while reducing duplicated test scaffolding.
 
@@ -535,7 +566,7 @@ Extract duplicated unit test recorder helpers only. Do not touch E2E browser-con
 ### Current token risks
 
 - `docs/archive/ui-ux-stream-first-redesign-plan.md` is large and now historical.
-- UI agents may read both `08`, `12`, `context/screens`, and the completed redesign plan even though `08` and `12` are enough for most tasks.
+- UI agents may read both `08`, `12`, `context/assets`, and the completed redesign plan even though `08` and `12` are enough for most tasks.
 - Broad refactor prompts can accidentally pull all docs, all stories, and large tests into context.
 - Long test files are useful but should be read only when directly affected.
 
@@ -557,7 +588,7 @@ Extract duplicated unit test recorder helpers only. Do not touch E2E browser-con
 ### Proposed archive docs
 
 - `docs/archive/ui-ux-stream-first-redesign-plan.md`: archived completed redesign plan; avoid unless investigating history.
-- `docs/context/screens.md`: human-confirmation candidate; keep as visual reference if still useful, otherwise archive or label historical.
+- `docs/context/assets/`: human-confirmation candidate; keep visual assets if still useful, otherwise archive or delete with explicit approval.
 - Existing `docs/archive/documentation-migration-summary.md`: keep historical.
 
 ### Proposed task-based doc routing
